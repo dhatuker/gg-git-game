@@ -1,3 +1,4 @@
+import { msg, raw } from "../messages";
 import {
   DIRTY_MESSAGE,
   failure,
@@ -26,22 +27,22 @@ function withUntracked(state: RepoState, snapshot: Files): Files {
 
 export const merge: Handler = (state, args) => {
   const target = args[0];
-  if (!target) return failure(state, "Sebutkan branch yang mau di-merge, misalnya `git merge fitur`.", "fatal: No commit specified and merge.defaultToUpstream not set.");
+  if (!target) return failure(state, msg("merge.needTarget"), "fatal: No commit specified and merge.defaultToUpstream not set.");
   if (state.mergeState) {
     return failure(
       state,
-      "Masih ada merge yang belum selesai. Selesaikan konfliknya, `git add`, lalu `git commit`.",
+      msg("merge.inProgress"),
       "fatal: You have not concluded your merge (MERGE_HEAD exists).",
     );
   }
   if (!(target in state.branches)) {
-    return failure(state, `Branch \`${target}\` tidak ditemukan.`, `merge: ${target} - not something we can merge`);
+    return failure(state, msg("merge.notFound", { branch: target }), `merge: ${target} - not something we can merge`);
   }
   const ours = getHeadCommitId(state);
-  if (!ours) return failure(state, "Buat commit pertama dulu sebelum melakukan merge.", "fatal: your current branch does not have any commits yet");
+  if (!ours) return failure(state, msg("merge.noCommits"), "fatal: your current branch does not have any commits yet");
   const theirs = state.branches[target];
   if (isReachable(state, ours, theirs)) {
-    return success(state, `Branch \`${target}\` sudah tercakup, tidak ada yang perlu di-merge.\nAlready up to date.`);
+    return success(state, [msg("merge.upToDate", { branch: target }), raw("Already up to date.")]);
   }
   if (hasUncommittedChanges(state)) {
     return failure(state, DIRTY_MESSAGE, "error: Your local changes would be overwritten by merge.\nPlease commit your changes or stash them before you merge.");
@@ -58,7 +59,7 @@ export const merge: Handler = (state, args) => {
         : { ...state, head: { type: "detached", id: theirs } };
     return success(
       { ...moved, files: withUntracked(state, snapshot), index: { ...snapshot } },
-      `Fast-forward: pointer \`${branchLabel}\` maju ke ${theirs}.\nUpdating ${ours}..${theirs}\nFast-forward`,
+      [msg("merge.fastForward", { branch: branchLabel, to: theirs }), raw(`Updating ${ours}..${theirs}`), raw("Fast-forward")],
       [{ type: "merge-fast-forward", branch: branchLabel, to: theirs }],
     );
   }
@@ -92,11 +93,11 @@ export const merge: Handler = (state, args) => {
     return success(
       { ...state, files, index: merged, mergeState: { from: target, fromCommit: theirs, conflicts } },
       [
-        `Konflik! File berikut diubah berbeda di kedua branch: ${conflicts.join(", ")}.`,
-        "Pilih isi yang benar, lalu `git add <file>` dan `git commit`.",
-        ...conflicts.map((c) => `CONFLICT (content): Merge conflict in ${c}`),
-        "Automatic merge failed; fix conflicts and then commit the result.",
-      ].join("\n"),
+        msg("merge.conflict", { files: conflicts.join(", ") }),
+        msg("merge.conflictNext"),
+        ...conflicts.map((c) => raw(`CONFLICT (content): Merge conflict in ${c}`)),
+        raw("Automatic merge failed; fix conflicts and then commit the result."),
+      ],
       [{ type: "konflik-terjadi", files: conflicts }],
     );
   }
@@ -104,7 +105,7 @@ export const merge: Handler = (state, args) => {
   const prepared = { ...state, files: withUntracked(state, merged), index: merged };
   const message = `Merge branch '${target}'`;
   const made = createCommit(prepared, message, [ours, theirs]);
-  return success(made.state, `Merge commit ${made.commit.id} dibuat dengan dua parent.\nMerge made by the 'ort' strategy.`, [
+  return success(made.state, [msg("merge.commitCreated", { id: made.commit.id }), raw("Merge made by the 'ort' strategy.")], [
     { type: "commit-dibuat", id: made.commit.id, parents: [ours, theirs] },
     { type: "merge-commit-dibuat", id: made.commit.id, parents: [ours, theirs] },
   ]);

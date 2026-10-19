@@ -1,3 +1,5 @@
+import { msg, type Msg } from "./messages";
+
 export interface ParsedCommand {
   name: string;
   args: string[];
@@ -26,11 +28,11 @@ function tokenize(input: string): string[] | null {
   return tokens;
 }
 
-export function parseInput(input: string): ParsedCommand | { error: string } {
+export function parseInput(input: string): ParsedCommand | { error: Msg } {
   const tokens = tokenize(input.trim());
-  if (tokens === null) return { error: "Tanda kutip belum ditutup. Pastikan pesan diapit \"...\"." };
-  if (tokens.length === 0) return { error: "Ketik sebuah perintah, misalnya `git status`." };
-  if (tokens[0] !== "git") return { error: "Perintah harus diawali `git`, misalnya `git status`." };
-  if (tokens.length === 1) return { error: "Tambahkan nama perintah setelah `git`, misalnya `git status`." };
+  if (tokens === null) return { error: msg("parse.unclosedQuote") };
+  if (tokens.length === 0) return { error: msg("parse.empty") };
+  if (tokens[0] !== "git") return { error: msg("parse.notGit") };
+  if (tokens.length === 1) return { error: msg("parse.missingCommand") };
   return { name: tokens[1], args: tokens.slice(2) };
 }

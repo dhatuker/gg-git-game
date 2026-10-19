@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { computeGraphLayout } from "../../ui/layout";
-import { exec, initRepo, run, write } from "./helpers";
+import { exec, initRepo, keys, paramsOf, rawText, run, write } from "./helpers";
 
 describe("id commit unik", () => {
   it("commit identik di dua branch tidak saling menimpa dan graf tetap valid", () => {
@@ -34,8 +34,8 @@ describe("file tak terlacak tidak ditimpa diam-diam", () => {
     const s = withBranchTrackingN();
     const r = exec(s, "git switch f");
     expect(r.ok).toBe(false);
-    expect(r.output).toContain("n.txt");
-    expect(r.output).toContain("untracked working tree files would be overwritten");
+    expect(paramsOf(r, "untracked.switch")?.files).toBe("n.txt");
+    expect(rawText(r)).toContain("untracked working tree files would be overwritten");
     expect(r.state.files["n.txt"]).toBe("MY WORK");
   });
 
@@ -43,7 +43,8 @@ describe("file tak terlacak tidak ditimpa diam-diam", () => {
     const s = withBranchTrackingN();
     const r = exec(s, "git merge f");
     expect(r.ok).toBe(false);
-    expect(r.output).toContain("untracked working tree files would be overwritten");
+    expect(keys(r)).toEqual(["untracked.merge"]);
+    expect(rawText(r)).toContain("untracked working tree files would be overwritten");
     expect(r.state.files["n.txt"]).toBe("MY WORK");
   });
 

@@ -2,13 +2,12 @@ import { HANDLERS, runCommand } from "../engine";
 import { resolveConflict, writeFile, type EditResult } from "../engine/files";
 import { parseInput } from "../engine/parse";
 import type { GitEvent, RepoState } from "../engine/types";
-import { LEVELS } from "../levels";
+import { LEVELS, type Localized } from "../levels";
+import type { TLine, TMsg } from "../i18n/types";
 import { describeEvents } from "./caption";
 
-export interface TerminalLine {
-  kind: "input" | "output" | "error";
-  text: string;
-}
+/** Baris terminal: input pemain apa adanya, atau output berupa pesan berkunci + baris raw. */
+export type TerminalLine = { kind: "input"; text: string } | { kind: "output" | "error"; lines: TLine[] };
 
 export interface GameState {
   levelIndex: number;
@@ -22,7 +21,8 @@ export interface GameState {
   failedSinceHint: number;
   lines: TerminalLine[];
   events: GitEvent[];
-  caption: string;
+  /** Pesan penjelasan untuk perintah sukses terakhir; diterjemahkan saat render. */
+  caption: TMsg | null;
   levelComplete: boolean;
 }
 
@@ -33,10 +33,12 @@ export type GameAction =
   | { type: "reset-level" }
   | { type: "goto-level"; index: number }
   | { type: "reveal-hint" }
+  /** Pulihkan state yang dibawa saat ganti bahasa; level selesai digabung dengan progres tersimpan agar tidak hilang. */
+  | { type: "restore"; state: GameState; savedCompleted: number[] }
   | { type: "load-progress"; completed: number[] };
 
-export const NOT_ALLOWED = "Perintah ini belum dipakai di level ini.";
-export const READ_ONLY_CAPTION = "Perintah ini hanya menampilkan informasi. Repositori tidak berubah.";
+export const NOT_ALLOWED: TMsg = { key: "game.notAllowed" };
+export const READ_ONLY_CAPTION: TMsg = { key: "caption.readOnly" };
 
 export function isUnlocked(completed: number[], index: number): boolean {
   if (index === 0) return true;
@@ -55,7 +57,7 @@ function startLevel(index: number, completed: number[]): GameState {
     failedSinceHint: 0,
     lines: [],
     events: [],
-    caption: "",
+    caption: null,
     levelComplete: false,
   };
 }
@@ -76,7 +78,7 @@ function withGoalCheck(state: GameState): GameState {
 
 function applyEdit(state: GameState, result: EditResult): GameState {
   if (result.error) {
-    return { ...state, lines: [...state.lines, { kind: "error", text: result.error }] };
+    return { ...state, lines: [...state.lines, { kind: "error", lines: [result.error] }] };
   }
   return withGoalCheck({ ...state, repo: result.state });
 }
@@ -89,7 +91,7 @@ function runInput(state: GameState, input: string): GameState {
   if (!("error" in parsed) && parsed.name in HANDLERS && !level.allowedCommands.includes(parsed.name)) {
     return {
       ...state,
-      lines: [...lines, { kind: "error", text: NOT_ALLOWED }],
+      lines: [...lines, { kind: "error", lines: [NOT_ALLOWED] }],
       failedAttempts: state.failedAttempts + 1,
       failedSinceHint: state.failedSinceHint + 1,
     };
@@ -98,12 +100,12 @@ function runInput(state: GameState, input: string): GameState {
   const next: GameState = {
     ...state,
     repo: r.state,
-    lines: [...lines, { kind: r.ok ? "output" : "error", text: r.output }],
+    lines: [...lines, { kind: r.ok ? "output" : "error", lines: r.output }],
     failedAttempts: r.ok ? state.failedAttempts : state.failedAttempts + 1,
     failedSinceHint: r.ok ? state.failedSinceHint : state.failedSinceHint + 1,
     ran: r.ok && !("error" in parsed) && !state.ran.includes(parsed.name) ? [...state.ran, parsed.name] : state.ran,
     events: r.events,
-    caption: r.ok ? describeEvents(r.events) || READ_ONLY_CAPTION : state.caption,
+    caption: r.ok ? (describeEvents(r.events) ?? READ_ONLY_CAPTION) : state.caption,
   };
   return withGoalCheck(next);
 }
@@ -126,13 +128,18 @@ export function reduce(state: GameState, action: GameAction): GameState {
       if (state.hintsRevealed >= total) return state;
       return { ...state, hintsRevealed: state.hintsRevealed + 1, failedSinceHint: 0 };
     }
+    case "restore":
+      return {
+        ...action.state,
+        completed: [...new Set([...action.state.completed, ...action.savedCompleted])].sort((a, b) => a - b),
+      };
     case "load-progress":
       return initGame(action.completed);
   }
 }
 
 /** Petunjuk yang sudah dibuka pemain, dari yang paling samar. */
-export function visibleHints(state: GameState): string[] {
+export function visibleHints(state: GameState): Localized[] {
   return LEVELS[state.levelIndex].hints.slice(0, state.hintsRevealed);
 }
 

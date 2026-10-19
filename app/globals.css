@@ -91,6 +91,39 @@ code,
   letter-spacing: -0.01em;
   white-space: nowrap;
 }
+.gg-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+/* Tombol ID | EN */
+.gg-lang {
+  display: inline-flex;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.gg-lang-btn {
+  font-family: var(--font-overpass-mono), ui-monospace, monospace;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  background: transparent;
+  color: var(--ink);
+  border: 0;
+  cursor: pointer;
+}
+.gg-lang-btn + .gg-lang-btn {
+  border-left: 2px solid var(--ink);
+}
+.gg-lang-btn[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--panel);
+}
+.gg-lang-btn:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: -3px;
+}
 .gg-left,
 .gg-right {
   display: flex;

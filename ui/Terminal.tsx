@@ -1,3 +1,4 @@
+import { useLang } from "./LanguageProvider";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import type { TerminalLine } from "./game-state";
 
@@ -7,6 +8,7 @@ interface Props {
 }
 
 export function Terminal({ lines, onSubmit }: Props) {
+  const { t, line: fmt } = useLang();
   const [value, setValue] = useState("");
   const logRef = useRef<HTMLDivElement>(null);
 
@@ -24,13 +26,14 @@ export function Terminal({ lines, onSubmit }: Props) {
 
   return (
     <div className="gg-term">
-      <div className="gg-term-log" ref={logRef} aria-live="polite">
+      {/* aria-relevant="additions": saat bahasa diganti, teks baris lama berubah tapi tidak dibacakan ulang. */}
+      <div className="gg-term-log" ref={logRef} aria-live="polite" aria-relevant="additions">
         {lines.length === 0 && (
-          <p className="gg-term-empty">Ketik perintah git di bawah, lalu tekan Enter.</p>
+          <p className="gg-term-empty">{t("ui.terminalEmpty")}</p>
         )}
         {lines.map((line, i) => (
           <div key={i} className={line.kind === "input" ? "gg-term-input-line" : line.kind === "error" ? "gg-term-error" : undefined}>
-            {line.text}
+            {line.kind === "input" ? line.text : line.lines.map(fmt).join("\n")}
           </div>
         ))}
       </div>
@@ -40,7 +43,7 @@ export function Terminal({ lines, onSubmit }: Props) {
           value={value}
           onChange={(e) => setValue(e.target.value)}
           placeholder="git …"
-          aria-label="Perintah git"
+          aria-label={t("ui.terminalInput")}
           autoComplete="off"
           autoCapitalize="off"
           spellCheck={false}

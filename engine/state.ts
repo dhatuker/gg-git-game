@@ -1,3 +1,4 @@
+import { msg, raw, type Msg, type OutputLine } from "./messages";
 import type { CommandResult, Files, GitEvent, RepoState } from "./types";
 
 export function createEmptyRepo(files: Files = {}): RepoState {
@@ -22,14 +23,18 @@ export function headSnapshot(state: RepoState): Files {
   return id ? state.commits[id].snapshot : {};
 }
 
-export function success(state: RepoState, output: string, events: GitEvent[] = []): CommandResult {
+export function success(state: RepoState, output: OutputLine[], events: GitEvent[] = []): CommandResult {
   return { state, output, events, ok: true };
 }
 
-/** Pesan Indonesia di baris pertama, pesan asli git di bawahnya. */
-export function failure(state: RepoState, indonesian: string, gitMessage?: string): CommandResult {
-  const output = gitMessage ? `${indonesian}\n${gitMessage}` : indonesian;
-  return { state, output, events: [], ok: false };
+/** Teks mentah multi-baris menjadi baris-baris raw. */
+export function rawLines(text: string): OutputLine[] {
+  return text.split("\n").map(raw);
+}
+
+/** Pesan ramah (berkunci) di baris pertama, pesan asli git (raw) di bawahnya. */
+export function failure(state: RepoState, message: Msg, gitMessage?: string): CommandResult {
+  return { state, output: gitMessage ? [message, ...rawLines(gitMessage)] : [message], events: [], ok: false };
 }
 
 /** True bila targetId dapat dicapai dari fromId lewat rantai parent (termasuk dirinya sendiri). */
@@ -68,10 +73,10 @@ export function untrackedOverwritten(state: RepoState, snapshot: Files): string[
     .sort();
 }
 
-export function untrackedFailure(state: RepoState, paths: string[], action: "pindah branch" | "merge"): CommandResult {
+export function untrackedFailure(state: RepoState, paths: string[], action: "switch" | "merge"): CommandResult {
   return failure(
     state,
-    `File ${paths.map((p) => `\`${p}\``).join(", ")} belum dilacak git dan akan tertimpa kalau kamu ${action}. Commit dulu (\`git add\` lalu \`git commit\`) atau ganti namanya.`,
+    msg(action === "merge" ? "untracked.merge" : "untracked.switch", { files: paths.join(", ") }),
     `error: The following untracked working tree files would be overwritten by ${action === "merge" ? "merge" : "checkout"}:\n${paths.map((p) => `\t${p}`).join("\n")}`,
   );
 }
@@ -82,6 +87,5 @@ export function isValidBranchName(name: string): boolean {
   return BRANCH_NAME.test(name) && !name.startsWith("-");
 }
 
-export const DIRTY_MESSAGE =
-  "Ada perubahan yang belum di-commit. Commit dulu (`git add` lalu `git commit`) sebelum pindah atau merge.";
+export const DIRTY_MESSAGE: Msg = msg("state.dirty");
 export const DIRTY_GIT = "error: Your local changes would be overwritten.\nPlease commit your changes or stash them before you switch branches.";

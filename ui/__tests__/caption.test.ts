@@ -1,16 +1,18 @@
 import { describe, expect, it } from "vitest";
 import type { GitEvent } from "../../engine/types";
+import { translate } from "../../i18n";
 import { describeEvents } from "../caption";
 
 describe("describeEvents", () => {
-  it("menjelaskan fast-forward dengan kalimat yang dipatok spec", () => {
-    expect(describeEvents([{ type: "merge-fast-forward", branch: "main", to: "a3f9c1e" }])).toBe(
-      "Pointer `main` maju ke commit `a3f9c1e`. Tidak ada commit baru yang dibuat.",
-    );
+  it("menjelaskan fast-forward dengan kunci dan kalimat yang dipatok spec", () => {
+    const m = describeEvents([{ type: "merge-fast-forward", branch: "main", to: "a3f9c1e" }]);
+    expect(m).toEqual({ key: "caption.fastForward", params: { branch: "main", to: "a3f9c1e" } });
+    expect(translate("id", m!.key, m!.params)).toBe("Pointer `main` maju ke commit `a3f9c1e`. Tidak ada commit baru yang dibuat.");
+    expect(translate("en", m!.key, m!.params)).toContain("a3f9c1e");
   });
 
-  it("daftar kosong menghasilkan string kosong", () => {
-    expect(describeEvents([])).toBe("");
+  it("daftar kosong menghasilkan null", () => {
+    expect(describeEvents([])).toBeNull();
   });
 
   const all: GitEvent[] = [
@@ -26,15 +28,17 @@ describe("describeEvents", () => {
     { type: "konflik-selesai" },
   ];
   it.each(all.map((e) => [e.type, e] as const))("event %s menghasilkan kalimat", (_t, e) => {
-    expect(describeEvents([e]).length).toBeGreaterThan(0);
+    const m = describeEvents([e]);
+    expect(m).not.toBeNull();
+    expect(translate("id", m!.key, m!.params)).not.toMatch(/\{\w+\}/);
+    expect(translate("en", m!.key, m!.params)).not.toMatch(/\{\w+\}/);
   });
 
   it("menggabungkan beberapa file yang di-stage", () => {
-    const text = describeEvents([
+    const m = describeEvents([
       { type: "file-di-stage", file: "a.txt" },
       { type: "file-di-stage", file: "b.txt" },
     ]);
-    expect(text).toContain("a.txt");
-    expect(text).toContain("b.txt");
+    expect(m).toEqual({ key: "caption.staged", params: { files: "`a.txt`, `b.txt`" } });
   });
 });

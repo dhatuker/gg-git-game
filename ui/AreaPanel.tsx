@@ -1,8 +1,12 @@
+import { useLang } from "./LanguageProvider";
 import type { GitEvent, RepoState } from "../engine/types";
 import { headSnapshot } from "../engine/state";
 import { highlightTargets } from "./highlight";
 
+/** `note` juga dipakai sebagai nama kelas CSS (gg-chip-baru, dst.), jadi nilainya tetap; labelnya diterjemahkan. */
 type Chip = { file: string; note?: "baru" | "diubah" | "konflik" };
+
+const NOTE_KEY = { baru: "ui.noteNew", diubah: "ui.noteChanged", konflik: "ui.noteConflict" } as const;
 
 function columns(repo: RepoState): { working: Chip[]; staging: Chip[]; committed: Chip[] } {
   const head = headSnapshot(repo);
@@ -29,6 +33,7 @@ interface Props {
 }
 
 export function AreaPanel({ repo, activeEvent }: Props) {
+  const { t } = useLang();
   const { working, staging, committed } = columns(repo);
   const files = highlightTargets(activeEvent, repo.branches).files;
   // Sorot di kolom tempat file itu "tiba": staging untuk git add, working untuk konflik.
@@ -45,7 +50,7 @@ export function AreaPanel({ repo, activeEvent }: Props) {
             className={`gg-chip${c.note ? ` gg-chip-${c.note}` : ""}${litColumn === key && files.includes(c.file) ? " gg-chip-lit" : ""}`}
           >
             <span className="gg-chip-name">{c.file}</span>
-            {c.note && <span className="gg-chip-note">{c.note}</span>}
+            {c.note && <span className="gg-chip-note">{t(NOTE_KEY[c.note])}</span>}
           </li>
         ))}
       </ul>
@@ -53,11 +58,11 @@ export function AreaPanel({ repo, activeEvent }: Props) {
   );
   return (
     <div className="gg-areas">
-      {col("working", "Working directory", "File di folder kerjamu", working, "Tidak ada perubahan")}
+      {col("working", t("ui.areaWorking"), t("ui.areaWorkingDesc"), working, t("ui.areaWorkingEmpty"))}
       <span className="gg-area-step" aria-hidden="true">git add</span>
-      {col("staging", "Staging area", "Siap masuk commit berikutnya", staging, "Kosong")}
+      {col("staging", t("ui.areaStaging"), t("ui.areaStagingDesc"), staging, t("ui.areaStagingEmpty"))}
       <span className="gg-area-step" aria-hidden="true">git commit</span>
-      {col("repo", "Repository", "Isi commit yang ditunjuk HEAD", committed, "Belum ada commit")}
+      {col("repo", t("ui.areaRepo"), t("ui.areaRepoDesc"), committed, t("ui.areaRepoEmpty"))}
     </div>
   );
 }

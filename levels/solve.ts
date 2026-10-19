@@ -10,11 +10,11 @@ export function applySteps(state: RepoState, steps: SolutionStep[]): RepoState {
   for (const step of steps) {
     if (step.kind === "cmd") {
       const r = runCommand(s, step.input);
-      if (!r.ok) throw new Error(`Langkah gagal: ${step.input}\n${r.output}`);
+      if (!r.ok) throw new Error(`Langkah gagal: ${step.input}\n${JSON.stringify(r.output)}`);
       s = r.state;
     } else {
       const r = step.kind === "write" ? writeFile(s, step.file, step.content) : resolveConflict(s, step.file, step.choice);
-      if (r.error) throw new Error(r.error);
+      if (r.error) throw new Error(r.error.key);
       s = r.state;
     }
   }

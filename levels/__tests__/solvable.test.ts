@@ -48,10 +48,25 @@ describe("LEVELS", () => {
       expect(level.hints).toHaveLength(3);
     });
 
-    it("tidak ada petunjuk yang membocorkan perintah solusi secara utuh", () => {
+    it("tidak ada petunjuk yang membocorkan perintah solusi secara utuh (id dan en)", () => {
       for (const forbidden of solutionCommandForms(level)) {
-        for (const hint of level.hints) expect(hint.toLowerCase()).not.toContain(forbidden);
+        for (const hint of level.hints) {
+          expect(hint.id.toLowerCase()).not.toContain(forbidden);
+          expect(hint.en.toLowerCase()).not.toContain(forbidden);
+        }
       }
+    });
+
+    it("semua teks punya versi id dan en yang tidak kosong", () => {
+      for (const text of [level.title, level.story, level.goal, ...level.hints]) {
+        expect(text.id.trim().length).toBeGreaterThan(0);
+        expect(text.en.trim().length).toBeGreaterThan(0);
+      }
+    });
+
+    it("memakai nama netral (tanpa fitur, catatan.txt, ide.txt)", () => {
+      const blob = JSON.stringify([level.initialState, level.solution]);
+      for (const old of ["fitur", "catatan.txt", "ide.txt"]) expect(blob).not.toContain(old);
     });
   });
 });
@@ -59,5 +74,16 @@ describe("LEVELS", () => {
 describe("applySteps", () => {
   it("melempar bila sebuah perintah gagal", () => {
     expect(() => applySteps(LEVELS[0].initialState, [{ kind: "cmd", input: "git status" }])).toThrow();
+  });
+});
+
+describe("petunjuk EN setara dengan ID", () => {
+  it("petunjuk level 7 tidak menyebut nama perintah pindah branch", () => {
+    for (const h of LEVELS[6].hints) expect(h.en).not.toMatch(/\b(switch|checkout)\b/i);
+  });
+
+  it("petunjuk ke-2 level 8 mengarahkan ke kata di tujuan level, bukan teka-teki bahasa", () => {
+    expect(LEVELS[7].hints[1].en).toMatch(/goal/i);
+    expect(LEVELS[7].hints[1].en).not.toMatch(/English verb/i);
   });
 });

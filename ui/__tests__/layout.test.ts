@@ -7,7 +7,7 @@ import { computeGraphLayout } from "../layout";
 
 function run(s: RepoState, input: string): RepoState {
   const r = runCommand(s, input);
-  if (!r.ok) throw new Error(r.output);
+  if (!r.ok) throw new Error(JSON.stringify(r.output));
   return r.state;
 }
 function commitFile(s: RepoState, file: string, content: string, msg: string): RepoState {

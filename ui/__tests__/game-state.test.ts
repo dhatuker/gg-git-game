@@ -12,7 +12,7 @@ describe("reduce", () => {
     expect(s.lines[0]).toEqual({ kind: "input", text: "git init" });
     expect(s.lines[1].kind).toBe("output");
     expect(s.events).toEqual([{ type: "repo-dibuat" }]);
-    expect(s.caption.length).toBeGreaterThan(0);
+    expect(s.caption).toEqual({ key: "caption.repoCreated" });
   });
 
   it("tidak menduplikasi id level yang sudah selesai", () => {
@@ -24,7 +24,7 @@ describe("reduce", () => {
 
   it("menolak perintah yang belum dibuka di level ini", () => {
     const s = run(initGame([]), "git status");
-    expect(s.lines.at(-1)).toEqual({ kind: "error", text: "Perintah ini belum dipakai di level ini." });
+    expect(s.lines.at(-1)).toEqual({ kind: "error", lines: [{ key: "game.notAllowed" }] });
     expect(s.failedAttempts).toBe(1);
     expect(s.repo).toBe(LEVELS[0].initialState);
   });
@@ -44,7 +44,7 @@ describe("reduce", () => {
   it("level 2 butuh git status walau file sudah dibuat", () => {
     let s = initGame([1]);
     expect(s.levelIndex).toBe(1);
-    s = reduce(s, { type: "write", file: "catatan.txt", content: "x" });
+    s = reduce(s, { type: "write", file: "notes.txt", content: "x" });
     expect(s.levelComplete).toBe(false);
     s = run(s, "git status");
     expect(s.levelComplete).toBe(true);
@@ -53,20 +53,20 @@ describe("reduce", () => {
 
   it("perintah baca-saja tetap memberi kalimat penjelasan", () => {
     let s = run(initGame([1]), "git status");
-    expect(s.caption).toBe("Perintah ini hanya menampilkan informasi. Repositori tidak berubah.");
+    expect(s.caption).toEqual({ key: "caption.readOnly" });
     s = run(s, "git init");
-    expect(s.caption).toBe("Perintah ini hanya menampilkan informasi. Repositori tidak berubah.");
+    expect(s.caption).toEqual({ key: "caption.readOnly" });
   });
 
   it("aksi write yang gagal menambah baris error", () => {
     const s = reduce(initGame([1]), { type: "write", file: "a b", content: "x" });
-    expect(s.lines.at(-1)?.kind).toBe("error");
+    expect(s.lines.at(-1)).toEqual({ kind: "error", lines: [{ key: "files.invalidName" }] });
   });
 
   it("menyelesaikan level 10 lewat resolve", () => {
     let s = reduce(initGame([]), { type: "load-progress", completed: [1, 2, 3, 4, 5, 6, 7, 8, 9] });
     expect(s.levelIndex).toBe(9);
-    s = run(s, "git merge fitur");
+    s = run(s, "git merge feature");
     s = reduce(s, { type: "resolve", file: "README.md", choice: "theirs" });
     s = run(s, "git add README.md");
     s = run(s, 'git commit -m "beres"');
@@ -167,25 +167,34 @@ describe("perbaikan review", () => {
     const s = run(atLevel(4), "git stauts");
     const last = s.lines.at(-1)!;
     expect(last.kind).toBe("error");
-    expect(last.text).toContain("Mungkin maksudmu `git status`");
-    expect(last.text).not.toContain("belum dipakai di level ini");
+    expect(last.kind !== "input" && last.lines[0]).toMatchObject({ key: "command.unknownSuggest", params: { suggestion: "status" } });
   });
 
   it("perintah git asli yang belum dibuka tetap mendapat pesan 'belum dipakai'", () => {
-    const s = run(atLevel(4), "git merge fitur");
-    expect(s.lines.at(-1)!.text).toBe("Perintah ini belum dipakai di level ini.");
+    const s = run(atLevel(4), "git merge feature");
+    expect(s.lines.at(-1)).toEqual({ kind: "error", lines: [{ key: "game.notAllowed" }] });
   });
 
   it("status level selesai tetap bertahan walau pemain bereksperimen sesudahnya", () => {
-    let s = run(atLevel(6), "git switch fitur");
+    let s = run(atLevel(6), "git switch feature");
     expect(s.levelComplete).toBe(true);
     s = run(s, "git switch main");
     expect(s.levelComplete).toBe(true);
   });
 
   it("ulangi level mengembalikan status selesai ke false", () => {
-    let s = run(atLevel(6), "git switch fitur");
+    let s = run(atLevel(6), "git switch feature");
     s = reduce(s, { type: "reset-level" });
     expect(s.levelComplete).toBe(false);
+  });
+});
+
+describe("caption berkunci", () => {
+  it("perintah gagal mempertahankan caption sebelumnya", () => {
+    let s = run(initGame([]), "git init");
+    expect(s.caption).toEqual({ key: "caption.repoCreated" });
+    s = run(s, "git init");
+    expect(s.lines.at(-1)?.kind).toBe("error");
+    expect(s.caption).toEqual({ key: "caption.repoCreated" });
   });
 });

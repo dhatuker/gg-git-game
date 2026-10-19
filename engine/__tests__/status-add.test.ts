@@ -1,53 +1,53 @@
 import { describe, expect, it } from "vitest";
 import { writeFile } from "../files";
-import { exec, initRepo, write } from "./helpers";
+import { exec, initRepo, keys, paramsOf, rawText, write } from "./helpers";
 
 describe("writeFile", () => {
   it("menolak nama file tidak valid tanpa mengubah state", () => {
     const repo = initRepo();
     const r = writeFile(repo, "a b", "x");
-    expect(r.error).toBeTruthy();
+    expect(r.error?.key).toBe("files.invalidName");
     expect(r.state).toBe(repo);
   });
 
   it("menolak nama file kosong", () => {
-    expect(writeFile(initRepo(), "", "x").error).toBeTruthy();
+    expect(writeFile(initRepo(), "", "x").error?.key).toBe("files.invalidName");
   });
 });
 
 describe("git status", () => {
   it("menampilkan file belum dilacak", () => {
     const repo = write(initRepo(), "a.txt", "halo");
-    const out = exec(repo, "git status").output;
-    expect(out).toContain("Di branch main");
-    expect(out).toContain("File yang belum dilacak:");
-    expect(out).toContain("a.txt");
+    const r = exec(repo, "git status");
+    expect(keys(r)).toEqual(["status.onBranch", "status.untracked"]);
+    expect(paramsOf(r, "status.onBranch")?.branch).toBe("main");
+    expect(rawText(r)).toContain("    a.txt");
   });
 
   it("menampilkan perubahan yang belum di-stage", () => {
     let repo = write(initRepo(), "a.txt", "halo");
     repo = exec(repo, "git add a.txt").state;
     repo = write(repo, "a.txt", "halo lagi");
-    expect(exec(repo, "git status").output).toContain("Perubahan yang belum di-stage:");
+    expect(keys(exec(repo, "git status"))).toContain("status.unstaged");
   });
 
   it("menampilkan perubahan yang akan di-commit", () => {
     let repo = write(initRepo(), "a.txt", "halo");
     repo = exec(repo, "git add a.txt").state;
-    const out = exec(repo, "git status").output;
-    expect(out).toContain("Perubahan yang akan di-commit:");
-    expect(out).not.toContain("File yang belum dilacak:");
+    const k = keys(exec(repo, "git status"));
+    expect(k).toContain("status.staged");
+    expect(k).not.toContain("status.untracked");
   });
 
   it("melaporkan working tree bersih", () => {
-    expect(exec(initRepo(), "git status").output).toContain(
-      "Tidak ada yang perlu di-commit, working tree bersih",
-    );
+    const r = exec(initRepo(), "git status");
+    expect(keys(r)).toEqual(["status.onBranch", "status.clean"]);
+    expect(rawText(r)).toContain("nothing to commit, working tree clean");
   });
 
   it("menampilkan konflik saat merge berlangsung", () => {
     const repo = { ...write(initRepo(), "a.txt", "x"), mergeState: { from: "fitur", fromCommit: "abc", conflicts: ["a.txt"] } };
-    expect(exec(repo, "git status").output).toContain("Konflik belum diselesaikan:");
+    expect(keys(exec(repo, "git status"))).toContain("status.conflicts");
   });
 });
 
@@ -71,7 +71,8 @@ describe("git add", () => {
   it("menolak file yang tidak ada", () => {
     const r = exec(initRepo(), "git add nope.txt");
     expect(r.ok).toBe(false);
-    expect(r.output).toContain("did not match any files");
+    expect(rawText(r)).toContain("did not match any files");
+    expect(paramsOf(r, "add.missingFile")?.file).toBe("nope.txt");
   });
 
   it("menolak add tanpa argumen", () => {
@@ -90,9 +91,8 @@ describe("git add", () => {
     const staged = exec(base, "git add a.txt").state;
     const repo = { ...staged, mergeState: { from: "fitur", fromCommit: "abc", conflicts: ["a.txt"] } };
     const r = exec(repo, "git add a.txt");
-    expect(r.output).toContain("Konflik di `a.txt` ditandai selesai");
-    expect(r.output).not.toContain("Tidak ada perubahan baru");
-    expect(r.output).toContain("git commit");
+    expect(keys(r)).toEqual(["add.conflictResolved", "add.allConflictsResolved"]);
+    expect(paramsOf(r, "add.conflictResolved")?.files).toBe("a.txt");
   });
 
   it("tidak menyuruh commit selama masih ada konflik lain", () => {
@@ -101,7 +101,7 @@ describe("git add", () => {
       mergeState: { from: "fitur", fromCommit: "abc", conflicts: ["a.txt", "b.txt"] },
     };
     const r = exec(repo, "git add a.txt");
-    expect(r.output).toContain("Konflik di `a.txt` ditandai selesai");
-    expect(r.output).toContain("b.txt");
+    expect(keys(r)).toContain("add.conflictResolved");
+    expect(paramsOf(r, "add.conflictsRemain")?.files).toBe("b.txt");
   });
 });

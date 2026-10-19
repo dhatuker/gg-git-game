@@ -6,6 +6,7 @@ import { log } from "./commands/log";
 import { merge } from "./commands/merge";
 import { init } from "./commands/init";
 import { status } from "./commands/status";
+import { msg } from "./messages";
 import { parseInput } from "./parse";
 import { failure } from "./state";
 import { suggestCommand } from "./suggest";
@@ -29,17 +30,16 @@ export function runCommand(state: RepoState, input: string): CommandResult {
   if (!state.initialized && parsed.name !== "init") {
     return failure(
       state,
-      "Folder ini belum menjadi repositori git (bukan repositori git). Jalankan `git init` dulu.",
+      msg("repo.notInitialized"),
       "fatal: not a git repository (or any of the parent directories): .git",
     );
   }
   const handler = HANDLERS[parsed.name];
   if (!handler) {
     const suggestion = suggestCommand(parsed.name);
-    const hint = suggestion ? ` Mungkin maksudmu \`git ${suggestion}\`?` : "";
     return failure(
       state,
-      `Perintah \`git ${parsed.name}\` tidak dikenal di game ini.${hint}`,
+      suggestion ? msg("command.unknownSuggest", { cmd: parsed.name, suggestion }) : msg("command.unknown", { cmd: parsed.name }),
       `git: '${parsed.name}' is not a git command. See 'git --help'.`,
     );
   }
@@ -47,4 +47,5 @@ export function runCommand(state: RepoState, input: string): CommandResult {
 }
 
 export * from "./types";
+export * from "./messages";
 export { createEmptyRepo, getHeadCommitId } from "./state";

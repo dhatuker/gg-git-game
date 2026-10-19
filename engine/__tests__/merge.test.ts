@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { resolveConflict } from "../files";
 import type { RepoState } from "../types";
-import { exec, initRepo, run, write } from "./helpers";
+import { exec, initRepo, keys, rawText, run, write } from "./helpers";
 
 function commitFile(state: RepoState, file: string, content: string, msg: string): RepoState {
   return run(run(write(state, file, content), "git add ."), `git commit -m "${msg}"`);
@@ -53,7 +53,8 @@ describe("git merge", () => {
     const s = divergedSetup(true);
     const r = exec(s, "git merge fitur");
     expect(r.ok).toBe(true);
-    expect(r.output).toContain("CONFLICT (content): Merge conflict in README.md");
+    expect(rawText(r)).toContain("CONFLICT (content): Merge conflict in README.md");
+    expect(keys(r)).toEqual(["merge.conflict", "merge.conflictNext"]);
     expect(r.state.mergeState).toEqual({ from: "fitur", fromCommit: s.branches.fitur, conflicts: ["README.md"] });
     expect(r.state.files["README.md"]).toBe("<<<<<<< HEAD\nversi main\n=======\nversi fitur\n>>>>>>> fitur");
     expect(r.state.branches.main).toBe(s.branches.main);
@@ -77,29 +78,29 @@ describe("git merge", () => {
   it("resolveConflict ours mengambil versi HEAD dan menolak file yang tidak konflik", () => {
     const st = exec(divergedSetup(true), "git merge fitur").state;
     expect(resolveConflict(st, "README.md", "ours").state.files["README.md"]).toBe("versi main");
-    expect(resolveConflict(st, "lain.txt", "ours").error).toBeTruthy();
+    expect(resolveConflict(st, "lain.txt", "ours").error?.key).toBe("files.notConflicted");
   });
 
   it("melaporkan sudah up to date", () => {
     const s = run(ffSetup(), "git merge fitur");
     const r = exec(s, "git merge fitur");
     expect(r.ok).toBe(true);
-    expect(r.output).toContain("Already up to date.");
+    expect(rawText(r)).toContain("Already up to date.");
     expect(r.events).toEqual([]);
-    expect(exec(base(), "git merge main").output).toContain("Already up to date.");
+    expect(rawText(exec(base(), "git merge main"))).toContain("Already up to date.");
   });
 
   it("menolak branch yang tidak ada", () => {
     const r = exec(base(), "git merge nope");
     expect(r.ok).toBe(false);
-    expect(r.output).toContain("not something we can merge");
+    expect(rawText(r)).toContain("not something we can merge");
   });
 
   it("menolak merge saat merge lain belum selesai", () => {
     const st = exec(divergedSetup(true), "git merge fitur").state;
     const r = exec(st, "git merge fitur");
     expect(r.ok).toBe(false);
-    expect(r.output).toContain("You have not concluded your merge");
+    expect(rawText(r)).toContain("You have not concluded your merge");
   });
 
   it("menolak merge saat ada perubahan belum di-commit", () => {

@@ -1,3 +1,5 @@
+import { useLang } from "./LanguageProvider";
+import { RichText } from "./RichText";
 import { useState } from "react";
 import type { Files } from "../engine/types";
 
@@ -9,13 +11,14 @@ interface Props {
 }
 
 function ContentEditor({ file, content, onSave }: { file: string; content: string; onSave: (c: string) => void }) {
+  const { t } = useLang();
   const [draft, setDraft] = useState(content);
   return (
     <>
-      <textarea value={draft} onChange={(e) => setDraft(e.target.value)} aria-label={`Isi ${file}`} spellCheck={false} />
+      <textarea value={draft} onChange={(e) => setDraft(e.target.value)} aria-label={t("ui.fileContent", { file })} spellCheck={false} />
       <div className="gg-editor-row">
         <button type="button" className="gg-btn" disabled={draft === content} onClick={() => onSave(draft)}>
-          Simpan perubahan
+          {t("ui.saveChanges")}
         </button>
       </div>
     </>
@@ -23,6 +26,7 @@ function ContentEditor({ file, content, onSave }: { file: string; content: strin
 }
 
 export function FileEditor({ files, conflicts, onWrite, onResolve }: Props) {
+  const { t } = useLang();
   const names = Object.keys(files).sort();
   const [picked, setPicked] = useState<string | null>(null);
   const [newName, setNewName] = useState("");
@@ -37,8 +41,8 @@ export function FileEditor({ files, conflicts, onWrite, onResolve }: Props) {
   };
 
   return (
-    <section className="gg-panel gg-editor" aria-label="Editor file">
-      <h3>Editor file</h3>
+    <section className="gg-panel gg-editor" aria-label={t("ui.editorTitle")}>
+      <h3>{t("ui.editorTitle")}</h3>
       {names.length > 0 && (
         <div className="gg-file-tabs">
           {names.map((n) => (
@@ -57,15 +61,14 @@ export function FileEditor({ files, conflicts, onWrite, onResolve }: Props) {
       {selected && conflicts.includes(selected) && (
         <div className="gg-conflict-note">
           <p>
-            File ini konflik. Bagian di antara <code>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</code> dan <code>=======</code> adalah versimu; di
-            bawahnya versi branch yang di-merge.
+            <RichText text={t("ui.editorConflict")} />
           </p>
           <div className="gg-editor-row">
             <button type="button" className="gg-btn" onClick={() => onResolve(selected, "ours")}>
-              Pakai versi saya
+              {t("ui.useOurs")}
             </button>
             <button type="button" className="gg-btn" onClick={() => onResolve(selected, "theirs")}>
-              Pakai versi mereka
+              {t("ui.useTheirs")}
             </button>
           </div>
         </div>
@@ -80,9 +83,9 @@ export function FileEditor({ files, conflicts, onWrite, onResolve }: Props) {
           create();
         }}
       >
-        <input type="text" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="nama-file.txt" aria-label="Nama file baru" />
+        <input type="text" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder={t("ui.newFilePlaceholder")} aria-label={t("ui.newFileLabel")} />
         <button type="submit" className="gg-btn" disabled={!newName.trim()}>
-          Buat file
+          {t("ui.createFile")}
         </button>
       </form>
     </section>

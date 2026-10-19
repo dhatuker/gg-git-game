@@ -1,3 +1,5 @@
+import type { OutputLine } from "./messages";
+
 export type Files = Record<string, string>;
 
 export interface Commit {
@@ -41,7 +43,8 @@ export type GitEvent =
 
 export interface CommandResult {
   state: RepoState;
-  output: string;
+  /** Pesan berkunci (diterjemahkan UI) dan baris mentah (pesan asli git, log, nama file). */
+  output: OutputLine[];
   events: GitEvent[];
   ok: boolean;
 }

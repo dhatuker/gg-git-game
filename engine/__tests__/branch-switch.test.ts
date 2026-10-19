@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { isReachable } from "../state";
-import { exec, initRepo, run, write } from "./helpers";
+import { exec, initRepo, keys, rawText, run, write } from "./helpers";
 
 const oneCommit = () => run(run(write(initRepo(), "a.txt", "1"), "git add ."), 'git commit -m "satu"');
 
@@ -20,7 +20,7 @@ describe("git branch", () => {
 
   it("menampilkan daftar dengan penanda branch aktif", () => {
     const repo = run(oneCommit(), "git branch fitur");
-    const out = exec(repo, "git branch").output.split("\n");
+    const out = rawText(exec(repo, "git branch")).split("\n");
     expect(out).toContain("* main");
     expect(out).toContain("  fitur");
   });
@@ -32,7 +32,8 @@ describe("git branch", () => {
   it("menolak nama kembar", () => {
     const r = exec(run(oneCommit(), "git branch fitur"), "git branch fitur");
     expect(r.ok).toBe(false);
-    expect(r.output).toContain("already exists");
+    expect(rawText(r)).toContain("already exists");
+    expect(keys(r)).toContain("branch.exists");
   });
 
   it("menghapus branch dengan event", () => {
@@ -46,7 +47,7 @@ describe("git branch", () => {
     expect(exec(oneCommit(), "git branch -d nope").ok).toBe(false);
     const r = exec(oneCommit(), "git branch -d main");
     expect(r.ok).toBe(false);
-    expect(r.output).toContain("checked out");
+    expect(rawText(r)).toContain("checked out");
   });
 
   it("menolak menghapus branch yang belum di-merge", () => {
@@ -55,7 +56,7 @@ describe("git branch", () => {
     repo = run(repo, "git switch main");
     const r = exec(repo, "git branch -d fitur");
     expect(r.ok).toBe(false);
-    expect(r.output).toContain("not fully merged");
+    expect(rawText(r)).toContain("not fully merged");
   });
 });
 
@@ -103,7 +104,8 @@ describe("git switch / checkout", () => {
     const repo = write(run(oneCommit(), "git branch fitur"), "a.txt", "diubah");
     const r = exec(repo, "git switch fitur");
     expect(r.ok).toBe(false);
-    expect(r.output).toContain("Please commit your changes");
+    expect(rawText(r)).toContain("Please commit your changes");
+    expect(keys(r)).toContain("state.dirty");
     const staged = run(repo, "git add .");
     expect(exec(staged, "git switch fitur").ok).toBe(false);
   });
@@ -111,14 +113,14 @@ describe("git switch / checkout", () => {
   it("pindah ke branch aktif tidak memberi event", () => {
     const r = exec(oneCommit(), "git switch main");
     expect(r.ok).toBe(true);
-    expect(r.output).toContain("Already on 'main'");
+    expect(rawText(r)).toContain("Already on 'main'");
     expect(r.events).toEqual([]);
   });
 
   it("menolak target yang tidak ada", () => {
     const r = exec(oneCommit(), "git switch nope");
     expect(r.ok).toBe(false);
-    expect(r.output).toContain("invalid reference");
+    expect(rawText(r)).toContain("invalid reference");
   });
 
   it("checkout <commit-id> membuat detached HEAD", () => {

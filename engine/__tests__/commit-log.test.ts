@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { exec, initRepo, run, write } from "./helpers";
+import { exec, initRepo, keys, rawText, run, write } from "./helpers";
 
 const staged = () => run(write(initRepo(), "a.txt", "1"), "git add a.txt");
 
@@ -11,8 +11,7 @@ describe("git commit", () => {
     expect(id).toHaveLength(7);
     expect(r.state.commits[id].parents).toEqual([]);
     expect(r.state.commits[id].snapshot).toEqual({ "a.txt": "1" });
-    expect(r.output).toContain(id);
-    expect(r.output).toContain("[main ");
+    expect(rawText(r)).toBe(`[main ${id}] Commit pertama`);
     expect(r.events).toEqual([{ type: "commit-dibuat", id, parents: [] }]);
   });
 
@@ -25,11 +24,12 @@ describe("git commit", () => {
   it("menolak commit tanpa perubahan di staging", () => {
     const r1 = exec(initRepo(), 'git commit -m "x"');
     expect(r1.ok).toBe(false);
-    expect(r1.output).toContain("nothing to commit");
+    expect(rawText(r1)).toContain("nothing to commit");
+    expect(keys(r1)).toContain("commit.nothingStaged");
     const once = run(staged(), 'git commit -m "satu"');
     const r2 = exec(once, 'git commit -m "dua"');
     expect(r2.ok).toBe(false);
-    expect(r2.output).toContain("nothing to commit");
+    expect(rawText(r2)).toContain("nothing to commit");
   });
 
   it("commit kedua punya parent commit pertama", () => {
@@ -52,14 +52,14 @@ describe("git log", () => {
   it("--oneline menampilkan commit terbaru lebih dulu", () => {
     const one = run(staged(), 'git commit -m "satu"');
     const two = run(run(write(one, "a.txt", "2"), "git add ."), 'git commit -m "dua"');
-    const out = exec(two, "git log --oneline").output.split("\n");
+    const out = rawText(exec(two, "git log --oneline")).split("\n");
     expect(out[0]).toBe(`${two.branches.main} dua`);
     expect(out[1]).toBe(`${one.branches.main} satu`);
   });
 
   it("format default memuat 'commit <id>' dan pesan menjorok", () => {
     const one = run(staged(), 'git commit -m "satu"');
-    const out = exec(one, "git log").output;
+    const out = rawText(exec(one, "git log"));
     expect(out).toContain(`commit ${one.branches.main}`);
     expect(out).toContain("    satu");
   });
@@ -67,6 +67,16 @@ describe("git log", () => {
   it("gagal bila belum ada commit", () => {
     const r = exec(initRepo(), "git log");
     expect(r.ok).toBe(false);
-    expect(r.output).toContain("does not have any commits yet");
+    expect(rawText(r)).toContain("does not have any commits yet");
+    expect(keys(r)).toEqual(["log.noCommits"]);
+  });
+});
+
+describe("baris raw", () => {
+  it("git log --oneline hanya berisi baris raw", () => {
+    const one = run(run(write(initRepo(), "a.txt", "1"), "git add ."), 'git commit -m "satu"');
+    const r = exec(one, "git log --oneline");
+    expect(keys(r)).toEqual([]);
+    expect(rawText(r)).toBe(`${one.branches.main} satu`);
   });
 });

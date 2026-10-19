@@ -1,42 +1,43 @@
 import type { GitEvent } from "../engine/types";
+import type { TMsg } from "../i18n/types";
 
-function sentence(e: GitEvent): string {
+function describe(e: GitEvent): TMsg {
   switch (e.type) {
     case "repo-dibuat":
-      return "Repositori dibuat. Git sekarang siap mencatat riwayat folder ini.";
+      return { key: "caption.repoCreated" };
     case "file-di-stage":
-      return `\`${e.file}\` masuk ke staging area dan akan ikut di commit berikutnya.`;
+      return { key: "caption.staged", params: { files: `\`${e.file}\`` } };
     case "commit-dibuat":
       return e.parents.length === 0
-        ? `Commit pertama \`${e.id}\` dibuat dari isi staging. Belum ada parent.`
-        : `Commit \`${e.id}\` dibuat dengan parent \`${e.parents[0]}\`, dan pointer branch bergeser ke sana.`;
+        ? { key: "caption.commitFirst", params: { id: e.id } }
+        : { key: "caption.commit", params: { id: e.id, parent: e.parents[0] } };
     case "branch-dibuat":
-      return `Label branch \`${e.name}\` ditempel di commit \`${e.at}\`. Tidak ada file yang disalin.`;
+      return { key: "caption.branchCreated", params: { name: e.name, at: e.at } };
     case "branch-dihapus":
-      return `Label branch \`${e.name}\` dilepas. Commit-nya tetap ada.`;
+      return { key: "caption.branchDeleted", params: { name: e.name } };
     case "branch-pindah":
-      return `HEAD pindah dari \`${e.from}\` ke \`${e.to}\`, dan isi working directory disesuaikan.`;
+      return { key: "caption.branchSwitched", params: { from: e.from, to: e.to } };
     case "head-pindah":
-      return `HEAD sekarang menunjuk langsung ke commit \`${e.id}\` (detached HEAD), bukan ke branch.`;
+      return { key: "caption.headDetached", params: { id: e.id } };
     case "merge-fast-forward":
-      return `Pointer \`${e.branch}\` maju ke commit \`${e.to}\`. Tidak ada commit baru yang dibuat.`;
+      return { key: "caption.fastForward", params: { branch: e.branch, to: e.to } };
     case "merge-commit-dibuat":
-      return `Merge commit \`${e.id}\` dibuat dengan dua parent: \`${e.parents[0]}\` dan \`${e.parents[1]}\`.`;
+      return { key: "caption.mergeCommit", params: { id: e.id, p1: e.parents[0], p2: e.parents[1] } };
     case "konflik-terjadi":
-      return `Konflik di ${e.files.map((f) => `\`${f}\``).join(", ")}: kedua branch mengubahnya berbeda. Pilih isi yang benar.`;
+      return { key: "caption.conflict", params: { files: e.files.map((f) => `\`${f}\``).join(", ") } };
     case "konflik-selesai":
-      return "Konflik selesai. Merge commit menyatukan kedua cabang.";
+      return { key: "caption.conflictResolved" };
   }
 }
 
-/** Satu kalimat penjelasan untuk hasil satu perintah. */
-export function describeEvents(events: GitEvent[]): string {
-  if (events.length === 0) return "";
+/** Satu pesan penjelasan (berkunci) untuk hasil satu perintah, atau null bila tidak ada event. */
+export function describeEvents(events: GitEvent[]): TMsg | null {
+  if (events.length === 0) return null;
   const staged = events.filter((e) => e.type === "file-di-stage");
   if (staged.length === events.length && staged.length > 1) {
-    const names = staged.map((e) => (e.type === "file-di-stage" ? `\`${e.file}\`` : "")).join(", ");
-    return `${names} masuk ke staging area dan akan ikut di commit berikutnya.`;
+    const files = staged.map((e) => (e.type === "file-di-stage" ? `\`${e.file}\`` : "")).join(", ");
+    return { key: "caption.staged", params: { files } };
   }
   const merge = events.find((e) => e.type === "merge-commit-dibuat");
-  return sentence(merge ?? events[events.length - 1]);
+  return describe(merge ?? events[events.length - 1]);
 }

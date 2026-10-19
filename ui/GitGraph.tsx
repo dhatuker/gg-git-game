@@ -1,3 +1,4 @@
+import { useLang } from "./LanguageProvider";
 import type { CSSProperties } from "react";
 import type { GitEvent, RepoState } from "../engine/types";
 import { highlightTargets } from "./highlight";
@@ -29,11 +30,12 @@ interface Props {
 }
 
 export function GitGraph({ repo, layout, activeEvent }: Props) {
+  const { t } = useLang();
   if (!repo.initialized) {
-    return <p className="gg-graph-empty">Folder ini belum menjadi repositori git. Belum ada riwayat untuk digambar.</p>;
+    return <p className="gg-graph-empty">{t("ui.graphNoRepo")}</p>;
   }
   if (layout.nodes.length === 0) {
-    return <p className="gg-graph-empty">Belum ada commit. Stasiun pertama muncul setelah commit pertama.</p>;
+    return <p className="gg-graph-empty">{t("ui.graphNoCommits")}</p>;
   }
 
   const byId = new Map(layout.nodes.map((n) => [n.id, n]));
@@ -43,7 +45,7 @@ export function GitGraph({ repo, layout, activeEvent }: Props) {
 
   return (
     <div className="gg-graph-scroll">
-      <svg className="gg-graph" width={width} height={height} viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Graf commit">
+      <svg className="gg-graph" width={width} height={height} viewBox={`0 0 ${width} ${height}`} role="img" aria-label={t("ui.graphTitle")}>
         <g>
           {layout.edges.map((e) => {
             const child = byId.get(e.from);

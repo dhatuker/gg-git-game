@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { runCommand } from "../index";
 import { createEmptyRepo } from "../state";
+import { keys, paramsOf, rawText } from "./helpers";
 
 describe("git init", () => {
   it("membuat repo dengan HEAD di branch main", () => {
@@ -19,15 +20,15 @@ describe("git init", () => {
   it("menolak perintah lain sebelum init", () => {
     const r = runCommand(createEmptyRepo(), "git status");
     expect(r.ok).toBe(false);
-    expect(r.output).toContain("bukan repositori git");
-    expect(r.output).toContain("fatal: not a git repository");
+    expect(keys(r)).toEqual(["repo.notInitialized"]);
+    expect(rawText(r)).toContain("fatal: not a git repository");
   });
 
   it("menolak perintah yang tidak dikenal dengan menyebut namanya", () => {
     const repo = runCommand(createEmptyRepo(), "git init").state;
     const r = runCommand(repo, "git foo");
     expect(r.ok).toBe(false);
-    expect(r.output).toContain("foo");
+    expect(r.output[0]).toMatchObject({ params: { cmd: "foo" } });
   });
 
   it("tidak melempar untuk input rusak", () => {
@@ -37,6 +38,6 @@ describe("git init", () => {
 
   it("menyarankan perintah yang mirip untuk salah ketik", () => {
     const repo = runCommand(createEmptyRepo(), "git init").state;
-    expect(runCommand(repo, "git comit -m x").output).toContain("git commit");
+    expect(paramsOf(runCommand(repo, "git comit -m x"), "command.unknownSuggest")?.suggestion).toBe("commit");
   });
 });

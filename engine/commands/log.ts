@@ -1,4 +1,5 @@
-import { failure, getHeadCommitId, success } from "../state";
+import { msg } from "../messages";
+import { failure, getHeadCommitId, rawLines, success } from "../state";
 import type { Commit, Handler, RepoState } from "../types";
 
 /** Semua commit yang terjangkau dari id, urut seq menurun. */
@@ -20,12 +21,12 @@ export const log: Handler = (state, args) => {
     const name = state.head.type === "branch" ? state.head.name : "HEAD";
     return failure(
       state,
-      "Belum ada commit untuk ditampilkan. Buat commit pertama dulu.",
+      msg("log.noCommits"),
       `fatal: your current branch '${name}' does not have any commits yet`,
     );
   }
   const commits = reachableCommits(state, headId);
   const oneline = args.includes("--oneline");
   const out = commits.map((c) => (oneline ? `${c.id} ${c.message}` : `commit ${c.id}\n\n    ${c.message}\n`));
-  return success(state, out.join("\n").trimEnd());
+  return success(state, rawLines(out.join("\n").trimEnd()));
 };

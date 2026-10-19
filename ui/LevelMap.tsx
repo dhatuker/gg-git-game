@@ -1,3 +1,4 @@
+import { useLang } from "./LanguageProvider";
 import type { Level } from "../levels/types";
 
 interface Props {
@@ -10,8 +11,9 @@ interface Props {
 
 /** Sepuluh level sebagai satu jalur dengan sepuluh stasiun. */
 export function LevelMap({ levels, current, completed, unlocked, onGoto }: Props) {
+  const { t, tl } = useLang();
   return (
-    <nav className="gg-map" aria-label="Peta level">
+    <nav className="gg-map" aria-label={t("ui.mapLabel")}>
       <ol>
         {levels.map((l, i) => {
           const done = completed.includes(l.id);
@@ -24,12 +26,12 @@ export function LevelMap({ levels, current, completed, unlocked, onGoto }: Props
                 className="gg-stop"
                 disabled={!open}
                 aria-current={i === current ? "step" : undefined}
-                aria-label={`Level ${l.id}: ${l.title}${done ? " (selesai)" : open ? "" : " (terkunci)"}`}
+                aria-label={t(done ? "ui.mapStopDone" : open ? "ui.mapStop" : "ui.mapStopLocked", { n: l.id, title: tl(l.title) })}
                 onClick={() => onGoto(i)}
               >
                 {l.id}
               </button>
-              <span className="gg-stop-name">{l.title}</span>
+              <span className="gg-stop-name">{tl(l.title)}</span>
             </li>
           );
         })}
