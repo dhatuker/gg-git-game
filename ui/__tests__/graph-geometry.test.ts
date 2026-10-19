@@ -3,7 +3,7 @@ import { runCommand } from "../../engine";
 import { writeFile } from "../../engine/files";
 import { createEmptyRepo } from "../../engine/state";
 import type { RepoState } from "../../engine/types";
-import { graphGeometry } from "../graph-geometry";
+import { graphGeometry, scrollLeftFor } from "../graph-geometry";
 import { computeGraphLayout } from "../layout";
 
 function run(s: RepoState, input: string): RepoState {
@@ -51,5 +51,23 @@ describe("graphGeometry", () => {
     const g = graphGeometry(layout);
     const lowest = Math.max(...layout.nodes.map((n) => g.py(n)));
     expect(g.height).toBeGreaterThanOrEqual(lowest + 36);
+  });
+});
+
+describe("scrollLeftFor", () => {
+  it("menaruh HEAD di sekitar 60% lebar area yang terlihat", () => {
+    expect(scrollLeftFor(1500, 500, 2000)).toBe(1200);
+  });
+
+  it("tidak menggulir saat HEAD sudah terlihat di awal", () => {
+    expect(scrollLeftFor(100, 500, 2000)).toBe(0);
+  });
+
+  it("tidak melewati ujung kanan konten", () => {
+    expect(scrollLeftFor(1990, 500, 2000)).toBe(1500);
+  });
+
+  it("konten lebih sempit dari area → 0", () => {
+    expect(scrollLeftFor(200, 800, 400)).toBe(0);
   });
 });

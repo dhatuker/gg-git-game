@@ -91,3 +91,37 @@ describe("computeGraphLayout", () => {
     expect(l.height).toBeGreaterThanOrEqual(80);
   });
 });
+
+describe("berbagi jalur", () => {
+  it("cabang yang rentangnya tidak tumpang tindih berbagi satu jalur samping", () => {
+    let s = commitFile(init(), "a", "1", "c1");
+    s = run(s, "git switch -c x");
+    s = commitFile(s, "x", "1", "x1");
+    s = run(s, "git switch main");
+    s = commitFile(s, "a", "2", "c2");
+    s = run(run(s, "git merge x"), "git branch -d x");
+    s = commitFile(s, "a", "3", "c3");
+    s = commitFile(s, "a", "4", "c4");
+    s = run(s, "git switch -c y");
+    s = commitFile(s, "y", "1", "y1");
+    s = run(s, "git switch main");
+    s = commitFile(s, "a", "5", "c5");
+    s = run(run(s, "git merge y"), "git branch -d y");
+    const l = computeGraphLayout(s);
+    expect(Math.max(...l.nodes.map((n) => n.lane))).toBe(1);
+    const pos = l.nodes.map((n) => `${n.x},${n.y}`);
+    expect(new Set(pos).size).toBe(pos.length);
+  });
+
+  it("cabang yang tumpang tindih tetap di jalur berbeda", () => {
+    let s = commitFile(init(), "a", "1", "c1");
+    s = run(s, "git branch x");
+    s = run(s, "git switch -c y");
+    s = commitFile(s, "y", "1", "y1");
+    s = run(s, "git switch x");
+    s = commitFile(s, "x", "1", "x1");
+    const l = computeGraphLayout(s);
+    const lanes = new Set(l.nodes.map((n) => n.lane));
+    expect(lanes.size).toBe(3);
+  });
+});

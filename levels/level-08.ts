@@ -1,4 +1,5 @@
-import { cmd, setup, write } from "./solve";
+import { projectSetup } from "./history";
+import { cmd, write } from "./solve";
 import type { Level } from "./types";
 
 export const level08: Level = {
@@ -17,14 +18,11 @@ export const level08: Level = {
   },
   editor: false,
   allowedCommands: ["init", "status", "add", "commit", "log", "branch", "switch", "checkout", "merge"],
-  initialState: setup({ "README.md": "# My First Project" }, [
-    cmd("git init"),
-    cmd("git add ."),
-    cmd('git commit -m "First commit"'),
+  initialState: projectSetup([
     cmd("git switch -c feature"),
-    write("login.txt", "Login page"),
+    write("search.js", "export function search(q) {}"),
     cmd("git add ."),
-    cmd('git commit -m "Add login page"'),
+    cmd('git commit -m "Add search box"'),
     cmd("git switch main"),
   ]),
   hints: [

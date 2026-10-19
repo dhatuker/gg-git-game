@@ -1,4 +1,5 @@
-import { cmd, setup } from "./solve";
+import { projectSetup } from "./history";
+import { cmd } from "./solve";
 import type { Level } from "./types";
 
 export const level06: Level = {
@@ -17,7 +18,7 @@ export const level06: Level = {
   },
   editor: false,
   allowedCommands: ["init", "status", "add", "commit", "log", "branch"],
-  initialState: setup({ "README.md": "# My First Project" }, [cmd("git init"), cmd("git add ."), cmd('git commit -m "First commit"')]),
+  initialState: projectSetup(),
   hints: [
     {
       id: "Branch hanyalah label. Membuatnya tidak mengubah file apa pun, hanya menambah label baru di graf.",

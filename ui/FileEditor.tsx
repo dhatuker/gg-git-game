@@ -1,4 +1,5 @@
 import { useLang } from "./LanguageProvider";
+import { defaultFile } from "./file-select";
 import { RichText } from "./RichText";
 import { useState } from "react";
 import type { Files } from "../engine/types";
@@ -30,7 +31,7 @@ export function FileEditor({ files, conflicts, onWrite, onResolve }: Props) {
   const names = Object.keys(files).sort();
   const [picked, setPicked] = useState<string | null>(null);
   const [newName, setNewName] = useState("");
-  const selected = picked && picked in files ? picked : (names[0] ?? null);
+  const selected = picked && picked in files ? picked : defaultFile(names, conflicts);
 
   const create = () => {
     const name = newName.trim();

@@ -44,3 +44,9 @@ export function graphGeometry(layout: GraphLayout): GraphGeometry {
   const height = top + (layout.height - PAD * 2) * SY + 48;
   return { stacks, top, width, height, px, py, labelY };
 }
+
+/** Posisi scrollLeft agar titik `headX` berada di sekitar 60% lebar area terlihat, dibatasi ke rentang konten. */
+export function scrollLeftFor(headX: number, viewportWidth: number, contentWidth: number): number {
+  const max = Math.max(0, contentWidth - viewportWidth);
+  return Math.min(max, Math.max(0, Math.round(headX - viewportWidth * 0.6)));
+}

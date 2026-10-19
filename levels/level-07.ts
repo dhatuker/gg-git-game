@@ -1,4 +1,5 @@
-import { cmd, setup } from "./solve";
+import { projectSetup } from "./history";
+import { cmd } from "./solve";
 import type { Level } from "./types";
 
 export const level07: Level = {
@@ -17,12 +18,7 @@ export const level07: Level = {
   },
   editor: false,
   allowedCommands: ["init", "status", "add", "commit", "log", "branch", "switch", "checkout"],
-  initialState: setup({ "README.md": "# My First Project" }, [
-    cmd("git init"),
-    cmd("git add ."),
-    cmd('git commit -m "First commit"'),
-    cmd("git branch feature"),
-  ]),
+  initialState: projectSetup([cmd("git branch feature")]),
   hints: [
     {
       id: "Perhatikan label HEAD di graf. Sekarang ia menempel ke `main`, padahal tujuannya ke branch lain.",

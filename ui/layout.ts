@@ -38,18 +38,36 @@ export function computeGraphLayout(state: RepoState): GraphLayout {
   const depth: Record<string, number> = {};
   for (const c of commits) depth[c.id] = c.parents.length ? 1 + Math.max(...c.parents.map((p) => depth[p])) : 0;
 
-  // Jalur: setiap branch (main dulu) mengklaim rantai parent pertamanya; sisanya
-  // (HEAD terlepas, commit dari branch yang sudah dihapus) mendapat jalur baru agar tidak bertumpuk.
-  const lane: Record<string, number> = {};
-  let nextLane = 0;
+  // Rantai: setiap branch (main dulu) mengklaim rantai parent pertamanya; sisanya (HEAD terlepas, commit dari
+  // branch yang sudah dihapus) menjadi rantai sendiri.
+  const chainOf: Record<string, number> = {};
+  const chains: string[][] = [];
   const claim = (tip: string | undefined) => {
-    if (!tip || tip in lane) return;
-    const l = nextLane++;
-    for (let cur: string | undefined = tip; cur && !(cur in lane); cur = state.commits[cur].parents[0]) lane[cur] = l;
+    if (!tip || tip in chainOf) return;
+    const chain: string[] = [];
+    for (let cur: string | undefined = tip; cur && !(cur in chainOf); cur = state.commits[cur].parents[0]) {
+      chainOf[cur] = chains.length;
+      chain.push(cur);
+    }
+    chains.push(chain);
   };
   for (const name of orderedBranches(state)) claim(state.branches[name]);
   if (state.head.type === "detached") claim(state.head.id);
   for (const c of [...commits].reverse()) claim(c.id);
+
+  // Jalur: rantai pertama (main) di jalur 0. Rantai lain dikemas ke jalur terendah yang rentang kolomnya
+  // (ditambah satu kolom di kiri-kanan untuk garis cabang dan merge) belum terpakai, agar riwayat panjang
+  // dengan banyak cabang lama tetap ringkas tanpa node bertumpuk.
+  const lane: Record<string, number> = {};
+  const used: Array<Array<[number, number]>> = [];
+  chains.forEach((chain, i) => {
+    const ds = chain.map((id) => depth[id]);
+    const span: [number, number] = [Math.min(...ds) - 1, Math.max(...ds) + 1];
+    let l = i === 0 ? 0 : 1;
+    while (used[l]?.some(([a, b]) => span[0] <= b && a <= span[1])) l++;
+    (used[l] ??= []).push(span);
+    for (const id of chain) lane[id] = l;
+  });
 
   const nodes: GraphNode[] = commits.map((c) => ({
     id: c.id,

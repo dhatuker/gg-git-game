@@ -1,8 +1,10 @@
 import { useLang } from "./LanguageProvider";
-import type { CSSProperties } from "react";
+import { useEffect, useRef, type CSSProperties } from "react";
+import { getHeadCommitId } from "../engine/state";
 import type { GitEvent, RepoState } from "../engine/types";
 import { highlightTargets } from "./highlight";
-import { graphGeometry } from "./graph-geometry";
+import { graphGeometry, scrollLeftFor } from "./graph-geometry";
+import { useReducedMotion } from "./useReducedMotion";
 import type { GraphLayout, GraphNode } from "./layout";
 
 const LANES = 5;
@@ -31,6 +33,19 @@ interface Props {
 
 export function GitGraph({ repo, layout, activeEvent }: Props) {
   const { t } = useLang();
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const reducedMotion = useReducedMotion();
+  const headId = getHeadCommitId(repo);
+
+  // Riwayat panjang membuat graf lebih lebar dari panel: gulir otomatis agar HEAD selalu terlihat.
+  useEffect(() => {
+    const el = scrollRef.current;
+    const head = layout.nodes.find((n) => n.id === headId);
+    if (!el || !head) return;
+    const left = scrollLeftFor(graphGeometry(layout).px(head), el.clientWidth, el.scrollWidth);
+    el.scrollTo({ left, behavior: reducedMotion ? "auto" : "smooth" });
+  }, [layout, headId, reducedMotion]);
+
   if (!repo.initialized) {
     return <p className="gg-graph-empty">{t("ui.graphNoRepo")}</p>;
   }
@@ -44,7 +59,7 @@ export function GitGraph({ repo, layout, activeEvent }: Props) {
   const conflictFrom = repo.mergeState ? repo.mergeState.fromCommit : null;
 
   return (
-    <div className="gg-graph-scroll">
+    <div className="gg-graph-scroll" ref={scrollRef}>
       <svg className="gg-graph" width={width} height={height} viewBox={`0 0 ${width} ${height}`} role="img" aria-label={t("ui.graphTitle")}>
         <g>
           {layout.edges.map((e) => {

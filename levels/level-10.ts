@@ -1,5 +1,6 @@
 import { getHeadCommitId } from "../engine/state";
-import { cmd, headParents, setup, write } from "./solve";
+import { projectSetup } from "./history";
+import { cmd, headParents, write } from "./solve";
 import type { Level } from "./types";
 
 export const level10: Level = {
@@ -18,10 +19,7 @@ export const level10: Level = {
   },
   editor: true,
   allowedCommands: ["init", "status", "add", "commit", "log", "branch", "switch", "checkout", "merge"],
-  initialState: setup({ "README.md": "# My First Project" }, [
-    cmd("git init"),
-    cmd("git add ."),
-    cmd('git commit -m "First commit"'),
+  initialState: projectSetup([
     cmd("git switch -c feature"),
     write("README.md", "# Awesome Project"),
     cmd("git add ."),
