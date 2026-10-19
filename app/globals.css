@@ -1,26 +1,671 @@
 @import "tailwindcss";
 
+/* Token: peta jalur di atas kertas. Setiap branch = satu jalur berwarna. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-overpass: "Overpass";
+  --font-overpass-mono: "Overpass Mono";
+  --paper: #eef2f0;
+  --panel: #fbfcfb;
+  --ink: #17232b;
+  --muted: #5a6a73;
+  --rail: #cdd6d2;
+  --lane-0: #2360c4;
+  --lane-1: #0b9468;
+  --lane-2: #9a3cc6;
+  --lane-3: #c27c00;
+  --lane-4: #cf2f68;
+  --staging: #f2b632;
+  --staging-tint: #fdf3d8;
+  --conflict: #c42b2b;
+  --conflict-tint: #fbe4e2;
+  --ok: #0b9468;
+  --term-bg: #17232b;
+  --term-ink: #dfe8e4;
+  --term-muted: #8fa3ac;
+  --term-error: #ff8a80;
+  --focus: #2360c4;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --paper: #0f161b;
+    --panel: #162027;
+    --ink: #e4ebe8;
+    --muted: #94a5ae;
+    --rail: #2b3a42;
+    --lane-0: #5c94f0;
+    --lane-1: #2fc795;
+    --lane-2: #c27ae6;
+    --lane-3: #e9a93a;
+    --lane-4: #f0679a;
+    --staging-tint: #3a3015;
+    --conflict: #ff6b61;
+    --conflict-tint: #3b1d1c;
+    --term-bg: #0a1014;
+    --focus: #5c94f0;
   }
 }
 
+@theme inline {
+  --color-background: var(--paper);
+  --color-foreground: var(--ink);
+  --font-sans: var(--font-overpass);
+  --font-mono: var(--font-overpass-mono);
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-overpass), system-ui, sans-serif;
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+code,
+.gg-mono {
+  font-family: var(--font-overpass-mono), ui-monospace, monospace;
+}
+
+/* ---------- Tata letak ---------- */
+.gg-shell {
+  display: grid;
+  grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
+  gap: 16px;
+  padding: 16px;
+  min-height: 100dvh;
+}
+.gg-header {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.gg-header h1 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+.gg-left,
+.gg-right {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+.gg-panel {
+  background: var(--panel);
+  border: 1px solid var(--rail);
+  border-radius: 14px;
+  padding: 16px 18px;
+}
+@media (max-width: 900px) {
+  .gg-shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ---------- Peta level ---------- */
+.gg-map {
+  flex: 1;
+  min-width: 280px;
+  overflow-x: auto;
+}
+.gg-map ol {
+  display: flex;
+  align-items: flex-start;
+  position: relative;
+  padding: 6px 4px;
+  min-width: 520px;
+}
+.gg-map li {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+.gg-map li::before {
+  content: "";
+  position: absolute;
+  top: 13px;
+  left: -50%;
+  width: 100%;
+  height: 5px;
+  background: var(--rail);
+  z-index: 0;
+}
+.gg-map li:first-child::before {
+  display: none;
+}
+.gg-map li.gg-stop-done::before,
+.gg-map li.gg-stop-current::before {
+  background: var(--lane-0);
+}
+.gg-stop {
+  position: relative;
+  z-index: 1;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 4px solid var(--rail);
+  background: var(--panel);
+  font-weight: 800;
+  font-size: 0.8rem;
+  color: var(--muted);
+  cursor: pointer;
+}
+.gg-stop:disabled {
+  cursor: not-allowed;
+}
+.gg-stop-done .gg-stop {
+  border-color: var(--lane-0);
+  background: var(--lane-0);
+  color: #fff;
+}
+.gg-stop-current .gg-stop {
+  border-color: var(--lane-0);
+  color: var(--lane-0);
+  transform: scale(1.18);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--lane-0) 25%, transparent);
+}
+.gg-stop-name {
+  margin-top: 6px;
+  font-size: 0.68rem;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.2;
+  max-width: 76px;
+}
+.gg-stop-current .gg-stop-name {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+/* ---------- Panel level ---------- */
+.gg-level h2 {
+  font-size: 1.35rem;
+  font-weight: 800;
+  line-height: 1.2;
+  margin-bottom: 8px;
+}
+.gg-level-num {
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+.gg-story {
+  line-height: 1.6;
+  margin-bottom: 12px;
+}
+.gg-goal {
+  border-left: 5px solid var(--lane-0);
+  padding: 6px 0 6px 12px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+.gg-hints {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.gg-hints li {
+  background: var(--staging-tint);
+  border-radius: 8px;
+  padding: 8px 10px;
+  line-height: 1.5;
+  font-size: 0.92rem;
+}
+.gg-level-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+.gg-complete {
+  margin-top: 14px;
+  border-radius: 10px;
+  padding: 12px 14px;
+  background: color-mix(in srgb, var(--ok) 14%, var(--panel));
+  border: 2px solid var(--ok);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  animation: gg-pop 420ms ease-out;
+}
+
+/* ---------- Tombol ---------- */
+.gg-btn {
+  border-radius: 999px;
+  padding: 7px 14px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  border: 2px solid var(--ink);
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+}
+.gg-btn:hover {
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+}
+.gg-btn-primary {
+  background: var(--lane-0);
+  border-color: var(--lane-0);
+  color: #fff;
+}
+.gg-btn-primary:hover {
+  background: color-mix(in srgb, var(--lane-0) 85%, black);
+}
+.gg-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.gg-cmd-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.gg-cmd-btn {
+  font-family: var(--font-overpass-mono), ui-monospace, monospace;
+  font-size: 0.85rem;
+  border-radius: 8px;
+  padding: 8px 12px;
+  border: 2px solid var(--lane-0);
+  color: var(--lane-0);
+  background: var(--panel);
+  cursor: pointer;
+}
+.gg-cmd-btn:hover {
+  background: var(--lane-0);
+  color: #fff;
+}
+
+/* ---------- Terminal ---------- */
+.gg-term {
+  background: var(--term-bg);
+  color: var(--term-ink);
+  border-radius: 14px;
+  padding: 12px 14px;
+  font-family: var(--font-overpass-mono), ui-monospace, monospace;
+  font-size: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  min-height: 220px;
+}
+.gg-term-log {
+  flex: 1;
+  overflow-y: auto;
+  max-height: 300px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.5;
+}
+.gg-term-empty {
+  color: var(--term-muted);
+}
+.gg-term-input-line {
+  color: #fff;
+  margin-top: 6px;
+}
+.gg-term-input-line::before {
+  content: "$ ";
+  color: var(--term-muted);
+}
+.gg-term-error {
+  color: var(--term-error);
+}
+.gg-term-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-top: 1px solid #2f3f48;
+  margin-top: 10px;
+  padding-top: 10px;
+}
+.gg-term-form span {
+  color: var(--term-muted);
+}
+.gg-term-form input {
+  flex: 1;
+  background: transparent;
+  color: #fff;
+  border: none;
+  font: inherit;
+  min-width: 0;
+}
+.gg-term-form input:focus-visible {
+  outline: none;
+}
+.gg-term-form:focus-within {
+  border-top-color: var(--lane-0);
+}
+
+/* ---------- Editor file ---------- */
+.gg-editor h3,
+.gg-section-title {
+  font-weight: 800;
+  font-size: 1rem;
+  margin-bottom: 8px;
+}
+.gg-file-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.gg-file-tab {
+  font-family: var(--font-overpass-mono), ui-monospace, monospace;
+  font-size: 0.8rem;
+  border-radius: 6px;
+  padding: 4px 10px;
+  border: 1px solid var(--rail);
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+}
+.gg-file-tab[aria-pressed="true"] {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--panel);
+}
+.gg-file-tab-conflict {
+  border-color: var(--conflict);
+  color: var(--conflict);
+}
+.gg-editor textarea,
+.gg-editor input[type="text"] {
+  width: 100%;
+  font-family: var(--font-overpass-mono), ui-monospace, monospace;
+  font-size: 0.85rem;
+  border: 1px solid var(--rail);
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: var(--paper);
+  color: var(--ink);
+}
+.gg-editor textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+.gg-editor-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.gg-editor-row input[type="text"] {
+  flex: 1;
+  min-width: 140px;
+  width: auto;
+}
+.gg-editor-error {
+  color: var(--conflict);
+  font-size: 0.85rem;
+  margin-top: 6px;
+}
+.gg-conflict-note {
+  background: var(--conflict-tint);
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+/* ---------- Graf ---------- */
+.gg-graph-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 300px;
+}
+.gg-graph-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.gg-graph-scroll {
+  overflow: auto;
+  flex: 1;
+  margin-top: 8px;
+}
+.gg-graph-empty {
+  color: var(--muted);
+  padding: 32px 0;
+}
+.gg-caption {
+  margin-top: 10px;
+  min-height: 1.6em;
+  line-height: 1.6;
+  font-weight: 600;
+}
+.gg-caption code,
+.gg-level code,
+.gg-conflict-note code {
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+  border-radius: 4px;
+  padding: 0 4px;
+}
+.gg-edge {
+  fill: none;
+  stroke-width: 7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke: var(--lane-color);
+  stroke-dasharray: 1;
+  animation: gg-draw 500ms ease-out;
+}
+.gg-lane-0 { --lane-color: var(--lane-0); }
+.gg-lane-1 { --lane-color: var(--lane-1); }
+.gg-lane-2 { --lane-color: var(--lane-2); }
+.gg-lane-3 { --lane-color: var(--lane-3); }
+.gg-lane-4 { --lane-color: var(--lane-4); }
+.gg-node .gg-node-dot {
+  fill: var(--panel);
+  stroke: var(--lane-color);
+  stroke-width: 5;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: gg-pop 420ms ease-out;
+}
+.gg-node-merge .gg-node-dot {
+  stroke: var(--ink);
+  stroke-width: 6;
+}
+.gg-node-id {
+  text-anchor: middle;
+  paint-order: stroke;
+  stroke: var(--panel);
+  stroke-width: 5px;
+  stroke-linejoin: round;
+  font-family: var(--font-overpass-mono), ui-monospace, monospace;
+  font-size: 11px;
+  fill: var(--muted);
+}
+.gg-node-halo {
+  fill: none;
+  stroke: var(--lane-color);
+  stroke-width: 3;
+  opacity: 0.55;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: gg-pulse 900ms ease-in-out infinite;
+}
+.gg-node-conflict {
+  fill: none;
+  stroke: var(--conflict);
+  stroke-width: 3;
+  stroke-dasharray: 4 4;
+}
+.gg-label {
+  transition: transform 450ms cubic-bezier(0.3, 0.7, 0.2, 1);
+}
+.gg-label rect {
+  fill: var(--lane-color);
+}
+.gg-label text {
+  fill: #fff;
+  font-weight: 800;
+  font-size: 12px;
+  text-anchor: middle;
+}
+.gg-label-head rect {
+  fill: var(--ink);
+}
+.gg-label-head text {
+  fill: var(--panel);
+}
+.gg-label-lit rect {
+  stroke: var(--staging);
+  stroke-width: 3;
+}
+
+/* ---------- Tiga area ---------- */
+.gg-areas {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto 1fr;
+  gap: 8px;
+  align-items: stretch;
+}
+.gg-area {
+  border-radius: 12px;
+  border: 2px solid var(--rail);
+  padding: 10px 12px;
+  min-width: 0;
+}
+.gg-area-staging {
+  border-color: var(--staging);
+  background: var(--staging-tint);
+}
+.gg-area-repo {
+  border-color: var(--lane-0);
+}
+.gg-area h3 {
+  font-weight: 800;
+  font-size: 0.95rem;
+}
+.gg-area-desc {
+  color: var(--muted);
+  font-size: 0.78rem;
+  margin-bottom: 8px;
+}
+.gg-area ul {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.gg-area-step {
+  align-self: center;
+  font-family: var(--font-overpass-mono), ui-monospace, monospace;
+  font-size: 0.72rem;
+  color: var(--muted);
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+.gg-chip {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  background: var(--panel);
+  border: 1px solid var(--rail);
+  border-radius: 8px;
+  padding: 5px 8px;
+  font-family: var(--font-overpass-mono), ui-monospace, monospace;
+  font-size: 0.8rem;
+  animation: gg-slide-in 380ms ease-out;
+}
+.gg-chip-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gg-chip-note {
+  color: var(--muted);
+  font-family: var(--font-overpass), system-ui, sans-serif;
+  font-size: 0.72rem;
+}
+.gg-chip-konflik {
+  border-color: var(--conflict);
+  background: var(--conflict-tint);
+}
+.gg-chip-konflik .gg-chip-note {
+  color: var(--conflict);
+  font-weight: 700;
+}
+.gg-chip-lit {
+  box-shadow: 0 0 0 3px var(--staging);
+}
+.gg-chip-empty {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+@media (max-width: 640px) {
+  .gg-areas {
+    grid-template-columns: 1fr;
+  }
+  .gg-area-step {
+    writing-mode: horizontal-tb;
+    transform: none;
+    text-align: center;
+  }
+}
+
+/* ---------- Animasi ---------- */
+@keyframes gg-pop {
+  from {
+    transform: scale(0.2);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@keyframes gg-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes gg-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.25);
+  }
+}
+@keyframes gg-slide-in {
+  from {
+    transform: translateY(-6px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
 }
