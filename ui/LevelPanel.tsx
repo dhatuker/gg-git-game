@@ -4,13 +4,18 @@ import { RichText } from "./RichText";
 interface Props {
   level: Level;
   hints: string[];
+  hintsTotal: number;
+  /** Sorot tombol petunjuk karena pemain beberapa kali gagal. */
+  nudge: boolean;
+  onRevealHint: () => void;
   complete: boolean;
   isLast: boolean;
   onReset: () => void;
   onNext: () => void;
 }
 
-export function LevelPanel({ level, hints, complete, isLast, onReset, onNext }: Props) {
+export function LevelPanel({ level, hints, hintsTotal, nudge, onRevealHint, complete, isLast, onReset, onNext }: Props) {
+  const allShown = hints.length >= hintsTotal;
   return (
     <section className="gg-panel gg-level" aria-labelledby="gg-level-title">
       <p className="gg-level-num">Level {level.id} dari 10</p>
@@ -23,8 +28,9 @@ export function LevelPanel({ level, hints, complete, isLast, onReset, onNext }: 
       </p>
       {hints.length > 0 && (
         <ol className="gg-hints" aria-label="Petunjuk">
-          {hints.map((h) => (
+          {hints.map((h, i) => (
             <li key={h}>
+              <span className="gg-hint-num">Petunjuk {i + 1}</span>
               <RichText text={h} />
             </li>
           ))}
@@ -40,7 +46,20 @@ export function LevelPanel({ level, hints, complete, isLast, onReset, onNext }: 
           )}
         </div>
       ) : null}
+      {nudge && !complete && (
+        <p className="gg-nudge-note" role="status">
+          Kesulitan? Petunjuk bisa membantu tanpa memberi jawabannya.
+        </p>
+      )}
       <div className="gg-level-actions">
+        <button
+          type="button"
+          className={`gg-btn gg-btn-hint${nudge && !complete ? " gg-btn-nudge" : ""}`}
+          onClick={onRevealHint}
+          disabled={allShown}
+        >
+          {allShown ? "Semua petunjuk terbuka" : `Minta petunjuk (${hints.length}/${hintsTotal})`}
+        </button>
         <button type="button" className="gg-btn" onClick={onReset}>
           Ulangi level
         </button>

@@ -7,10 +7,8 @@ export const level09: Level = {
   story:
     "Kali ini `main` dan `fitur` sama-sama punya commit baru, jadi riwayatnya bercabang. Pointer tidak bisa sekadar digeser. Git membuat merge commit: commit khusus dengan dua parent yang menyatukan kedua cabang.",
   goal: "Gabungkan `fitur` ke `main` dengan merge commit.",
-  mode: "terminal",
   editor: false,
   allowedCommands: ["init", "status", "add", "commit", "log", "branch", "switch", "checkout", "merge"],
-  buttons: [],
   initialState: setup({ "README.md": "# Proyek Pertamaku" }, [
     cmd("git init"),
     cmd("git add ."),
@@ -25,8 +23,9 @@ export const level09: Level = {
     cmd('git commit -m "Tambah kontak"'),
   ]),
   hints: [
-    "Pastikan kamu di `main` (lihat label HEAD), lalu merge branch `fitur`.",
-    "Ketik `git merge fitur` dan perhatikan commit baru dengan dua garis parent.",
+    "Lihat graf: `main` dan `fitur` sama-sama punya commit yang tidak dimiliki pihak lain, jadi pointer tidak bisa sekadar digeser maju.",
+    "Pastikan HEAD menempel ke `main`, karena hasil merge masuk ke branch aktif.",
+    "Perintahnya sama dengan level sebelumnya. Bedanya ada di hasil: perhatikan commit baru dengan dua garis parent.",
   ],
   isGoalReached: (s) => headParents(s) === 2,
   solution: [cmd("git merge fitur")],

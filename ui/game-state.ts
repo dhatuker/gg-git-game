@@ -16,6 +16,10 @@ export interface GameState {
   completed: number[];
   ran: string[];
   failedAttempts: number;
+  /** Jumlah petunjuk yang sudah dibuka pemain lewat tombol "Minta petunjuk". */
+  hintsRevealed: number;
+  /** Kegagalan sejak petunjuk terakhir dibuka; dipakai untuk menyorot tombol petunjuk. */
+  failedSinceHint: number;
   lines: TerminalLine[];
   events: GitEvent[];
   caption: string;
@@ -28,6 +32,7 @@ export type GameAction =
   | { type: "resolve"; file: string; choice: "ours" | "theirs" }
   | { type: "reset-level" }
   | { type: "goto-level"; index: number }
+  | { type: "reveal-hint" }
   | { type: "load-progress"; completed: number[] };
 
 export const NOT_ALLOWED = "Perintah ini belum dipakai di level ini.";
@@ -46,6 +51,8 @@ function startLevel(index: number, completed: number[]): GameState {
     completed,
     ran: [],
     failedAttempts: 0,
+    hintsRevealed: 0,
+    failedSinceHint: 0,
     lines: [],
     events: [],
     caption: "",
@@ -80,7 +87,12 @@ function runInput(state: GameState, input: string): GameState {
   const parsed = parseInput(input);
   // Hanya perintah yang dikenal engine yang bisa "terkunci"; typo diteruskan ke engine agar mendapat saran.
   if (!("error" in parsed) && parsed.name in HANDLERS && !level.allowedCommands.includes(parsed.name)) {
-    return { ...state, lines: [...lines, { kind: "error", text: NOT_ALLOWED }], failedAttempts: state.failedAttempts + 1 };
+    return {
+      ...state,
+      lines: [...lines, { kind: "error", text: NOT_ALLOWED }],
+      failedAttempts: state.failedAttempts + 1,
+      failedSinceHint: state.failedSinceHint + 1,
+    };
   }
   const r = runCommand(state.repo, input);
   const next: GameState = {
@@ -88,6 +100,7 @@ function runInput(state: GameState, input: string): GameState {
     repo: r.state,
     lines: [...lines, { kind: r.ok ? "output" : "error", text: r.output }],
     failedAttempts: r.ok ? state.failedAttempts : state.failedAttempts + 1,
+    failedSinceHint: r.ok ? state.failedSinceHint : state.failedSinceHint + 1,
     ran: r.ok && !("error" in parsed) && !state.ran.includes(parsed.name) ? [...state.ran, parsed.name] : state.ran,
     events: r.events,
     caption: r.ok ? describeEvents(r.events) || READ_ONLY_CAPTION : state.caption,
@@ -108,13 +121,22 @@ export function reduce(state: GameState, action: GameAction): GameState {
     case "goto-level":
       if (action.index < 0 || action.index >= LEVELS.length || !isUnlocked(state.completed, action.index)) return state;
       return startLevel(action.index, state.completed);
+    case "reveal-hint": {
+      const total = LEVELS[state.levelIndex].hints.length;
+      if (state.hintsRevealed >= total) return state;
+      return { ...state, hintsRevealed: state.hintsRevealed + 1, failedSinceHint: 0 };
+    }
     case "load-progress":
       return initGame(action.completed);
   }
 }
 
-/** Petunjuk bertingkat: satu petunjuk terbuka setiap 2 percobaan keliru. */
+/** Petunjuk yang sudah dibuka pemain, dari yang paling samar. */
 export function visibleHints(state: GameState): string[] {
-  const hints = LEVELS[state.levelIndex].hints;
-  return hints.slice(0, Math.min(hints.length, Math.floor(state.failedAttempts / 2)));
+  return LEVELS[state.levelIndex].hints.slice(0, state.hintsRevealed);
+}
+
+/** Sorot tombol petunjuk setelah 2 kegagalan sejak petunjuk terakhir, selama masih ada yang tertutup. */
+export function hintNudge(state: GameState): boolean {
+  return state.failedSinceHint >= 2 && state.hintsRevealed < LEVELS[state.levelIndex].hints.length;
 }

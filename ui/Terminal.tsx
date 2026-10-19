@@ -4,10 +4,9 @@ import type { TerminalLine } from "./game-state";
 interface Props {
   lines: TerminalLine[];
   onSubmit: (input: string) => void;
-  inputEnabled: boolean;
 }
 
-export function Terminal({ lines, onSubmit, inputEnabled }: Props) {
+export function Terminal({ lines, onSubmit }: Props) {
   const [value, setValue] = useState("");
   const logRef = useRef<HTMLDivElement>(null);
 
@@ -27,9 +26,7 @@ export function Terminal({ lines, onSubmit, inputEnabled }: Props) {
     <div className="gg-term">
       <div className="gg-term-log" ref={logRef} aria-live="polite">
         {lines.length === 0 && (
-          <p className="gg-term-empty">
-            {inputEnabled ? "Ketik perintah git di bawah, lalu tekan Enter." : "Output perintah akan muncul di sini."}
-          </p>
+          <p className="gg-term-empty">Ketik perintah git di bawah, lalu tekan Enter.</p>
         )}
         {lines.map((line, i) => (
           <div key={i} className={line.kind === "input" ? "gg-term-input-line" : line.kind === "error" ? "gg-term-error" : undefined}>
@@ -37,20 +34,18 @@ export function Terminal({ lines, onSubmit, inputEnabled }: Props) {
           </div>
         ))}
       </div>
-      {inputEnabled && (
-        <form className="gg-term-form" onSubmit={submit}>
-          <span aria-hidden="true">$</span>
-          <input
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            placeholder="git status"
-            aria-label="Perintah git"
-            autoComplete="off"
-            autoCapitalize="off"
-            spellCheck={false}
-          />
-        </form>
-      )}
+      <form className="gg-term-form" onSubmit={submit}>
+        <span aria-hidden="true">$</span>
+        <input
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          placeholder="git …"
+          aria-label="Perintah git"
+          autoComplete="off"
+          autoCapitalize="off"
+          spellCheck={false}
+        />
+      </form>
     </div>
   );
 }

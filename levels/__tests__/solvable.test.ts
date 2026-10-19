@@ -11,6 +11,17 @@ function commandNames(level: (typeof LEVELS)[number]): string[] {
   });
 }
 
+/** Bentuk perintah solusi yang tidak boleh muncul di petunjuk: `git <nama> <argumen>`, dan `<nama> <argumen>` bila ada argumen. */
+function solutionCommandForms(level: (typeof LEVELS)[number]): string[] {
+  return level.solution.flatMap((s) => {
+    if (s.kind !== "cmd") return [];
+    const p = parseInput(s.input);
+    if ("error" in p) return [];
+    const rest = [p.name, ...p.args].join(" ").toLowerCase();
+    return p.args.length > 0 ? [`git ${rest}`, rest] : [`git ${rest}`];
+  });
+}
+
 describe("LEVELS", () => {
   it("berisi 10 level dengan id berurutan", () => {
     expect(LEVELS.map((l) => l.id)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
@@ -33,16 +44,13 @@ describe("LEVELS", () => {
       for (const name of level.mustRun ?? []) expect(commandNames(level)).toContain(name);
     });
 
-    it("punya minimal 2 petunjuk", () => {
-      expect(level.hints.length).toBeGreaterThanOrEqual(2);
+    it("punya tepat 3 petunjuk bertingkat", () => {
+      expect(level.hints).toHaveLength(3);
     });
 
-    it("level tombol/hybrid punya tombol, dan tombolnya diizinkan", () => {
-      if (level.mode !== "terminal") expect(level.buttons.length).toBeGreaterThan(0);
-      for (const b of level.buttons) {
-        const p = parseInput(b.command);
-        expect("error" in p).toBe(false);
-        if (!("error" in p)) expect(level.allowedCommands).toContain(p.name);
+    it("tidak ada petunjuk yang membocorkan perintah solusi secara utuh", () => {
+      for (const forbidden of solutionCommandForms(level)) {
+        for (const hint of level.hints) expect(hint.toLowerCase()).not.toContain(forbidden);
       }
     });
   });

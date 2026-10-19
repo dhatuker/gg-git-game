@@ -269,24 +269,33 @@ code,
   opacity: 0.45;
   cursor: not-allowed;
 }
-.gg-cmd-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+.gg-btn-hint {
+  border-color: var(--staging);
+  background: var(--staging-tint);
 }
-.gg-cmd-btn {
-  font-family: var(--font-overpass-mono), ui-monospace, monospace;
-  font-size: 0.85rem;
-  border-radius: 8px;
-  padding: 8px 12px;
-  border: 2px solid var(--lane-0);
-  color: var(--lane-0);
-  background: var(--panel);
-  cursor: pointer;
+.gg-btn-hint:hover {
+  background: color-mix(in srgb, var(--staging) 35%, var(--panel));
 }
-.gg-cmd-btn:hover {
-  background: var(--lane-0);
-  color: #fff;
+/* Disorot setelah pemain beberapa kali gagal. Tanpa animasi pun warnanya tetap berbeda. */
+.gg-btn-nudge {
+  background: var(--staging);
+  color: #17232b;
+  border-color: color-mix(in srgb, var(--staging) 70%, black);
+  animation: gg-nudge 1.6s ease-in-out infinite;
+}
+.gg-nudge-note {
+  margin-top: 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+.gg-hint-num {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: color-mix(in srgb, var(--staging) 55%, var(--ink));
 }
 
 /* ---------- Terminal ---------- */
@@ -639,6 +648,15 @@ code,
   }
   to {
     stroke-dashoffset: 0;
+  }
+}
+@keyframes gg-nudge {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--staging) 60%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 7px color-mix(in srgb, var(--staging) 0%, transparent);
   }
 }
 @keyframes gg-pulse {

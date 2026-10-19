@@ -14,7 +14,7 @@ Dokumen ini adalah spec versi 1. Proyek dibangun di atas scaffold Next.js yang s
 ## 2. Keputusan yang sudah disepakati
 
 - Platform: browser.
-- Mode input: hybrid. Level awal memakai tombol dengan perintah yang ditampilkan, level berikutnya memakai terminal simulasi.
+- Mode input: terminal simulasi di semua level (diubah 2026-10-19; sebelumnya hybrid dengan tombol di level 1–5). Pemain yang kesulitan bisa membuka petunjuk bertingkat yang tidak memberi jawaban langsung.
 - Cakupan versi 1: perintah dasar ditambah percabangan dan merge (10 level).
 - Pendekatan: mini git engine buatan sendiri (disederhanakan, bukan git asli).
 - Stack: Next.js 16 + React 19 + TypeScript + Tailwind 4 (sudah terpasang), Vitest ditambahkan untuk pengujian.
@@ -73,22 +73,24 @@ Tiga jenis, semuanya dalam Bahasa Indonesia ramah beserta petunjuk langkah berik
 
 ### 3.5 Levels
 
-Setiap level adalah satu berkas data berisi: judul, narasi, state awal, perintah yang diizinkan, mode input (tombol atau terminal), petunjuk bertingkat, dan fungsi murni `isGoalReached(state)`. Penyelesaian dinilai dari state hasil, bukan urutan perintah, sehingga pemain boleh menempuh jalur berbeda. Karena `status` dan `log` tidak mengubah state, level dapat menambahkan `mustRun`: daftar perintah yang harus pernah dijalankan dengan sukses di level itu (urutan bebas), selain tujuan berbasis state. Level berikutnya terbuka setelah tujuan tercapai.
+Setiap level adalah satu berkas data berisi: judul, narasi, state awal, perintah yang diizinkan, tepat 3 petunjuk bertingkat, dan fungsi murni `isGoalReached(state)`. Penyelesaian dinilai dari state hasil, bukan urutan perintah, sehingga pemain boleh menempuh jalur berbeda. Karena `status` dan `log` tidak mengubah state, level dapat menambahkan `mustRun`: daftar perintah yang harus pernah dijalankan dengan sukses di level itu (urutan bebas), selain tujuan berbasis state. Level berikutnya terbuka setelah tujuan tercapai.
 
-| # | Topik | Mode input |
-|---|---|---|
-| 1 | `init`: membuat repo | Tombol |
-| 2 | `status`: working directory dan file baru | Tombol |
-| 3 | `add`: memasukkan ke staging | Tombol |
-| 4 | `commit`: menyimpan snapshot | Tombol |
-| 5 | `log`: membaca riwayat | Tombol dan terminal |
-| 6 | `branch`: membuat cabang | Terminal |
-| 7 | `switch` / `checkout`: pindah cabang | Terminal |
-| 8 | `merge` fast-forward | Terminal |
-| 9 | `merge` dengan merge commit | Terminal |
-| 10 | Menyelesaikan konflik merge | Terminal |
+| # | Topik |
+|---|---|
+| 1 | `init`: membuat repo |
+| 2 | `status`: working directory dan file baru |
+| 3 | `add`: memasukkan ke staging |
+| 4 | `commit`: menyimpan snapshot |
+| 5 | `log`: membaca riwayat |
+| 6 | `branch`: membuat cabang |
+| 7 | `switch` / `checkout`: pindah cabang |
+| 8 | `merge` fast-forward |
+| 9 | `merge` dengan merge commit |
+| 10 | Menyelesaikan konflik merge |
 
-Bantuan: petunjuk bertingkat muncul setelah beberapa percobaan keliru. Tombol "Ulangi level" mengembalikan state awal level.
+Semua perintah diketik di terminal. Cerita level memperkenalkan nama perintah sebagai materi; menyusun perintah lengkap tetap tugas pemain.
+
+Bantuan: setiap level punya tepat 3 petunjuk, dari samar ke spesifik: (1) konsep apa yang perlu terjadi, (2) di mana melihatnya, (3) bentuk perintah tanpa argumen lengkap. Petunjuk tidak pernah memuat perintah solusi secara utuh; aturan ini dijaga tes otomatis. Petunjuk dibuka pemain sendiri lewat tombol "Minta petunjuk", satu per klik. Setelah 2 percobaan keliru sejak petunjuk terakhir dibuka, tombol itu disorot (warna, ditambah denyut halus bila animasi diizinkan). Tombol "Ulangi level" mengembalikan state awal level dan menutup kembali semua petunjuk.
 
 ## 4. UI
 
@@ -98,14 +100,14 @@ Satu halaman, dua kolom:
 ┌───────────────────────┬──────────────────────────────┐
 │ Level & instruksi     │  GitGraph (graf commit)      │
 ├───────────────────────┤──────────────────────────────┤
-│ Terminal / ButtonBar  │  AreaPanel                   │
+│ Terminal              │  AreaPanel                   │
 │ + editor file         │  Working → Staging → Repo    │
 └───────────────────────┴──────────────────────────────┘
 ```
 
-Komponen: `LevelPanel`, `Terminal`, `ButtonBar`, `FileEditor`, `GitGraph`, `AreaPanel`.
+Komponen: `LevelMap`, `LevelPanel` (termasuk tombol petunjuk), `Terminal`, `FileEditor`, `GitGraph`, `AreaPanel`.
 
-`ButtonBar` hanya menyusun string perintah dan mengirimkannya lewat jalur yang sama dengan `Terminal`, sehingga engine hanya punya satu pintu masuk.
+Semua perintah masuk lewat `Terminal`, sehingga engine hanya punya satu pintu masuk.
 
 ### 4.1 GitGraph (SVG)
 

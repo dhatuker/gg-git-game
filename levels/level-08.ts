@@ -7,10 +7,8 @@ export const level08: Level = {
   story:
     "Branch `fitur` sudah punya satu commit baru, sedangkan `main` belum bergerak. Saat di-merge, git cukup menggeser pointer `main` maju ke commit yang sama. Ini disebut fast-forward: tidak ada commit baru yang dibuat.",
   goal: "Gabungkan `fitur` ke `main` sehingga keduanya menunjuk commit yang sama.",
-  mode: "terminal",
   editor: false,
   allowedCommands: ["init", "status", "add", "commit", "log", "branch", "switch", "checkout", "merge"],
-  buttons: [],
   initialState: setup({ "README.md": "# Proyek Pertamaku" }, [
     cmd("git init"),
     cmd("git add ."),
@@ -21,7 +19,11 @@ export const level08: Level = {
     cmd('git commit -m "Tambah fitur login"'),
     cmd("git switch main"),
   ]),
-  hints: ["Kamu sedang di `main`. Merge menarik commit dari branch lain ke branch aktif.", "Ketik `git merge fitur`."],
+  hints: [
+    "Kamu sedang di `main`, dan `fitur` sudah selangkah lebih maju. Merge selalu menarik perubahan ke branch yang sedang aktif (tempat HEAD berada).",
+    "Nama perintahnya adalah kata kerja \"gabungkan\" dalam bahasa Inggris.",
+    "Perintah itu butuh satu argumen: nama branch yang perubahannya ingin kamu tarik ke `main`.",
+  ],
   isGoalReached: (s) => s.branches.main === s.branches.fitur,
   solution: [cmd("git merge fitur")],
 };

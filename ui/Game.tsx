@@ -3,9 +3,8 @@
 import { useEffect, useMemo, useReducer } from "react";
 import { LEVELS } from "../levels";
 import { AreaPanel } from "./AreaPanel";
-import { ButtonBar } from "./ButtonBar";
 import { FileEditor } from "./FileEditor";
-import { initGame, isUnlocked, reduce, visibleHints } from "./game-state";
+import { hintNudge, initGame, isUnlocked, reduce, visibleHints } from "./game-state";
 import { GitGraph } from "./GitGraph";
 import { computeGraphLayout } from "./layout";
 import { LevelMap } from "./LevelMap";
@@ -39,8 +38,6 @@ export default function Game() {
   }, [state.completed]);
 
   const run = (input: string) => dispatch({ type: "run", input });
-  const showButtons = level.mode !== "terminal";
-  const showInput = level.mode !== "buttons";
   const isLast = state.levelIndex === LEVELS.length - 1;
 
   return (
@@ -60,18 +57,15 @@ export default function Game() {
         <LevelPanel
           level={level}
           hints={visibleHints(state)}
+          hintsTotal={level.hints.length}
+          nudge={hintNudge(state)}
+          onRevealHint={() => dispatch({ type: "reveal-hint" })}
           complete={state.levelComplete}
           isLast={isLast}
           onReset={() => dispatch({ type: "reset-level" })}
           onNext={() => dispatch({ type: "goto-level", index: state.levelIndex + 1 })}
         />
-        {showButtons && (
-          <section className="gg-panel" aria-label="Tombol perintah">
-            <h3 className="gg-section-title">{showInput ? "Pintasan perintah" : "Klik perintah untuk menjalankannya"}</h3>
-            <ButtonBar buttons={level.buttons} onRun={run} />
-          </section>
-        )}
-        <Terminal key={state.levelIndex} lines={state.lines} onSubmit={run} inputEnabled={showInput} />
+        <Terminal key={state.levelIndex} lines={state.lines} onSubmit={run} />
         {level.editor && (
           <FileEditor
             files={state.repo.files}

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { LEVELS } from "../../levels";
-import { initGame, isUnlocked, reduce, visibleHints, type GameState } from "../game-state";
+import { hintNudge, initGame, isUnlocked, reduce, visibleHints, type GameState } from "../game-state";
 
 const run = (s: GameState, input: string) => reduce(s, { type: "run", input });
 
@@ -73,15 +73,51 @@ describe("reduce", () => {
     expect(s.levelComplete).toBe(true);
   });
 
-  it("menampilkan petunjuk setiap 2 kegagalan", () => {
+  it("petunjuk tidak terbuka otomatis walau pemain berkali-kali gagal", () => {
     let s = initGame([]);
+    for (let i = 0; i < 5; i++) s = run(s, "git status");
     expect(visibleHints(s)).toEqual([]);
-    s = run(s, "git status");
-    expect(visibleHints(s)).toEqual([]);
-    s = run(s, "git status");
+  });
+
+  it("reveal-hint membuka satu petunjuk per klik, berurutan, dan berhenti di batas", () => {
+    let s = initGame([]);
+    s = reduce(s, { type: "reveal-hint" });
     expect(visibleHints(s)).toEqual([LEVELS[0].hints[0]]);
-    for (let i = 0; i < 10; i++) s = run(s, "git status");
+    s = reduce(s, { type: "reveal-hint" });
+    expect(visibleHints(s)).toEqual(LEVELS[0].hints.slice(0, 2));
+    for (let i = 0; i < 5; i++) s = reduce(s, { type: "reveal-hint" });
     expect(visibleHints(s)).toEqual(LEVELS[0].hints);
+    expect(s.hintsRevealed).toBe(LEVELS[0].hints.length);
+  });
+
+  it("tombol petunjuk disorot setelah 2 kegagalan selama masih ada petunjuk tertutup", () => {
+    let s = initGame([]);
+    expect(hintNudge(s)).toBe(false);
+    s = run(s, "git status");
+    expect(hintNudge(s)).toBe(false);
+    s = run(s, "git status");
+    expect(hintNudge(s)).toBe(true);
+    for (let i = 0; i < LEVELS[0].hints.length; i++) s = reduce(s, { type: "reveal-hint" });
+    expect(hintNudge(s)).toBe(false);
+  });
+
+  it("membuka petunjuk menenangkan sorotan sampai pemain gagal 2 kali lagi", () => {
+    let s = run(run(initGame([]), "git status"), "git status");
+    s = reduce(s, { type: "reveal-hint" });
+    expect(hintNudge(s)).toBe(false);
+    s = run(s, "git status");
+    expect(hintNudge(s)).toBe(false);
+    s = run(s, "git status");
+    expect(hintNudge(s)).toBe(true);
+  });
+
+  it("reset-level dan pindah level menutup kembali semua petunjuk", () => {
+    let s = reduce(initGame([]), { type: "reveal-hint" });
+    s = reduce(s, { type: "reset-level" });
+    expect(s.hintsRevealed).toBe(0);
+    s = reduce(run(s, "git init"), { type: "reveal-hint" });
+    s = reduce(s, { type: "goto-level", index: 1 });
+    expect(s.hintsRevealed).toBe(0);
   });
 
   it("reset-level mengembalikan state awal tetapi mempertahankan progres", () => {

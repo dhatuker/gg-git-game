@@ -5,18 +5,10 @@ export const level05: Level = {
   id: 5,
   title: "Membaca riwayat",
   story:
-    "Setiap commit menyimpan id parent-nya, sehingga commit membentuk rantai riwayat. `git log` menelusuri rantai itu dari commit terbaru ke yang paling lama. Mulai level ini kamu juga bisa mengetik perintah sendiri di terminal.",
+    "Setiap commit menyimpan id parent-nya, sehingga commit membentuk rantai riwayat. `git log` menelusuri rantai itu dari commit terbaru ke yang paling lama.",
   goal: "Baca riwayat dengan `git log`, lalu tambahkan commit keempat (ubah atau buat file, stage, commit).",
-  mode: "hybrid",
   editor: true,
   allowedCommands: ["init", "status", "add", "commit", "log"],
-  buttons: [
-    { label: "git log", command: "git log" },
-    { label: "git log --oneline", command: "git log --oneline" },
-    { label: "git status", command: "git status" },
-    { label: "git add .", command: "git add ." },
-    { label: 'git commit -m "Commit keempat"', command: 'git commit -m "Commit keempat"' },
-  ],
   initialState: setup({ "README.md": "# Proyek Pertamaku" }, [
     cmd("git init"),
     cmd("git add ."),
@@ -29,8 +21,9 @@ export const level05: Level = {
     cmd('git commit -m "Perbarui catatan"'),
   ]),
   hints: [
-    "Jalankan `git log` atau `git log --oneline` untuk melihat 3 commit yang sudah ada.",
-    "Ubah isi file di editor, lalu `git add .` dan `git commit -m \"pesan\"`.",
+    "Mulailah dengan membaca riwayat. Perintahnya disebut di tujuan level, dan ada opsi `--oneline` untuk versi ringkas.",
+    "Untuk commit keempat, buat atau ubah file lewat Editor file lalu simpan. Perubahannya akan muncul di kolom Working.",
+    "Langkah selanjutnya sama seperti level 3 dan 4: pindahkan perubahan ke staging, lalu buat commit dengan pesan.",
   ],
   isGoalReached: (s) => commitCount(s) >= 4,
   mustRun: ["log"],
