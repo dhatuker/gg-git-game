@@ -1,4 +1,5 @@
 import { msg, type Msg } from "./messages";
+import { activeConflicts, conflictSources } from "./state";
 import type { RepoState } from "./types";
 
 export interface EditResult {
@@ -18,11 +19,11 @@ export function writeFile(state: RepoState, name: string, content: string): Edit
 
 /** Mengisi file konflik dengan versi HEAD (`ours`) atau versi branch yang di-merge (`theirs`). Tidak men-stage. */
 export function resolveConflict(state: RepoState, file: string, choice: "ours" | "theirs"): EditResult {
-  if (!state.mergeState || !state.mergeState.conflicts.includes(file)) {
+  const sources = conflictSources(state);
+  if (!sources || !activeConflicts(state).includes(file)) {
     return { state, error: msg("files.notConflicted", { file }) };
   }
-  const headId = state.head.type === "branch" ? state.branches[state.head.name] : state.head.id;
-  const sourceId = choice === "ours" ? headId : state.mergeState.fromCommit;
+  const sourceId = choice === "ours" ? sources.ours : sources.theirs;
   const content = state.commits[sourceId]?.snapshot[file] ?? "";
   return { state: { ...state, files: { ...state.files, [file]: content } } };
 }

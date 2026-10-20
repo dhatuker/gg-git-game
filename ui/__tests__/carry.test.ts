@@ -97,3 +97,42 @@ describe("reduce restore", () => {
     expect(reduce(initGame([]), { type: "restore", state: target, savedCompleted: [] })).toEqual(target);
   });
 });
+
+describe("carry state lama", () => {
+  it("state tersimpan tanpa stash dan rebaseState dinormalisasi", () => {
+    const store = memory();
+    const s = midGame();
+    const oldRepo: Record<string, unknown> = { ...s.repo };
+    delete oldRepo.stash;
+    delete oldRepo.rebaseState;
+    store.setItem(CARRY_KEY, JSON.stringify({ v: 1, lang: "id", at: 1000, state: { ...s, repo: oldRepo } }));
+    const got = takeCarry("id", store, 1000);
+    expect(got?.repo.stash).toEqual([]);
+    expect(got?.repo.rebaseState).toBeNull();
+  });
+});
+
+describe("carry dengan stash/rebaseState rusak", () => {
+  it("stash bukan array → [], rebaseState bukan objek → null", () => {
+    for (const [stash, rebaseState] of [
+      ["rusak", "x"],
+      [{ 0: 1 }, [1, 2]],
+      [42, 7],
+    ] as const) {
+      const store = memory();
+      const s = midGame();
+      store.setItem(CARRY_KEY, JSON.stringify({ v: 1, lang: "id", at: 1000, state: { ...s, repo: { ...s.repo, stash, rebaseState } } }));
+      const got = takeCarry("id", store, 1000);
+      expect(got?.repo.stash).toEqual([]);
+      expect(got?.repo.rebaseState).toBeNull();
+    }
+  });
+
+  it("rebaseState objek yang sah dipertahankan", () => {
+    const store = memory();
+    const s = midGame();
+    const rs = { branch: "feature", onto: "a", originalTip: "b", current: null, remaining: [], conflicts: [] };
+    store.setItem(CARRY_KEY, JSON.stringify({ v: 1, lang: "id", at: 1000, state: { ...s, repo: { ...s.repo, rebaseState: rs } } }));
+    expect(takeCarry("id", store, 1000)?.repo.rebaseState).toEqual(rs);
+  });
+});

@@ -17,6 +17,16 @@ export type UiKey =
   | "caption.mergeCommit"
   | "caption.conflict"
   | "caption.conflictResolved"
+  | "caption.resetSoft"
+  | "caption.resetMixed"
+  | "caption.resetHard"
+  | "caption.revert"
+  | "caption.cherryPick"
+  | "caption.stashSaved"
+  | "caption.stashRestored"
+  | "caption.rebaseCopied"
+  | "caption.rebaseDone"
+  | "caption.rebaseAborted"
   | "caption.readOnly"
   | "game.notAllowed"
   | "ui.appTitle"
@@ -40,6 +50,7 @@ export type UiKey =
   | "ui.terminalInput"
   | "ui.editorTitle"
   | "ui.editorConflict"
+  | "ui.editorRebaseNote"
   | "ui.useOurs"
   | "ui.useTheirs"
   | "ui.saveChanges"
@@ -58,12 +69,16 @@ export type UiKey =
   | "ui.areaStaging"
   | "ui.areaStagingDesc"
   | "ui.areaStagingEmpty"
+  | "ui.areaStash"
+  | "ui.areaStashDesc"
+  | "ui.areaStashEmpty"
   | "ui.areaRepo"
   | "ui.areaRepoDesc"
   | "ui.areaRepoEmpty"
   | "ui.noteNew"
   | "ui.noteChanged"
-  | "ui.noteConflict";
+  | "ui.noteConflict"
+  | "ui.orphanNode";
 
 export type DictKey = MessageKey | UiKey;
 

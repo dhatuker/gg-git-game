@@ -6,6 +6,7 @@ import {
   failure,
   getHeadCommitId,
   hasUncommittedChanges,
+  inProgressBlock,
   success,
   untrackedFailure,
   untrackedOverwritten,
@@ -43,6 +44,8 @@ function moveTo(state: RepoState, target: string): CommandResult {
 
 /** Dipakai oleh `switch` dan `checkout`. */
 export const switchBranch: Handler = (state, args) => {
+  const blocked = state.rebaseState && inProgressBlock(state);
+  if (blocked) return blocked;
   const create = args[0] === "-c" || args[0] === "-b";
   const target = create ? args[1] : args[0];
   if (!target) {

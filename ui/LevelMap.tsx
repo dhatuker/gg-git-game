@@ -1,4 +1,8 @@
+"use client";
+
+import { useEffect, useRef } from "react";
 import { useLang } from "./LanguageProvider";
+import { scrollCurrentStop } from "./map-scroll";
 import type { Level } from "../levels/types";
 
 interface Props {
@@ -9,11 +13,16 @@ interface Props {
   onGoto: (index: number) => void;
 }
 
-/** Sepuluh level sebagai satu jalur dengan sepuluh stasiun. */
+/** Satu jalur stasiun per level */
 export function LevelMap({ levels, current, completed, unlocked, onGoto }: Props) {
   const { t, tl } = useLang();
+  const navRef = useRef<HTMLElement>(null);
+  // Jaga stasiun saat ini tetap terlihat di peta yang bisa digulir (mis. layar sempit).
+  useEffect(() => {
+    scrollCurrentStop(navRef.current);
+  }, [current]);
   return (
-    <nav className="gg-map" aria-label={t("ui.mapLabel")}>
+    <nav ref={navRef} className="gg-map" aria-label={t("ui.mapLabel")}>
       <ol>
         {levels.map((l, i) => {
           const done = completed.includes(l.id);

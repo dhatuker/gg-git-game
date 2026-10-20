@@ -147,7 +147,7 @@ describe("reduce", () => {
 
 describe("initGame", () => {
   it("mulai di level terakhir bila semua selesai", () => {
-    expect(initGame([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]).levelIndex).toBe(9);
+    expect(initGame([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]).levelIndex).toBe(16);
   });
 });
 
@@ -196,5 +196,28 @@ describe("caption berkunci", () => {
     s = run(s, "git init");
     expect(s.lines.at(-1)?.kind).toBe("error");
     expect(s.caption).toEqual({ key: "caption.repoCreated" });
+  });
+});
+
+describe("level 16 wajib rebase", () => {
+  it("reset --hard main lalu cherry-pick tidak menyelesaikan level 16", () => {
+    const index = 15;
+    const level = LEVELS[index];
+    const ids = ["Add profile page", "Style profile page"].map((m) => {
+      const c = Object.values(level.initialState.commits).find((x) => x.message === m);
+      if (!c) throw new Error(m);
+      return c.id;
+    });
+    let s = initGame(LEVELS.slice(0, index).map((l) => l.id));
+    expect(s.levelIndex).toBe(index);
+    s = run(s, "git reset --hard main");
+    for (const id of ids) s = run(s, `git cherry-pick ${id}`);
+    expect(level.isGoalReached(s.repo)).toBe(true);
+    expect(s.levelComplete).toBe(false);
+  });
+
+  it("level 16 dan 17 mewajibkan rebase", () => {
+    expect(LEVELS[15].mustRun).toEqual(["rebase"]);
+    expect(LEVELS[16].mustRun).toEqual(["rebase"]);
   });
 });

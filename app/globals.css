@@ -154,10 +154,10 @@ code,
   align-items: flex-start;
   position: relative;
   padding: 6px 4px;
-  min-width: 520px;
+  min-width: max-content;
 }
 .gg-map li {
-  flex: 1;
+  flex: 1 0 64px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -463,6 +463,11 @@ code,
   font-size: 0.9rem;
   line-height: 1.5;
 }
+/* Catatan rebase di bawah tombol pilihan konflik. */
+.gg-conflict-note .gg-conflict-subnote {
+  margin: 8px 0 0;
+  font-size: 0.85rem;
+}
 
 /* ---------- Graf ---------- */
 .gg-graph-panel {
@@ -551,6 +556,21 @@ code,
   stroke-width: 3;
   stroke-dasharray: 4 4;
 }
+.gg-node {
+  transition: opacity 400ms ease;
+}
+.gg-node-orphan {
+  opacity: 0.4;
+}
+.gg-node-orphan .gg-node-dot {
+  stroke-dasharray: 5 4;
+}
+.gg-edge.gg-edge-orphan {
+  opacity: 0.4;
+  stroke-dasharray: 0.07 0.05;
+  animation: none;
+  transition: opacity 400ms ease;
+}
 .gg-label {
   transition: transform 450ms cubic-bezier(0.3, 0.7, 0.2, 1);
 }
@@ -586,6 +606,15 @@ code,
   border: 2px solid var(--rail);
   padding: 10px 12px;
   min-width: 0;
+}
+.gg-areas-stash {
+  grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr;
+}
+.gg-area-stash {
+  border-style: dashed;
+}
+.gg-area-lit {
+  box-shadow: 0 0 0 3px var(--staging);
 }
 .gg-area-staging {
   border-color: var(--staging);

@@ -18,6 +18,7 @@ import { RichText } from "./RichText";
 import { loadCompleted, saveCompleted } from "./progress";
 import { Terminal } from "./Terminal";
 import { useEventQueue } from "./useEventQueue";
+import { activeConflicts } from "../engine/state";
 
 function Caption({ message }: { message: TMsg | null }) {
   const { line } = useLang();
@@ -105,7 +106,8 @@ function GameView() {
         {level.editor && (
           <FileEditor
             files={state.repo.files}
-            conflicts={state.repo.mergeState?.conflicts ?? []}
+            conflicts={activeConflicts(state.repo)}
+            rebasing={!!state.repo.rebaseState}
             onWrite={(file, content) => dispatch({ type: "write", file, content })}
             onResolve={(file, choice) => dispatch({ type: "resolve", file, choice })}
           />
@@ -126,7 +128,7 @@ function GameView() {
           <Caption message={state.caption} />
         </section>
         <section className="gg-panel" aria-label={t("ui.areasLabel")}>
-          <AreaPanel repo={state.repo} activeEvent={queue.active} />
+          <AreaPanel repo={state.repo} activeEvent={queue.active} showStash={level.allowedCommands.includes("stash")} />
         </section>
       </div>
     </div>

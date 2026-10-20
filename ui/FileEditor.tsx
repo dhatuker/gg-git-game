@@ -7,6 +7,7 @@ import type { Files } from "../engine/types";
 interface Props {
   files: Files;
   conflicts: string[];
+  rebasing: boolean;
   onWrite: (file: string, content: string) => void;
   onResolve: (file: string, choice: "ours" | "theirs") => void;
 }
@@ -26,7 +27,7 @@ function ContentEditor({ file, content, onSave }: { file: string; content: strin
   );
 }
 
-export function FileEditor({ files, conflicts, onWrite, onResolve }: Props) {
+export function FileEditor({ files, conflicts, rebasing, onWrite, onResolve }: Props) {
   const { t } = useLang();
   const names = Object.keys(files).sort();
   const [picked, setPicked] = useState<string | null>(null);
@@ -72,6 +73,11 @@ export function FileEditor({ files, conflicts, onWrite, onResolve }: Props) {
               {t("ui.useTheirs")}
             </button>
           </div>
+          {rebasing && (
+            <p className="gg-conflict-subnote">
+              <RichText text={t("ui.editorRebaseNote")} />
+            </p>
+          )}
         </div>
       )}
       {selected && (

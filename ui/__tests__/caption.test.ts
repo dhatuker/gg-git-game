@@ -26,6 +26,16 @@ describe("describeEvents", () => {
     { type: "merge-commit-dibuat", id: "abc1234", parents: ["a", "b"] },
     { type: "konflik-terjadi", files: ["a.txt"] },
     { type: "konflik-selesai" },
+    { type: "reset-dilakukan", mode: "soft", from: "a", to: "b" },
+    { type: "reset-dilakukan", mode: "mixed", from: "a", to: "b" },
+    { type: "reset-dilakukan", mode: "hard", from: "a", to: "b" },
+    { type: "revert-dibuat", id: "r1", reverted: "c1" },
+    { type: "cherry-pick-dibuat", id: "p1", source: "c1" },
+    { type: "stash-disimpan", files: ["a.txt", "b.txt"] },
+    { type: "stash-dipulihkan", files: ["a.txt"] },
+    { type: "rebase-commit-disalin", from: "a", to: "b" },
+    { type: "rebase-selesai", branch: "fitur", tip: "t1" },
+    { type: "rebase-dibatalkan", branch: "fitur" },
   ];
   it.each(all.map((e) => [e.type, e] as const))("event %s menghasilkan kalimat", (_t, e) => {
     const m = describeEvents([e]);
@@ -40,5 +50,30 @@ describe("describeEvents", () => {
       { type: "file-di-stage", file: "b.txt" },
     ]);
     expect(m).toEqual({ key: "caption.staged", params: { files: "`a.txt`, `b.txt`" } });
+  });
+
+  it.each(["soft", "mixed", "hard"] as const)("reset %s memilih kunci per mode", (mode) => {
+    const m = describeEvents([{ type: "reset-dilakukan", mode, from: "a", to: "b" }]);
+    const key = { soft: "caption.resetSoft", mixed: "caption.resetMixed", hard: "caption.resetHard" }[mode];
+    expect(m).toEqual({ key, params: { from: "a", to: "b" } });
+  });
+
+  it("revert, cherry-pick, dan rebase-selesai diprioritaskan atas event lain", () => {
+    const commit: GitEvent = { type: "commit-dibuat", id: "x", parents: ["p"] };
+    expect(describeEvents([commit, { type: "revert-dibuat", id: "x", reverted: "c" }])).toEqual({
+      key: "caption.revert",
+      params: { id: "x", reverted: "c" },
+    });
+    expect(describeEvents([commit, { type: "cherry-pick-dibuat", id: "x", source: "c" }])).toEqual({
+      key: "caption.cherryPick",
+      params: { id: "x", source: "c" },
+    });
+    expect(
+      describeEvents([
+        { type: "rebase-commit-disalin", from: "a", to: "b" },
+        { type: "rebase-commit-disalin", from: "c", to: "d" },
+        { type: "rebase-selesai", branch: "fitur", tip: "d" },
+      ]),
+    ).toEqual({ key: "caption.rebaseDone", params: { branch: "fitur", tip: "d" } });
   });
 });

@@ -28,6 +28,7 @@ export type MessageKey =
   | "status.unstaged"
   | "status.untracked"
   | "status.clean"
+  | "status.rebaseInProgress"
   // add
   | "add.nothingSpecified"
   | "add.missingFile"
@@ -35,6 +36,8 @@ export type MessageKey =
   | "add.conflictResolved"
   | "add.conflictsRemain"
   | "add.allConflictsResolved"
+  | "add.allConflictsResolvedRebase"
+  | "rebase.inProgress"
   | "add.nothingNew"
   // commit
   | "commit.needMessage"
@@ -70,7 +73,54 @@ export type MessageKey =
   | "merge.fastForward"
   | "merge.conflict"
   | "merge.conflictNext"
-  | "merge.commitCreated";
+  | "merge.commitCreated"
+  // reset
+  | "reset.noCommits"
+  | "reset.badFlag"
+  | "reset.soft"
+  | "reset.mixed"
+  | "reset.hard"
+  // revert dan cherry-pick
+  | "revert.needTarget"
+  | "revert.noCommits"
+  | "revert.isMerge"
+  | "revert.conflict"
+  | "revert.done"
+  | "revert.empty"
+  | "cherryPick.needTarget"
+  | "cherryPick.noCommits"
+  | "cherryPick.isMerge"
+  | "cherryPick.conflict"
+  | "cherryPick.done"
+  | "cherryPick.empty"
+  | "stash.unsupported"
+  | "stash.nothing"
+  | "stash.noCommits"
+  | "stash.empty"
+  | "stash.conflict"
+  | "stash.saved"
+  | "stash.popped"
+  | "stash.noneYet"
+  // rebase
+  | "rebase.needTarget"
+  | "rebase.notFound"
+  | "rebase.notOnBranch"
+  | "rebase.sameBranch"
+  | "rebase.hasMerges"
+  | "rebase.upToDate"
+  | "rebase.fastForward"
+  | "rebase.done"
+  | "rebase.conflict"
+  | "rebase.conflictNext"
+  | "rebase.notInProgress"
+  | "rebase.continueConflictsRemain"
+  | "rebase.continueUnstaged"
+  | "rebase.aborted"
+  // revision
+  | "revision.unknown"
+  | "revision.ambiguous"
+  | "revision.tooFar"
+  | "revision.unsupported";
 
 export type Params = Record<string, string | number>;
 

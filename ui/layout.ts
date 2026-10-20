@@ -1,4 +1,4 @@
-import { getHeadCommitId } from "../engine/state";
+import { getHeadCommitId, unreachableCommits } from "../engine/state";
 import type { RepoState } from "../engine/types";
 
 export interface GraphNode {
@@ -7,10 +7,12 @@ export interface GraphNode {
   x: number;
   y: number;
   lane: number;
+  orphan: boolean;
 }
 export interface GraphEdge {
   from: string;
   to: string;
+  orphan: boolean;
 }
 export interface GraphLabel {
   name: string;
@@ -69,14 +71,16 @@ export function computeGraphLayout(state: RepoState): GraphLayout {
     for (const id of chain) lane[id] = l;
   });
 
+  const orphans = new Set(unreachableCommits(state));
   const nodes: GraphNode[] = commits.map((c) => ({
     id: c.id,
     message: c.message,
     lane: lane[c.id],
+    orphan: orphans.has(c.id),
     x: depth[c.id] * X_STEP + PAD,
     y: lane[c.id] * Y_STEP + PAD,
   }));
-  const edges: GraphEdge[] = commits.flatMap((c) => c.parents.map((p) => ({ from: c.id, to: p })));
+  const edges: GraphEdge[] = commits.flatMap((c) => c.parents.map((p) => ({ from: c.id, to: p, orphan: orphans.has(c.id) || orphans.has(p) })));
   const labels: GraphLabel[] = orderedBranches(state).map((name) => ({ name, kind: "branch", commitId: state.branches[name] }));
   const headId = getHeadCommitId(state);
   if (headId) labels.push({ name: "HEAD", kind: "head", commitId: headId });

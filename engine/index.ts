@@ -6,6 +6,11 @@ import { log } from "./commands/log";
 import { merge } from "./commands/merge";
 import { init } from "./commands/init";
 import { status } from "./commands/status";
+import { reset } from "./commands/reset";
+import { revert } from "./commands/revert";
+import { cherryPick } from "./commands/cherry-pick";
+import { stash } from "./commands/stash";
+import { rebase } from "./commands/rebase";
 import { msg } from "./messages";
 import { parseInput } from "./parse";
 import { failure } from "./state";
@@ -22,6 +27,11 @@ export const HANDLERS: Record<string, Handler> = {
   switch: switchBranch,
   checkout: switchBranch,
   merge,
+  reset,
+  revert,
+  "cherry-pick": cherryPick,
+  stash,
+  rebase,
 };
 
 export function runCommand(state: RepoState, input: string): CommandResult {

@@ -56,7 +56,7 @@ export function GitGraph({ repo, layout, activeEvent }: Props) {
   const byId = new Map(layout.nodes.map((n) => [n.id, n]));
   const hl = highlightTargets(activeEvent, repo.branches);
   const { stacks, width, height, px, py, labelY } = graphGeometry(layout);
-  const conflictFrom = repo.mergeState ? repo.mergeState.fromCommit : null;
+  const conflictFrom = repo.mergeState?.fromCommit ?? repo.rebaseState?.current ?? null;
 
   return (
     <div className="gg-graph-scroll" ref={scrollRef}>
@@ -72,7 +72,7 @@ export function GitGraph({ repo, layout, activeEvent }: Props) {
                 key={`${e.from}-${e.to}`}
                 d={edgePath(child, parent, px, py)}
                 pathLength={1}
-                className={`gg-edge ${laneClass(lane)}`}
+                className={`gg-edge ${laneClass(lane)}${e.orphan ? " gg-edge-orphan" : ""}`}
               />
             );
           })}
@@ -82,8 +82,8 @@ export function GitGraph({ repo, layout, activeEvent }: Props) {
             const isMerge = repo.commits[n.id].parents.length > 1;
             const lit = hl.commits.includes(n.id);
             return (
-              <g key={n.id} className={`gg-node ${laneClass(n.lane)}${isMerge ? " gg-node-merge" : ""}`} transform={`translate(${px(n)} ${py(n)})`}>
-                <title>{`${n.id}: ${n.message}`}</title>
+              <g key={n.id} className={`gg-node ${laneClass(n.lane)}${isMerge ? " gg-node-merge" : ""}${n.orphan ? " gg-node-orphan" : ""}`} transform={`translate(${px(n)} ${py(n)})`}>
+                <title>{n.orphan ? `${n.id}: ${n.message} (${t("ui.orphanNode")})` : `${n.id}: ${n.message}`}</title>
                 {lit && <circle r={22} className="gg-node-halo" />}
                 {conflictFrom === n.id && <circle r={19} className="gg-node-conflict" />}
                 <circle r={isMerge ? 13 : 11} className="gg-node-dot" />

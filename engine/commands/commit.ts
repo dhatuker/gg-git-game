@@ -1,6 +1,6 @@
 import { msg, raw } from "../messages";
 import { shortHash } from "../hash";
-import { failure, getHeadCommitId, headSnapshot, success } from "../state";
+import { failure, getHeadCommitId, headSnapshot, inProgressBlock, success } from "../state";
 import type { Commit, GitEvent, Handler, RepoState } from "../types";
 
 function sameFiles(a: Record<string, string>, b: Record<string, string>): boolean {
@@ -24,6 +24,9 @@ export function createCommit(state: RepoState, message: string, parents: string[
 }
 
 export const commit: Handler = (state, args) => {
+  // Saat rebase, salinan commit dibuat oleh `git rebase --continue`, bukan `git commit`.
+  const blocked = state.rebaseState && inProgressBlock(state);
+  if (blocked) return blocked;
   const m = args.indexOf("-m");
   const message = m >= 0 ? args[m + 1] : undefined;
   if (!message || !message.trim()) {

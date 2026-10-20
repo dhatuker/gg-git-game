@@ -1,15 +1,18 @@
 import { msg, raw } from "../messages";
 import {
+  checkoutSnapshot,
   DIRTY_MESSAGE,
   failure,
   getHeadCommitId,
   hasUncommittedChanges,
+  inProgressBlock,
   isReachable,
   success,
   untrackedFailure,
   untrackedOverwritten,
 } from "../state";
-import type { Files, Handler, RepoState } from "../types";
+import type { Handler, RepoState } from "../types";
+import { threeWay } from "../threeway";
 import { createCommit } from "./commit";
 import { reachableCommits } from "./log";
 
@@ -19,13 +22,9 @@ function mergeBase(state: RepoState, a: string, b: string): string | null {
   return common ? common.id : null;
 }
 
-function withUntracked(state: RepoState, snapshot: Files): Files {
-  const files: Files = {};
-  for (const [p, c] of Object.entries(state.files)) if (!(p in state.index)) files[p] = c;
-  return { ...files, ...snapshot };
-}
-
 export const merge: Handler = (state, args) => {
+  const blocked = state.rebaseState && inProgressBlock(state);
+  if (blocked) return blocked;
   const target = args[0];
   if (!target) return failure(state, msg("merge.needTarget"), "fatal: No commit specified and merge.defaultToUpstream not set.");
   if (state.mergeState) {
@@ -58,7 +57,7 @@ export const merge: Handler = (state, args) => {
         ? { ...state, branches: { ...state.branches, [state.head.name]: theirs } }
         : { ...state, head: { type: "detached", id: theirs } };
     return success(
-      { ...moved, files: withUntracked(state, snapshot), index: { ...snapshot } },
+      { ...moved, ...checkoutSnapshot(state, snapshot) },
       [msg("merge.fastForward", { branch: branchLabel, to: theirs }), raw(`Updating ${ours}..${theirs}`), raw("Fast-forward")],
       [{ type: "merge-fast-forward", branch: branchLabel, to: theirs }],
     );
@@ -68,28 +67,13 @@ export const merge: Handler = (state, args) => {
   const b = baseId ? state.commits[baseId].snapshot : {};
   const o = state.commits[ours].snapshot;
   const t = state.commits[theirs].snapshot;
-  const merged: Files = {};
-  const conflictFiles: Files = {};
-  const conflicts: string[] = [];
-  for (const p of [...new Set([...Object.keys(b), ...Object.keys(o), ...Object.keys(t)])].sort()) {
-    let value: string | undefined;
-    if (o[p] === t[p]) value = o[p];
-    else if (b[p] === o[p]) value = t[p];
-    else if (b[p] === t[p]) value = o[p];
-    else {
-      conflicts.push(p);
-      conflictFiles[p] = `<<<<<<< HEAD\n${o[p] ?? ""}\n=======\n${t[p] ?? ""}\n>>>>>>> ${target}`;
-      if (o[p] !== undefined) merged[p] = o[p];
-      continue;
-    }
-    if (value !== undefined) merged[p] = value;
-  }
+  const { merged, conflictFiles, conflicts } = threeWay(b, o, t, target);
 
   const clobbered = untrackedOverwritten(state, { ...merged, ...conflictFiles });
   if (clobbered.length) return untrackedFailure(state, clobbered, "merge");
 
   if (conflicts.length > 0) {
-    const files = { ...withUntracked(state, merged), ...conflictFiles };
+    const files = { ...checkoutSnapshot(state, merged).files, ...conflictFiles };
     return success(
       { ...state, files, index: merged, mergeState: { from: target, fromCommit: theirs, conflicts } },
       [
@@ -102,7 +86,7 @@ export const merge: Handler = (state, args) => {
     );
   }
 
-  const prepared = { ...state, files: withUntracked(state, merged), index: merged };
+  const prepared = { ...state, ...checkoutSnapshot(state, merged) };
   const message = `Merge branch '${target}'`;
   const made = createCommit(prepared, message, [ours, theirs]);
   return success(made.state, [msg("merge.commitCreated", { id: made.commit.id }), raw("Merge made by the 'ort' strategy.")], [

@@ -57,7 +57,14 @@ export function takeCarry(lang: Lang, storage?: Pick<Storage, "getItem" | "remov
     const parsed: unknown = JSON.parse(raw);
     if (!isObj(parsed) || parsed.v !== 1 || parsed.lang !== lang || !isNum(parsed.at)) return null;
     if (now - parsed.at > CARRY_MAX_AGE_MS || now < parsed.at) return null;
-    return isGameState(parsed.state) ? { ...parsed.state, events: [] } : null;
+    if (!isGameState(parsed.state)) return null;
+    // Simpanan lama belum punya stash/rebaseState: isi nilai awalnya agar tetap bisa dimuat.
+    const repo = parsed.state.repo;
+    // Bentuk rusak (bukan array / bukan objek) juga dinormalisasi agar engine tidak tersandung.
+    const loose = repo as unknown as Record<string, unknown>;
+    const stash = Array.isArray(loose.stash) ? repo.stash : [];
+    const rebaseState = isObj(loose.rebaseState) ? repo.rebaseState : null;
+    return { ...parsed.state, repo: { ...repo, stash, rebaseState }, events: [] };
   } catch {
     return null;
   }

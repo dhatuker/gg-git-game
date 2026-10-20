@@ -125,3 +125,57 @@ describe("berbagi jalur", () => {
     expect(lanes.size).toBe(3);
   });
 });
+
+describe("computeGraphLayout: node yatim", () => {
+  const linear = () => {
+    let s = commitFile(init(), "a", "1", "satu");
+    s = commitFile(s, "a", "2", "dua");
+    return commitFile(s, "a", "3", "tiga");
+  };
+
+  it("tanpa reset tidak ada node yatim", () => {
+    const l = computeGraphLayout(linear());
+    expect(l.nodes.every((n) => !n.orphan)).toBe(true);
+    expect(l.edges.every((e) => !e.orphan)).toBe(true);
+  });
+
+  it("setelah reset --hard HEAD~1 commit teratas yatim beserta edge-nya", () => {
+    const before = linear();
+    const top = before.branches.main;
+    const l = computeGraphLayout(run(before, "git reset --hard HEAD~1"));
+    expect(l.nodes.filter((n) => n.orphan).map((n) => n.id)).toEqual([top]);
+    expect(l.nodes.every((n) => typeof n.lane === "number")).toBe(true);
+    for (const e of l.edges) expect(e.orphan).toBe(e.from === top || e.to === top);
+    expect(l.edges.some((e) => e.orphan)).toBe(true);
+  });
+
+  function rebaseSetup(conflict: boolean) {
+    let s = commitFile(init(), "a", "1", "dasar");
+    s = run(s, "git switch -c fitur");
+    s = commitFile(s, conflict ? "a" : "b", "f1", "f1");
+    s = commitFile(s, "c", "f2", "f2");
+    const orig = [s.branches.fitur, s.commits[s.branches.fitur].parents[0]];
+    s = run(s, "git switch main");
+    s = commitFile(s, conflict ? "a" : "d", "m1", "m1");
+    s = run(s, "git switch fitur");
+    return { s, orig };
+  }
+
+  it("setelah rebase selesai dua commit asli yatim, salinan tidak", () => {
+    const { s, orig } = rebaseSetup(false);
+    const done = run(s, "git rebase main");
+    expect(done.rebaseState).toBeFalsy();
+    const l = computeGraphLayout(done);
+    expect(l.nodes.filter((n) => n.orphan).map((n) => n.id).sort()).toEqual([...orig].sort());
+    expect(l.nodes.find((n) => n.id === done.branches.fitur)!.orphan).toBe(false);
+  });
+
+  it("selama rebase berhenti karena konflik commit asli belum yatim", () => {
+    const { s } = rebaseSetup(true);
+    const r = runCommand(s, "git rebase main");
+    const st = r.state;
+    expect(st.rebaseState).toBeTruthy();
+    const l = computeGraphLayout(st);
+    expect(l.nodes.some((n) => n.orphan)).toBe(false);
+  });
+});

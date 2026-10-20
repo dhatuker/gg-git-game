@@ -1,5 +1,5 @@
 import { msg, type OutputLine } from "../messages";
-import { failure, success } from "../state";
+import { failure, markResolved, success } from "../state";
 import type { GitEvent, Handler } from "../types";
 
 export const add: Handler = (state, args) => {
@@ -24,22 +24,19 @@ export const add: Handler = (state, args) => {
       events.push({ type: "file-di-stage", file: p });
     }
   }
-  const mergeState = state.mergeState
-    ? { ...state.mergeState, conflicts: state.mergeState.conflicts.filter((c) => !paths.includes(c)) }
-    : null;
-  const resolved = state.mergeState ? state.mergeState.conflicts.filter((c) => paths.includes(c)) : [];
+  const { state: marked, resolved, remaining } = markResolved(state, paths);
   const lines: OutputLine[] = [];
   if (events.length) {
     lines.push(msg("add.staged", { files: events.map((e) => (e.type === "file-di-stage" ? e.file : "")).join(", ") }));
   }
-  if (resolved.length && mergeState) {
+  if (resolved.length && remaining) {
     lines.push(msg("add.conflictResolved", { files: resolved.join(", ") }));
     lines.push(
-      mergeState.conflicts.length
-        ? msg("add.conflictsRemain", { files: mergeState.conflicts.join(", ") })
-        : msg("add.allConflictsResolved"),
+      remaining.length
+        ? msg("add.conflictsRemain", { files: remaining.join(", ") })
+        : msg(state.mergeState ? "add.allConflictsResolved" : "add.allConflictsResolvedRebase"),
     );
   }
   if (lines.length === 0) lines.push(msg("add.nothingNew"));
-  return success({ ...state, index, mergeState }, lines, events);
+  return success({ ...marked, index }, lines, events);
 };

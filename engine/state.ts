@@ -10,6 +10,8 @@ export function createEmptyRepo(files: Files = {}): RepoState {
     branches: {},
     head: { type: "branch", name: "main" },
     mergeState: null,
+    stash: [],
+    rebaseState: null,
   };
 }
 
@@ -89,3 +91,71 @@ export function isValidBranchName(name: string): boolean {
 
 export const DIRTY_MESSAGE: Msg = msg("state.dirty");
 export const DIRTY_GIT = "error: Your local changes would be overwritten.\nPlease commit your changes or stash them before you switch branches.";
+
+/** Daftar file konflik dari merge atau rebase yang sedang berjalan. */
+export function activeConflicts(state: RepoState): string[] {
+  if (state.mergeState) return state.mergeState.conflicts;
+  if (state.rebaseState) return state.rebaseState.conflicts;
+  return [];
+}
+
+/** Commit sumber versi `ours` (HEAD) dan `theirs` untuk konflik aktif; null bila tak ada konflik. */
+export function conflictSources(state: RepoState): { ours: string; theirs: string } | null {
+  const ours = getHeadCommitId(state) as string;
+  if (state.mergeState) return { ours, theirs: state.mergeState.fromCommit };
+  if (state.rebaseState && state.rebaseState.current) return { ours, theirs: state.rebaseState.current };
+  return null;
+}
+
+/** Buang `paths` dari daftar konflik state aktif. `remaining` null bila tak ada state konflik. */
+export function markResolved(
+  state: RepoState,
+  paths: string[],
+): { state: RepoState; resolved: string[]; remaining: string[] | null } {
+  if (state.mergeState) {
+    const resolved = state.mergeState.conflicts.filter((c) => paths.includes(c));
+    const remaining = state.mergeState.conflicts.filter((c) => !paths.includes(c));
+    return { state: { ...state, mergeState: { ...state.mergeState, conflicts: remaining } }, resolved, remaining };
+  }
+  if (state.rebaseState) {
+    const resolved = state.rebaseState.conflicts.filter((c) => paths.includes(c));
+    const remaining = state.rebaseState.conflicts.filter((c) => !paths.includes(c));
+    return { state: { ...state, rebaseState: { ...state.rebaseState, conflicts: remaining } }, resolved, remaining };
+  }
+  return { state, resolved: [], remaining: null };
+}
+
+/** Id commit yang tak terjangkau dari branch, HEAD, atau state merge/rebase; urut seq menurun. */
+export function unreachableCommits(state: RepoState): string[] {
+  const roots = [...Object.values(state.branches)];
+  const head = getHeadCommitId(state);
+  if (head) roots.push(head);
+  if (state.mergeState) roots.push(state.mergeState.fromCommit);
+  if (state.rebaseState) {
+    roots.push(state.rebaseState.originalTip);
+    if (state.rebaseState.current) roots.push(state.rebaseState.current);
+  }
+  const seen = new Set<string>();
+  const stack = [...roots];
+  while (stack.length) {
+    const cur = stack.pop() as string;
+    if (seen.has(cur) || !state.commits[cur]) continue;
+    seen.add(cur);
+    stack.push(...state.commits[cur].parents);
+  }
+  return Object.values(state.commits)
+    .filter((c) => !seen.has(c.id))
+    .sort((a, b) => b.seq - a.seq)
+    .map((c) => c.id);
+}
+
+/** Gagal bila rebase atau merge sedang berjalan; null bila bersih. */
+export function inProgressBlock(state: RepoState): CommandResult | null {
+  if (state.rebaseState) {
+    return failure(state, msg("rebase.inProgress"), "fatal: It seems that there is already a rebase-merge directory");
+  }
+  if (state.mergeState) {
+    return failure(state, msg("merge.inProgress"), "fatal: You have not concluded your merge (MERGE_HEAD exists).");
+  }
+  return null;
+}

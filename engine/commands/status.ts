@@ -1,5 +1,5 @@
 import { msg, raw, type MessageKey, type OutputLine } from "../messages";
-import { headSnapshot, success } from "../state";
+import { activeConflicts, headSnapshot, success } from "../state";
 import type { Handler } from "../types";
 
 export const status: Handler = (state) => {
@@ -10,14 +10,16 @@ export const status: Handler = (state) => {
   const lines: OutputLine[] = [
     state.head.type === "branch" ? msg("status.onBranch", { branch: state.head.name }) : msg("status.detached", { id: state.head.id }),
   ];
+  if (state.rebaseState) lines.push(msg("status.rebaseInProgress", { branch: state.rebaseState.branch }));
+  const headerLines = lines.length;
   const section = (title: MessageKey, paths: string[]) => {
     if (paths.length === 0) return;
     lines.push(raw(""), msg(title), ...paths.sort().map((p) => raw(`    ${p}`)));
   };
-  section("status.conflicts", state.mergeState ? [...state.mergeState.conflicts] : []);
+  section("status.conflicts", [...activeConflicts(state)]);
   section("status.staged", staged);
   section("status.unstaged", unstaged);
   section("status.untracked", untracked);
-  if (lines.length === 1) lines.push(raw(""), msg("status.clean"), raw("nothing to commit, working tree clean"));
+  if (lines.length === headerLines) lines.push(raw(""), msg("status.clean"), raw("nothing to commit, working tree clean"));
   return success(state, lines);
 };

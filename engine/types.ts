@@ -18,6 +18,21 @@ export interface MergeState {
   conflicts: string[];
 }
 
+export interface StashEntry {
+  files: Files;
+  index: Files;
+  baseCommit: string | null;
+}
+
+export interface RebaseState {
+  branch: string;
+  onto: string;
+  originalTip: string;
+  current: string | null;
+  remaining: string[];
+  conflicts: string[];
+}
+
 export interface RepoState {
   initialized: boolean;
   files: Files;
@@ -26,6 +41,8 @@ export interface RepoState {
   branches: Record<string, string>;
   head: Head;
   mergeState: MergeState | null;
+  stash: StashEntry[];
+  rebaseState: RebaseState | null;
 }
 
 export type GitEvent =
@@ -39,7 +56,15 @@ export type GitEvent =
   | { type: "merge-fast-forward"; branch: string; to: string }
   | { type: "merge-commit-dibuat"; id: string; parents: [string, string] }
   | { type: "konflik-terjadi"; files: string[] }
-  | { type: "konflik-selesai" };
+  | { type: "konflik-selesai" }
+  | { type: "reset-dilakukan"; mode: "soft" | "mixed" | "hard"; from: string; to: string }
+  | { type: "revert-dibuat"; id: string; reverted: string }
+  | { type: "cherry-pick-dibuat"; id: string; source: string }
+  | { type: "stash-disimpan"; files: string[] }
+  | { type: "stash-dipulihkan"; files: string[] }
+  | { type: "rebase-commit-disalin"; from: string; to: string }
+  | { type: "rebase-selesai"; branch: string; tip: string }
+  | { type: "rebase-dibatalkan"; branch: string };
 
 export interface CommandResult {
   state: RepoState;

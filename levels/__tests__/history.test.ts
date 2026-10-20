@@ -18,7 +18,7 @@ describe.each(LEVELS.slice(4).map((l) => [l.id, l] as const))("level %i: proyek 
   });
 
   it("branch tim yang sudah di-merge tidak menyisakan label", () => {
-    for (const name of Object.keys(level.initialState.branches)) expect(["main", "feature"]).toContain(name);
+    for (const name of Object.keys(level.initialState.branches)) expect(["main", "feature", "hotfix", "experiment"]).toContain(name);
   });
 
   it("graf tidak punya node bertumpuk, sebelum maupun sesudah solusi", () => {

@@ -16,3 +16,11 @@ describe("kamus", () => {
     expect(params(en)).toEqual(params(id));
   });
 });
+
+describe("state.dirty", () => {
+  it.each(["id", "en"] as const)("%s: netral dan menyebut git stash sebagai pilihan", (lang) => {
+    const text = DICTS[lang]["state.dirty"];
+    expect(text).toContain("git stash");
+    expect(text).not.toMatch(/switching or merging|pindah atau merge/);
+  });
+});
