@@ -100,4 +100,10 @@ describe("describeEvents", () => {
       ]),
     ).toEqual({ key: "caption.rebaseDone", params: { branch: "fitur", tip: "d" } });
   });
+
+  it("push-berhasil dan clone-selesai tidak kalah oleh commit-dibuat", () => {
+    const commit: GitEvent = { type: "commit-dibuat", id: "x", parents: ["p"] };
+    expect(describeEvents([commit, { type: "push-berhasil", from: "a", to: "b", count: 1 }])?.key).toBe("caption.push");
+    expect(describeEvents([commit, { type: "clone-selesai", tip: "x" }])?.key).toBe("caption.clone");
+  });
 });

@@ -18,3 +18,12 @@ describe("highlightTargets (v2a)", () => {
     expect(highlightTargets(e, {})).toEqual(expected);
   });
 });
+
+describe("highlightTargets (v2b)", () => {
+  it("push-berhasil menyorot commit to dan label origin/main", () => {
+    expect(highlightTargets({ type: "push-berhasil", from: "a", to: "b", count: 1 }, {})).toEqual({ commits: ["b"], labels: ["origin/main"], files: [] });
+  });
+  it("fetch-selesai menyorot commit to", () => {
+    expect(highlightTargets({ type: "fetch-selesai", from: "a", to: "b" }, {})).toEqual({ commits: ["b"], labels: [], files: [] });
+  });
+});

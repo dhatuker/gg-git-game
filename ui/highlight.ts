@@ -37,12 +37,16 @@ export function highlightTargets(e: GitEvent | null, branches: Record<string, st
       return { commits: [e.to], labels: [], files: [] };
     case "rebase-selesai":
       return { commits: [e.tip], labels: [e.branch], files: [] };
+    case "push-berhasil":
+      return { commits: [e.to], labels: ["origin/main"], files: [] };
+    case "fetch-selesai":
+      return { commits: [e.to], labels: [], files: [] };
     default:
       return none;
   }
 }
 
-export type AreaColumn = "working" | "staging" | "stash";
+export type AreaColumn = "working" | "staging" | "stash" | "remote" | "repo";
 
 /** Kolom area yang disorot untuk satu event (null bila tidak ada). */
 export function litColumn(e: GitEvent | null): AreaColumn | null {
@@ -56,6 +60,11 @@ export function litColumn(e: GitEvent | null): AreaColumn | null {
       return "stash";
     case "reset-dilakukan":
       return e.mode === "soft" ? "staging" : e.mode === "mixed" ? "working" : null;
+    case "push-berhasil":
+      return "remote";
+    case "fetch-selesai":
+    case "clone-selesai":
+      return "repo";
     default:
       return null;
   }

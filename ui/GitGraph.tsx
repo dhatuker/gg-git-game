@@ -56,6 +56,7 @@ export function GitGraph({ repo, layout, activeEvent }: Props) {
   const byId = new Map(layout.nodes.map((n) => [n.id, n]));
   const hl = highlightTargets(activeEvent, repo.branches);
   const { stacks, width, height, px, py, labelY } = graphGeometry(layout);
+  const remoteNames = new Set(layout.labels.filter((l) => l.kind === "remote").map((l) => l.name));
   const conflictFrom = repo.mergeState?.fromCommit ?? repo.rebaseState?.current ?? null;
 
   return (
@@ -102,11 +103,12 @@ export function GitGraph({ repo, layout, activeEvent }: Props) {
               const w = pillWidth(name);
               const isHead = name === "HEAD";
               const style: CSSProperties = { transform: `translate(${px(node) - w / 2}px, ${labelY(node, i)}px)` };
-              const lane = isHead ? 0 : (byId.get(repo.branches[name])?.lane ?? 0);
+              const isRemote = remoteNames.has(name);
+              const lane = isHead ? 0 : isRemote ? node.lane : (byId.get(repo.branches[name])?.lane ?? 0);
               return (
                 <g
                   key={`label-${name}`}
-                  className={`gg-label ${isHead ? "gg-label-head" : laneClass(lane)}${hl.labels.includes(name) ? " gg-label-lit" : ""}`}
+                  className={`gg-label ${isHead ? "gg-label-head" : laneClass(lane)}${isRemote ? " gg-label-remote" : ""}${hl.labels.includes(name) ? " gg-label-lit" : ""}`}
                   style={style}
                 >
                   <rect width={w} height={21} rx={10.5} />

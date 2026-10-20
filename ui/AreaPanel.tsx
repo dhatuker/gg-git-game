@@ -1,6 +1,7 @@
+import type React from "react";
 import { useLang } from "./LanguageProvider";
 import type { GitEvent, RepoState } from "../engine/types";
-import { activeConflicts, headSnapshot } from "../engine/state";
+import { activeConflicts, connectedRemote, headSnapshot } from "../engine/state";
 import { highlightTargets, litColumn as litColumnOf } from "./highlight";
 
 /** `note` juga dipakai sebagai nama kelas CSS (gg-chip-baru, dst.), jadi nilainya tetap; labelnya diterjemahkan. */
@@ -8,7 +9,7 @@ type Chip = { file: string; note?: "baru" | "diubah" | "konflik" };
 
 const NOTE_KEY = { baru: "ui.noteNew", diubah: "ui.noteChanged", konflik: "ui.noteConflict" } as const;
 
-export function columns(repo: RepoState): { working: Chip[]; staging: Chip[]; committed: Chip[]; stash: Chip[] } {
+export function columns(repo: RepoState): { working: Chip[]; staging: Chip[]; committed: Chip[]; stash: Chip[]; remote: Chip[] } {
   const head = headSnapshot(repo);
   const conflicts = activeConflicts(repo);
   const working: Chip[] = [];
@@ -25,22 +26,53 @@ export function columns(repo: RepoState): { working: Chip[]; staging: Chip[]; co
     .sort()
     .map((file) => ({ file }));
   const stash: Chip[] = repo.stash.map((_, i) => ({ file: `stash@{${i}}` }));
-  return { working, staging, committed, stash };
+  const remote: Chip[] = connectedRemote(repo) ? [{ file: "origin/main" }] : [];
+  return { working, staging, committed, stash, remote };
+}
+
+/** Ringkasan lokal vs remote; `behind` dihitung terhadap ujung remote sebenarnya, bukan hanya `origin/main` lokal. */
+export function remoteSummary(repo: RepoState): { ahead: number; behind: number; tip: { id: string; message: string } } | null {
+  const remote = connectedRemote(repo);
+  const local = repo.branches.main;
+  const tipId = remote?.branches.main;
+  if (!remote || !local || !tipId) return null;
+  const all = { ...repo.commits, ...remote.commits };
+  if (!all[local] || !all[tipId]) return null;
+  const reach = (from: string): Set<string> => {
+    const seen = new Set<string>();
+    const stack = [from];
+    while (stack.length) {
+      const cur = stack.pop() as string;
+      if (seen.has(cur) || !all[cur]) continue;
+      seen.add(cur);
+      stack.push(...all[cur].parents);
+    }
+    return seen;
+  };
+  const mine = reach(local);
+  const theirs = reach(tipId);
+  return {
+    ahead: [...mine].filter((id) => !theirs.has(id)).length,
+    behind: [...theirs].filter((id) => !mine.has(id)).length,
+    tip: { id: tipId, message: all[tipId].message },
+  };
 }
 
 interface Props {
   repo: RepoState;
   activeEvent: GitEvent | null;
   showStash: boolean;
+  showRemote: boolean;
 }
 
-export function AreaPanel({ repo, activeEvent, showStash }: Props) {
+export function AreaPanel({ repo, activeEvent, showStash, showRemote }: Props) {
   const { t } = useLang();
-  const { working, staging, committed, stash } = columns(repo);
+  const { working, staging, committed, stash, remote } = columns(repo);
+  const summary = remoteSummary(repo);
   const files = highlightTargets(activeEvent, repo.branches).files;
   // Sorot kolom tempat perubahan "tiba" (lihat litColumnOf).
   const litColumn = litColumnOf(activeEvent);
-  const col = (key: string, title: string, desc: string, chips: Chip[], empty: string) => (
+  const col = (key: string, title: string, desc: string, chips: Chip[], empty: string, extra?: React.ReactNode) => (
     <section className={`gg-area gg-area-${key}${litColumn === key ? " gg-area-lit" : ""}`} aria-label={title}>
       <h3>{title}</h3>
       <p className="gg-area-desc">{desc}</p>
@@ -56,10 +88,11 @@ export function AreaPanel({ repo, activeEvent, showStash }: Props) {
           </li>
         ))}
       </ul>
+      {extra}
     </section>
   );
   return (
-    <div className={`gg-areas${showStash ? " gg-areas-stash" : ""}`}>
+    <div className={`gg-areas${showStash ? " gg-areas-stash" : ""}${showRemote ? " gg-areas-remote" : ""}`}>
       {col("working", t("ui.areaWorking"), t("ui.areaWorkingDesc"), working, t("ui.areaWorkingEmpty"))}
       <span className="gg-area-step" aria-hidden="true">git add</span>
       {col("staging", t("ui.areaStaging"), t("ui.areaStagingDesc"), staging, t("ui.areaStagingEmpty"))}
@@ -69,6 +102,19 @@ export function AreaPanel({ repo, activeEvent, showStash }: Props) {
         <>
           <span className="gg-area-step gg-area-step-stash" aria-hidden="true">git stash / git stash pop</span>
           {col("stash", t("ui.areaStash"), t("ui.areaStashDesc"), stash, t("ui.areaStashEmpty"))}
+        </>
+      )}
+      {showRemote && (
+        <>
+          <span className="gg-area-step gg-area-step-remote" aria-hidden="true">git push / git pull</span>
+          {col("remote", t("ui.areaRemote"), t("ui.areaRemoteDesc"), remote, t("ui.areaRemoteEmpty"), summary && (
+            <p className="gg-remote-summary">
+              {summary.ahead === 0 && summary.behind === 0 && t("ui.remoteSynced")}
+              {summary.ahead > 0 && <span>{t("ui.remoteAhead", { n: summary.ahead })}</span>}
+              {summary.behind > 0 && <span>{t("ui.remoteBehind", { n: summary.behind })}</span>}
+              <span className="gg-remote-tip">{summary.tip.id}: {summary.tip.message}</span>
+            </p>
+          ))}
         </>
       )}
     </div>

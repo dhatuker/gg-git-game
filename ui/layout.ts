@@ -16,7 +16,7 @@ export interface GraphEdge {
 }
 export interface GraphLabel {
   name: string;
-  kind: "branch" | "head";
+  kind: "branch" | "head" | "remote";
   commitId: string;
 }
 export interface GraphLayout {
@@ -54,6 +54,7 @@ export function computeGraphLayout(state: RepoState): GraphLayout {
     chains.push(chain);
   };
   for (const name of orderedBranches(state)) claim(state.branches[name]);
+  for (const name of Object.keys(state.remoteRefs ?? {}).sort()) claim(state.commits[state.remoteRefs[name]] ? state.remoteRefs[name] : undefined);
   if (state.head.type === "detached") claim(state.head.id);
   for (const c of [...commits].reverse()) claim(c.id);
 
@@ -82,6 +83,9 @@ export function computeGraphLayout(state: RepoState): GraphLayout {
   }));
   const edges: GraphEdge[] = commits.flatMap((c) => c.parents.map((p) => ({ from: c.id, to: p, orphan: orphans.has(c.id) || orphans.has(p) })));
   const labels: GraphLabel[] = orderedBranches(state).map((name) => ({ name, kind: "branch", commitId: state.branches[name] }));
+  for (const name of Object.keys(state.remoteRefs ?? {}).sort()) {
+    if (state.commits[state.remoteRefs[name]]) labels.push({ name: `origin/${name}`, kind: "remote", commitId: state.remoteRefs[name] });
+  }
   const headId = getHeadCommitId(state);
   if (headId) labels.push({ name: "HEAD", kind: "head", commitId: headId });
 

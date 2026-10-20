@@ -128,7 +128,9 @@ function GameView() {
           <Caption message={state.caption} />
         </section>
         <section className="gg-panel" aria-label={t("ui.areasLabel")}>
-          <AreaPanel repo={state.repo} activeEvent={queue.active} showStash={level.allowedCommands.includes("stash")} />
+          <AreaPanel repo={state.repo} activeEvent={queue.active} showStash={level.allowedCommands.includes("stash")}
+            showRemote={level.allowedCommands.includes("push")}
+          />
         </section>
       </div>
     </div>

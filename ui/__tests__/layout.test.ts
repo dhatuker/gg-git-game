@@ -4,6 +4,7 @@ import { writeFile } from "../../engine/files";
 import { createEmptyRepo } from "../../engine/state";
 import type { RepoState } from "../../engine/types";
 import { computeGraphLayout } from "../layout";
+import { attachRemote, teammateCommit } from "../../engine/__tests__/helpers";
 
 function run(s: RepoState, input: string): RepoState {
   const r = runCommand(s, input);
@@ -177,5 +178,30 @@ describe("computeGraphLayout: node yatim", () => {
     expect(st.rebaseState).toBeTruthy();
     const l = computeGraphLayout(st);
     expect(l.nodes.some((n) => n.orphan)).toBe(false);
+  });
+});
+
+describe("computeGraphLayout remote", () => {
+  it("tanpa remoteRefs tidak ada label remote", () => {
+    const l = computeGraphLayout(commitFile(init(), "a", "1", "satu"));
+    expect(l.labels.some((x) => x.kind === "remote")).toBe(false);
+  });
+  it("label origin/main di commit remoteRefs.main", () => {
+    let s = commitFile(init(), "a", "1", "satu");
+    s = attachRemote(s);
+    s = commitFile(s, "a", "2", "dua");
+    const l = computeGraphLayout(s);
+    expect(l.labels).toContainEqual({ name: "origin/main", kind: "remote", commitId: s.remoteRefs.main });
+    expect(l.nodes.find((n) => n.id === s.remoteRefs.main)?.lane).toBe(0);
+  });
+  it("commit yang hanya terjangkau dari origin/main mendapat lane", () => {
+    let s = attachRemote(commitFile(init(), "a", "1", "satu"));
+    s = teammateCommit(s, "t", "1", "teman");
+    const tip = s.remote!.branches.main;
+    s = { ...s, commits: { ...s.commits, [tip]: s.remote!.commits[tip] }, remoteRefs: { main: tip } };
+    const l = computeGraphLayout(s);
+    const n = l.nodes.find((x) => x.id === tip)!;
+    expect(typeof n.lane).toBe("number");
+    expect(l.labels.find((x) => x.kind === "remote")?.commitId).toBe(tip);
   });
 });

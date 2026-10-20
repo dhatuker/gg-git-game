@@ -589,6 +589,15 @@ code,
 .gg-label-head text {
   fill: var(--panel);
 }
+.gg-label-remote rect {
+  fill: var(--panel);
+  stroke: var(--lane-color);
+  stroke-width: 2;
+  stroke-dasharray: 4 3;
+}
+.gg-label-remote text {
+  fill: var(--ink);
+}
 .gg-label-lit rect {
   stroke: var(--staging);
   stroke-width: 3;
@@ -612,6 +621,40 @@ code,
 }
 .gg-area-stash {
   border-style: dashed;
+}
+.gg-areas-remote {
+  grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr;
+}
+.gg-areas-stash.gg-areas-remote {
+  grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr auto 1fr;
+}
+.gg-area-remote {
+  border-style: dotted;
+}
+.gg-remote-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+.gg-remote-tip {
+  color: var(--muted);
+  font-weight: 400;
+  font-family: var(--font-overpass-mono), ui-monospace, monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (max-width: 1100px) and (min-width: 641px) {
+  .gg-areas-remote,
+  .gg-areas-stash.gg-areas-remote {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+  .gg-areas-remote .gg-area-step {
+    display: none;
+  }
 }
 .gg-area-lit {
   box-shadow: 0 0 0 3px var(--staging);
@@ -683,7 +726,9 @@ code,
   font-size: 0.8rem;
 }
 @media (max-width: 640px) {
-  .gg-areas {
+  .gg-areas,
+  .gg-areas-remote,
+  .gg-areas-stash.gg-areas-remote {
     grid-template-columns: 1fr;
   }
   .gg-area-step {
