@@ -11,7 +11,8 @@ import {
   untrackedFailure,
   untrackedOverwritten,
 } from "../state";
-import type { Handler, RepoState } from "../types";
+import type { CommandResult, Handler, RepoState } from "../types";
+import { resolveRef } from "../revision";
 import { threeWay } from "../threeway";
 import { createCommit } from "./commit";
 import { reachableCommits } from "./log";
@@ -34,12 +35,20 @@ export const merge: Handler = (state, args) => {
       "fatal: You have not concluded your merge (MERGE_HEAD exists).",
     );
   }
-  if (!(target in state.branches)) {
+  const theirs = resolveRef(state, target);
+  if (!theirs) {
     return failure(state, msg("merge.notFound", { branch: target }), `merge: ${target} - not something we can merge`);
   }
+  const message = target.startsWith("origin/") ? `Merge remote-tracking branch '${target}'` : `Merge branch '${target}'`;
+  return mergeCommit(state, theirs, target, message);
+};
+
+/** Inti merge: dari "sudah terbaru" sampai merge commit atau konflik. `label` dipakai untuk pesan dan mergeState.from. */
+export function mergeCommit(state: RepoState, targetId: string, label: string, mergeMessage: string): CommandResult {
+  const target = label;
+  const theirs = targetId;
   const ours = getHeadCommitId(state);
   if (!ours) return failure(state, msg("merge.noCommits"), "fatal: your current branch does not have any commits yet");
-  const theirs = state.branches[target];
   if (isReachable(state, ours, theirs)) {
     return success(state, [msg("merge.upToDate", { branch: target }), raw("Already up to date.")]);
   }
@@ -87,10 +96,9 @@ export const merge: Handler = (state, args) => {
   }
 
   const prepared = { ...state, ...checkoutSnapshot(state, merged) };
-  const message = `Merge branch '${target}'`;
-  const made = createCommit(prepared, message, [ours, theirs]);
+  const made = createCommit(prepared, mergeMessage, [ours, theirs]);
   return success(made.state, [msg("merge.commitCreated", { id: made.commit.id }), raw("Merge made by the 'ort' strategy.")], [
     { type: "commit-dibuat", id: made.commit.id, parents: [ours, theirs] },
     { type: "merge-commit-dibuat", id: made.commit.id, parents: [ours, theirs] },
   ]);
-};
+}

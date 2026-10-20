@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { resolveConflict } from "../files";
 import { isReachable, unreachableCommits } from "../state";
 import type { RepoState } from "../types";
-import { exec, initRepo, keys, paramsOf, rawText, run, write } from "./helpers";
+import { attachRemote, exec, initRepo, keys, paramsOf, rawText, run, teammateCommit, write } from "./helpers";
 
 function commitFile(state: RepoState, file: string, content: string, msg: string): RepoState {
   return run(run(write(state, file, content), "git add ."), `git commit -m "${msg}"`);
@@ -409,5 +409,20 @@ describe("git rebase --continue dengan perubahan tak ter-stage", () => {
     expect(ok.state.rebaseState).toBeNull();
     expect(ok.state.files["a.txt"]).toBe("suntingan");
     expect(ok.state.files["g.txt"]).toBe("g");
+  });
+});
+
+describe("git rebase origin/main", () => {
+  it("memindahkan commit lokal ke atas origin/main", () => {
+    let s = commitFile(initRepo(), "a.txt", "1", "c1");
+    s = attachRemote(s);
+    s = teammateCommit(s, "t.txt", "t", "teman");
+    s = { ...s, commits: { ...s.commits, ...s.remote!.commits }, remoteRefs: { ...s.remote!.branches } };
+    s = commitFile(s, "m.txt", "m", "lokal");
+    const r = exec(s, "git rebase origin/main");
+    expect(r.ok).toBe(true);
+    const tip = r.state.commits[r.state.branches.main];
+    expect(tip.message).toBe("lokal");
+    expect(tip.parents[0]).toBe(s.remoteRefs.main);
   });
 });

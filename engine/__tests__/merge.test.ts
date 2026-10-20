@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { resolveConflict } from "../files";
 import type { RepoState } from "../types";
-import { exec, initRepo, keys, rawText, run, write } from "./helpers";
+import { attachRemote, exec, initRepo, keys, rawText, run, teammateCommit, write } from "./helpers";
 
 function commitFile(state: RepoState, file: string, content: string, msg: string): RepoState {
   return run(run(write(state, file, content), "git add ."), `git commit -m "${msg}"`);
@@ -109,5 +109,58 @@ describe("git merge", () => {
 
   it("menolak merge tanpa argumen", () => {
     expect(exec(base(), "git merge").ok).toBe(false);
+  });
+});
+
+/** Simulasi fetch: salin commit remote dan majukan origin/main. */
+function fetched(s: RepoState): RepoState {
+  const remote = s.remote!;
+  return { ...s, commits: { ...s.commits, ...remote.commits }, remoteRefs: { ...remote.branches } };
+}
+
+describe("git merge origin/main", () => {
+  it("fast-forward bila main tertinggal", () => {
+    const s = fetched(teammateCommit(attachRemote(base()), "t.txt", "t", "teman"));
+    const r = exec(s, "git merge origin/main");
+    expect(r.ok).toBe(true);
+    expect(r.events.some((e) => e.type === "merge-fast-forward")).toBe(true);
+    expect(r.state.branches.main).toBe(s.remoteRefs.main);
+  });
+
+  it("membuat merge commit remote-tracking saat bercabang", () => {
+    let s = fetched(teammateCommit(attachRemote(base()), "t.txt", "t", "teman"));
+    s = commitFile(s, "m.txt", "m", "lokal");
+    const r = exec(s, "git merge origin/main");
+    expect(r.ok).toBe(true);
+    const id = r.state.branches.main;
+    expect(r.state.commits[id].message).toBe("Merge remote-tracking branch 'origin/main'");
+    expect(r.state.commits[id].parents).toHaveLength(2);
+  });
+
+  it("konflik menyimpan from dan fromCommit", () => {
+    let s = fetched(teammateCommit(attachRemote(base()), "README.md", "teman", "teman"));
+    s = commitFile(s, "README.md", "lokal", "lokal");
+    const r = exec(s, "git merge origin/main");
+    expect(r.ok).toBe(true);
+    expect(r.state.mergeState?.from).toBe("origin/main");
+    expect(r.state.mergeState?.fromCommit).toBe(s.remoteRefs.main);
+  });
+
+  it("origin/missing tetap merge.notFound", () => {
+    const s = attachRemote(base());
+    const r = exec(s, "git merge origin/missing");
+    expect(r.ok).toBe(false);
+    expect(r.state).toBe(s);
+    expect(rawText(r)).toContain("not something we can merge");
+  });
+
+  it("switch dan branch -d origin/main gagal tanpa mengubah state", () => {
+    const s = attachRemote(base());
+    const a = exec(s, "git switch origin/main");
+    expect(a.ok).toBe(false);
+    expect(a.state).toBe(s);
+    const b = exec(s, "git branch -d origin/main");
+    expect(b.ok).toBe(false);
+    expect(b.state).toBe(s);
   });
 });

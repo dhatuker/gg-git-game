@@ -13,6 +13,7 @@ import {
   untrackedFailure,
   untrackedOverwritten,
 } from "../state";
+import { resolveRef } from "../revision";
 import { threeWay } from "../threeway";
 import type { CommandResult, GitEvent, Handler, RebaseState, RepoState } from "../types";
 import { createCommit } from "./commit";
@@ -131,7 +132,8 @@ export const rebase: Handler = (state, args) => {
   const blocked = inProgressBlock(state);
   if (blocked) return blocked;
   if (!target) return failure(state, msg("rebase.needTarget"), "fatal: no upstream configured for the current branch");
-  if (!(target in state.branches)) {
+  const onto = resolveRef(state, target);
+  if (!onto) {
     return failure(state, msg("rebase.notFound", { branch: target }), `fatal: invalid upstream '${target}'`);
   }
   if (state.head.type !== "branch") {
@@ -143,7 +145,6 @@ export const rebase: Handler = (state, args) => {
   }
   if (hasUncommittedChanges(state)) return failure(state, DIRTY_MESSAGE, DIRTY_GIT);
 
-  const onto = state.branches[target];
   const tip = getHeadCommitId(state) as string;
   if (isReachable(state, tip, onto)) {
     return success(state, [msg("rebase.upToDate", { branch: target }), raw(`Current branch ${branch} is up to date.`)]);
