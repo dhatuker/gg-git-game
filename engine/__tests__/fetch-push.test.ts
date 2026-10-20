@@ -128,7 +128,9 @@ describe("git push", () => {
     expect(r.events).toEqual([]);
     expect(keys(r)).toEqual(["push.rejected"]);
     expect(paramsOf(r, "push.rejected")).toEqual({ reason: "fetch-first" });
-    expect(rawText(r)).toContain("! [rejected] main -> main (fetch first)");
+    expect(rawText(r)).toContain("main -> main (fetch first)");
+    expect(rawText(r)).toContain("error: failed to push some refs to '{}'".replace("{}", s.remote!.url));
+    expect(rawText(r)).toMatch(/hint: .*git pull/);
   });
   it("sudah di-fetch tetapi bercabang: non-fast-forward", () => {
     let s = teammateCommit(ahead(), "b.txt", "x", "teman");
@@ -138,11 +140,14 @@ describe("git push", () => {
     expect(r.state).toBe(s);
     expect(r.events).toEqual([]);
     expect(paramsOf(r, "push.rejected")).toEqual({ reason: "non-fast-forward" });
-    expect(rawText(r)).toContain("! [rejected] main -> main (non-fast-forward)");
+    expect(rawText(r)).toContain("main -> main (non-fast-forward)");
+    expect(rawText(r)).toContain("error: failed to push some refs to '{}'".replace("{}", s.remote!.url));
+    expect(rawText(r)).toMatch(/hint: .*git pull/);
   });
   it("branch lain, HEAD terlepas, atau bukan main: onlyMain", () => {
     const s = ahead();
     expect(keys(exec(s, "git push origin feature"))).toEqual(["push.onlyMain"]);
+    expect(rawText(exec(s, "git push origin feature"))).toBe("error: src refspec feature does not match any");
     expect(keys(exec(s, "git push upstream main"))).toEqual(["push.onlyMain"]);
     const b = run(s, "git switch -c feature");
     const rb = exec(b, "git push");

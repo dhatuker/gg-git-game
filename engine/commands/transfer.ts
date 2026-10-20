@@ -12,8 +12,3 @@ export function copyMissing(source: Record<string, Commit>, target: Record<strin
   }
   return out;
 }
-
-/** Jumlah commit yang akan disalin (ada di source, belum di target). */
-export function countMissing(source: Record<string, Commit>, target: Record<string, Commit>, tip: string): number {
-  return Object.keys(copyMissing(source, target, tip)).length - Object.keys(target).length;
-}
