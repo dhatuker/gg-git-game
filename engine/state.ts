@@ -166,3 +166,26 @@ export function inProgressBlock(state: RepoState): CommandResult | null {
   }
   return null;
 }
+
+/** Selisih main lokal dengan origin/main, dihitung dari commit lokal; null bila tidak relevan. */
+export function aheadBehind(state: RepoState): { ahead: number; behind: number } | null {
+  if (!connectedRemote(state)) return null;
+  if (state.head.type !== "branch" || state.head.name !== "main") return null;
+  const local = state.branches.main;
+  const tracked = state.remoteRefs.main;
+  if (!local || !tracked || !state.commits[local] || !state.commits[tracked]) return null;
+  const reach = (from: string): Set<string> => {
+    const seen = new Set<string>();
+    const stack = [from];
+    while (stack.length) {
+      const cur = stack.pop() as string;
+      if (seen.has(cur) || !state.commits[cur]) continue;
+      seen.add(cur);
+      stack.push(...state.commits[cur].parents);
+    }
+    return seen;
+  };
+  const a = reach(local);
+  const b = reach(tracked);
+  return { ahead: [...a].filter((id) => !b.has(id)).length, behind: [...b].filter((id) => !a.has(id)).length };
+}

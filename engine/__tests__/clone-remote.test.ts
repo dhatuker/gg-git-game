@@ -117,7 +117,7 @@ describe("guard dan suggest", () => {
     expect(suggestCommand("remot")).toBe("remote");
   });
 
-  it("perintah yang belum terdaftar tetap lewat jalur unknown", () => {
-    expect(keys(exec(initRepo(), "git pull"))).toEqual(["command.unknown"]);
+  it("perintah yang tidak dikenal tetap lewat jalur unknown", () => {
+    expect(keys(exec(initRepo(), "git bogus"))).toEqual(["command.unknown"]);
   });
 });

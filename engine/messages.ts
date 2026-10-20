@@ -140,6 +140,15 @@ export type MessageKey =
   | "push.done"
   | "push.rejected"
   | "push.badFlag"
+  // pull dan pelacakan
+  | "pull.noRemote"
+  | "pull.onlyMain"
+  | "pull.badFlag"
+  | "pull.noCommits"
+  | "status.trackingUpToDate"
+  | "status.trackingAhead"
+  | "status.trackingBehind"
+  | "status.trackingDiverged"
   // revision
   | "revision.unknown"
   | "revision.ambiguous"

@@ -15,6 +15,7 @@ import { clone } from "./commands/clone";
 import { remote } from "./commands/remote";
 import { fetch } from "./commands/fetch";
 import { push } from "./commands/push";
+import { pull } from "./commands/pull";
 import { msg } from "./messages";
 import { parseInput } from "./parse";
 import { failure } from "./state";
@@ -40,6 +41,7 @@ export const HANDLERS: Record<string, Handler> = {
   remote,
   fetch,
   push,
+  pull,
 };
 
 export function runCommand(state: RepoState, input: string): CommandResult {
