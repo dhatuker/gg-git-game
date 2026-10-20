@@ -84,4 +84,17 @@ describe("remoteSummary", () => {
     expect(r.tip.message).toBe("teman dua");
     expect(s.remoteRefs.main).not.toBe(s.remote!.branches.main);
   });
+  it("local main belum ada: ahead 0, behind = semua commit remote", () => {
+    const s = connected();
+    const noMain = { ...s, branches: {} };
+    const r = remoteSummary(noMain)!;
+    expect([r.ahead, r.behind]).toEqual([0, 1]);
+  });
+  it("null bila remote main tak ada atau commit tak dikenal", () => {
+    const s = connected();
+    expect(remoteSummary({ ...s, remote: { ...s.remote!, branches: {} } })).toBeNull();
+    expect(remoteSummary({ ...s, remote: { ...s.remote!, branches: { main: "zzzzzzz" } } })).toBeNull();
+    expect(remoteSummary({ ...s, branches: { main: "zzzzzzz" } })).toBeNull();
+    expect(remoteSummary({ ...s, remote: { ...s.remote!, connected: false } })).toBeNull();
+  });
 });

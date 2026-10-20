@@ -35,9 +35,9 @@ export function remoteSummary(repo: RepoState): { ahead: number; behind: number;
   const remote = connectedRemote(repo);
   const local = repo.branches.main;
   const tipId = remote?.branches.main;
-  if (!remote || !local || !tipId) return null;
+  if (!remote || !tipId) return null;
   const all = { ...repo.commits, ...remote.commits };
-  if (!all[local] || !all[tipId]) return null;
+  if ((local && !all[local]) || !all[tipId]) return null;
   const reach = (from: string): Set<string> => {
     const seen = new Set<string>();
     const stack = [from];
@@ -49,7 +49,7 @@ export function remoteSummary(repo: RepoState): { ahead: number; behind: number;
     }
     return seen;
   };
-  const mine = reach(local);
+  const mine = local ? reach(local) : new Set<string>();
   const theirs = reach(tipId);
   return {
     ahead: [...mine].filter((id) => !theirs.has(id)).length,

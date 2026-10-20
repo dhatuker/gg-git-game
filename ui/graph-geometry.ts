@@ -24,7 +24,6 @@ export function graphGeometry(layout: GraphLayout): GraphGeometry {
   for (const l of layout.labels) {
     const list = stacks.get(l.commitId) ?? [];
     if (l.kind === "branch") list.unshift(l.name);
-    else if (l.kind === "remote" && list.includes("HEAD")) list.splice(list.indexOf("HEAD"), 0, l.name);
     else list.push(l.name);
     stacks.set(l.commitId, list);
   }

@@ -194,14 +194,21 @@ describe("computeGraphLayout remote", () => {
     expect(l.labels).toContainEqual({ name: "origin/main", kind: "remote", commitId: s.remoteRefs.main });
     expect(l.nodes.find((n) => n.id === s.remoteRefs.main)?.lane).toBe(0);
   });
-  it("commit yang hanya terjangkau dari origin/main mendapat lane", () => {
+  it("commit yang hanya terjangkau dari origin/main mendapat lane sendiri (lewat fetch nyata)", () => {
     let s = attachRemote(commitFile(init(), "a", "1", "satu"));
+    const base = s.branches.main;
     s = teammateCommit(s, "t", "1", "teman");
-    const tip = s.remote!.branches.main;
-    s = { ...s, commits: { ...s.commits, [tip]: s.remote!.commits[tip] }, remoteRefs: { main: tip } };
+    s = run(s, "git fetch");
+    const tip = s.remoteRefs.main;
+    expect(tip).not.toBe(base);
+    expect(s.branches.main).toBe(base);
     const l = computeGraphLayout(s);
-    const n = l.nodes.find((x) => x.id === tip)!;
-    expect(typeof n.lane).toBe("number");
-    expect(l.labels.find((x) => x.kind === "remote")?.commitId).toBe(tip);
+    const baseNode = l.nodes.find((x) => x.id === base)!;
+    const tipNode = l.nodes.find((x) => x.id === tip)!;
+    expect(baseNode.lane).toBe(0);
+    expect(tipNode.lane).toBe(1);
+    expect(tipNode.x).toBeGreaterThan(baseNode.x);
+    expect(l.labels).toContainEqual({ name: "main", kind: "branch", commitId: base });
+    expect(l.labels).toContainEqual({ name: "origin/main", kind: "remote", commitId: tip });
   });
 });
