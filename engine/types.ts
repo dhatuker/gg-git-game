@@ -73,7 +73,8 @@ export type GitEvent =
   | { type: "stash-dipulihkan"; files: string[] }
   | { type: "rebase-commit-disalin"; from: string; to: string }
   | { type: "rebase-selesai"; branch: string; tip: string }
-  | { type: "rebase-dibatalkan"; branch: string };
+  | { type: "rebase-dibatalkan"; branch: string }
+  | { type: "clone-selesai"; tip: string };
 
 export interface CommandResult {
   state: RepoState;

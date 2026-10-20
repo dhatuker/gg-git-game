@@ -30,6 +30,7 @@ export type UiKey =
   | "caption.rebaseCopied"
   | "caption.rebaseDone"
   | "caption.rebaseAborted"
+  | "caption.clone"
   | "caption.readOnly"
   | "game.notAllowed"
   | "ui.appTitle"

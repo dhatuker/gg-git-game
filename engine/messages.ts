@@ -119,6 +119,14 @@ export type MessageKey =
   | "rebase.continueConflictsRemain"
   | "rebase.continueUnstaged"
   | "rebase.aborted"
+  // clone dan remote
+  | "clone.alreadyInit"
+  | "clone.notFound"
+  | "clone.needUrl"
+  | "clone.badArgs"
+  | "clone.done"
+  | "remote.none"
+  | "remote.unsupported"
   // revision
   | "revision.unknown"
   | "revision.ambiguous"

@@ -26,6 +26,7 @@ export const id: UiDict = {
   "caption.rebaseCopied": "Commit `{from}` disalin menjadi commit baru `{to}` di atas dasar yang baru.",
   "caption.rebaseDone": "Rebase selesai: branch `{branch}` sekarang menunjuk ke `{tip}`, ujung dari commit-commit salinan. Commit lamanya tidak lagi terjangkau dari branch.",
   "caption.rebaseAborted": "Rebase pada `{branch}` dibatalkan dan branch kembali persis seperti sebelum rebase dimulai.",
+  "caption.clone": "Repositori disalin dari server. `main` lokalmu dan `origin/main` sama-sama mulai di commit `{tip}`, jadi kamu sudah sinkron dengan server.",
   "caption.readOnly": "Perintah ini hanya menampilkan informasi. Repositori tidak berubah.",
   "game.notAllowed": "Perintah ini belum dipakai di level ini.",
   "ui.appTitle": "Belajar Git",

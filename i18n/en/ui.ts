@@ -26,6 +26,7 @@ export const en: UiDict = {
   "caption.rebaseCopied": "Commit `{from}` was copied into a new commit `{to}` on top of the new base.",
   "caption.rebaseDone": "Rebase finished: branch `{branch}` now points to `{tip}`, the tip of the copied commits. The old commits are no longer reachable from the branch.",
   "caption.rebaseAborted": "Rebase on `{branch}` was aborted and the branch is back exactly as it was before the rebase started.",
+  "caption.clone": "The repository was copied from the server. Your local `main` and `origin/main` both start at the same commit `{tip}`, so you are in sync with the server.",
   "caption.readOnly": "This command only shows information. The repository did not change.",
   "game.notAllowed": "This command is not used in this level yet.",
   "ui.appTitle": "Learn Git",

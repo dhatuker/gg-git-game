@@ -11,6 +11,8 @@ import { revert } from "./commands/revert";
 import { cherryPick } from "./commands/cherry-pick";
 import { stash } from "./commands/stash";
 import { rebase } from "./commands/rebase";
+import { clone } from "./commands/clone";
+import { remote } from "./commands/remote";
 import { msg } from "./messages";
 import { parseInput } from "./parse";
 import { failure } from "./state";
@@ -32,12 +34,14 @@ export const HANDLERS: Record<string, Handler> = {
   "cherry-pick": cherryPick,
   stash,
   rebase,
+  clone,
+  remote,
 };
 
 export function runCommand(state: RepoState, input: string): CommandResult {
   const parsed = parseInput(input);
   if ("error" in parsed) return failure(state, parsed.error);
-  if (!state.initialized && parsed.name !== "init") {
+  if (!state.initialized && parsed.name !== "init" && parsed.name !== "clone") {
     return failure(
       state,
       msg("repo.notInitialized"),
@@ -49,7 +53,7 @@ export function runCommand(state: RepoState, input: string): CommandResult {
     const suggestion = suggestCommand(parsed.name);
     return failure(
       state,
-      suggestion ? msg("command.unknownSuggest", { cmd: parsed.name, suggestion }) : msg("command.unknown", { cmd: parsed.name }),
+      suggestion && suggestion !== parsed.name ? msg("command.unknownSuggest", { cmd: parsed.name, suggestion }) : msg("command.unknown", { cmd: parsed.name }),
       `git: '${parsed.name}' is not a git command. See 'git --help'.`,
     );
   }

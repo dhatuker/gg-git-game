@@ -36,12 +36,20 @@ describe("describeEvents", () => {
     { type: "rebase-commit-disalin", from: "a", to: "b" },
     { type: "rebase-selesai", branch: "fitur", tip: "t1" },
     { type: "rebase-dibatalkan", branch: "fitur" },
+    { type: "clone-selesai", tip: "abc1234" },
   ];
   it.each(all.map((e) => [e.type, e] as const))("event %s menghasilkan kalimat", (_t, e) => {
     const m = describeEvents([e]);
     expect(m).not.toBeNull();
     expect(translate("id", m!.key, m!.params)).not.toMatch(/\{\w+\}/);
     expect(translate("en", m!.key, m!.params)).not.toMatch(/\{\w+\}/);
+  });
+
+  it("clone-selesai memakai caption.clone dengan tip", () => {
+    const m = describeEvents([{ type: "clone-selesai", tip: "abc1234" }]);
+    expect(m).toEqual({ key: "caption.clone", params: { tip: "abc1234" } });
+    expect(translate("id", m!.key, m!.params)).toContain("abc1234");
+    expect(translate("en", m!.key, m!.params)).toContain("abc1234");
   });
 
   it("menggabungkan beberapa file yang di-stage", () => {
