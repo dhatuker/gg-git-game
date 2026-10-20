@@ -13,8 +13,10 @@ function noOverlap(s: RepoState) {
 
 describe.each(LEVELS.slice(4).map((l) => [l.id, l] as const))("level %i: proyek yang sudah berjalan", (_id, level) => {
   it("punya riwayat panjang dengan beberapa merge", () => {
-    expect(commitCount(level.initialState)).toBeGreaterThanOrEqual(12);
-    expect(mergeCount(level.initialState)).toBeGreaterThanOrEqual(2);
+    // Level 18 mulai dari folder kosong; riwayat panjang baru ada setelah clone.
+    const s = level.id === 18 ? applySteps(level.initialState, level.solution) : level.initialState;
+    expect(commitCount(s)).toBeGreaterThanOrEqual(12);
+    expect(mergeCount(s)).toBeGreaterThanOrEqual(2);
   });
 
   it("branch tim yang sudah di-merge tidak menyisakan label", () => {

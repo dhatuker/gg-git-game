@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { LEVELS } from "../index";
 import { runCommand } from "../../engine";
-import { applySteps, cmd, idByMessage, treeMatchesHead } from "../solve";
+import { applySteps, cmd, idByMessage, treeMatchesHead, write } from "../solve";
+import { REMOTE_URL, remoteWorld } from "../history";
 
 const level = (id: number) => LEVELS[id - 1];
 const run = (id: number, input: string) => applySteps(level(id).initialState, [cmd(input)]);
@@ -111,5 +112,56 @@ describe("petunjuk level 17 bertingkat", () => {
       expect(text.toLowerCase()).not.toContain("rebase");
       expect(text).not.toContain("main");
     }
+  });
+});
+
+describe("remoteWorld", () => {
+  const cloned = remoteWorld({ cloned: true, teammate: [write("docs.md", "Docs"), cmd("git add ."), cmd('git commit -m "Update docs"')], local: [write("a.txt", "a"), cmd("git add ."), cmd('git commit -m "Local"')] });
+  it("cloned: true menghasilkan remote.commits yang mencakup commits", () => {
+    const w = remoteWorld({ cloned: true, teammate: [write("docs.md", "Docs"), cmd("git add ."), cmd('git commit -m "Update docs"')] });
+    for (const id of Object.keys(w.commits)) expect(w.remote?.commits[id]).toBeDefined();
+    expect(Object.keys(w.remote!.commits).length).toBeGreaterThan(Object.keys(w.commits).length);
+    expect(w.remote?.connected).toBe(true);
+  });
+  it("commit lokal bersekuens lebih besar daripada commit teman", () => {
+    const friend = Object.values(cloned.remote!.commits).find((c) => c.message === "Update docs")!;
+    const mine = Object.values(cloned.commits).find((c) => c.message === "Local")!;
+    expect(mine.seq).toBeGreaterThan(friend.seq);
+  });
+  it("origin/main belum di-fetch: tertinggal dari ujung remote", () => {
+    expect(cloned.remoteRefs.main).not.toBe(cloned.remote?.branches.main);
+  });
+  it("cloned: false: folder kosong dan remote tak terhubung", () => {
+    const w = remoteWorld({ cloned: false });
+    expect(w.initialized).toBe(false);
+    expect(w.remote?.connected).toBe(false);
+  });
+});
+
+describe("level 18 (clone)", () => {
+  const l = level(18);
+  it("selesai dengan URL lengkap dan tanpa .git", () => {
+    expect(l.isGoalReached(run(18, `git clone ${REMOTE_URL}`))).toBe(true);
+    expect(l.isGoalReached(run(18, `git clone ${REMOTE_URL.replace(/\.git$/, "")}`))).toBe(true);
+  });
+  it("URL salah gagal", () => {
+    expect(runCommand(l.initialState, "git clone https://github.com/x/y.git").ok).toBe(false);
+  });
+});
+
+describe("level 19 (push)", () => {
+  const l = level(19);
+  it("selesai dengan git push origin main", () => {
+    const s = applySteps(l.initialState, [cmd("git add ."), cmd('git commit -m "Add notes"'), cmd("git push origin main")]);
+    expect(l.isGoalReached(s)).toBe(true);
+  });
+  it("tidak selesai hanya dengan git add .", () => {
+    expect(l.isGoalReached(run(19, "git add ."))).toBe(false);
+  });
+  it("push sebelum commit tidak memindahkan ujung remote", () => {
+    const before = l.initialState.remote?.branches.main;
+    const r = runCommand(l.initialState, "git push");
+    expect(r.state.remote?.branches.main).toBe(before);
+    expect(l.isGoalReached(r.state)).toBe(false);
   });
 });

@@ -1,5 +1,6 @@
 import type { RepoState } from "../engine/types";
-import { cmd, setup, write } from "./solve";
+import { createEmptyRepo } from "../engine/state";
+import { applySteps, cmd, setup, write } from "./solve";
 import type { SolutionStep } from "./types";
 
 const commit = (message: string): SolutionStep[] => [cmd("git add ."), cmd(`git commit -m "${message}"`)];
@@ -54,4 +55,25 @@ export const PROJECT_HISTORY: SolutionStep[] = [
 /** State awal level 5–10: proyek yang sudah berjalan, ditambah langkah khusus level. */
 export function projectSetup(extra: SolutionStep[] = []): RepoState {
   return setup({ "README.md": "# My First Project" }, [...PROJECT_HISTORY, ...extra]);
+}
+
+export const REMOTE_URL = "https://github.com/gg-team/taskboard.git";
+
+/**
+ * Dunia level remote (lokal + remote). Riwayat remote = `projectSetup()` ditambah langkah `teammate`.
+ * `cloned: false`: folder kosong, remote belum terhubung. `cloned: true`: salinan lokal sudah ada,
+ * remote terhubung, `origin/main` masih di ujung `projectSetup()` (commit teman belum di-fetch),
+ * lalu `local` dijalankan; seq commit lokal melanjutkan seq commit teman.
+ */
+export function remoteWorld(opts: { teammate?: SolutionStep[]; local?: SolutionStep[]; cloned: boolean }): RepoState {
+  const base = projectSetup();
+  const theirs = applySteps(structuredClone(base), opts.teammate ?? []);
+  const remote = { url: REMOTE_URL, connected: false, branches: { ...theirs.branches }, commits: { ...theirs.commits } };
+  if (!opts.cloned) return { ...createEmptyRepo(), remote };
+  const local = {
+    ...base,
+    remote: { ...remote, connected: true },
+    remoteRefs: { main: base.branches.main },
+  };
+  return applySteps(local, opts.local ?? []);
 }
