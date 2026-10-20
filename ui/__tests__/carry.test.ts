@@ -136,3 +136,39 @@ describe("carry dengan stash/rebaseState rusak", () => {
     expect(takeCarry("id", store, 1000)?.repo.rebaseState).toEqual(rs);
   });
 });
+
+describe("carry remote", () => {
+  const put = (store: ReturnType<typeof memory>, repo: Record<string, unknown>) => {
+    const s = midGame();
+    store.setItem(CARRY_KEY, JSON.stringify({ v: 1, lang: "id", at: 1000, state: { ...s, repo } }));
+    return s;
+  };
+
+  it("simpanan tanpa remote/remoteRefs -> null / {}", () => {
+    const store = memory();
+    const repo: Record<string, unknown> = { ...midGame().repo };
+    delete repo.remote;
+    delete repo.remoteRefs;
+    put(store, repo);
+    const got = takeCarry("id", store, 1000);
+    expect(got?.repo.remote).toBeNull();
+    expect(got?.repo.remoteRefs).toEqual({});
+  });
+
+  it("remote string / remoteRefs array dinormalkan", () => {
+    const store = memory();
+    put(store, { ...midGame().repo, remote: "x", remoteRefs: [1] });
+    const got = takeCarry("id", store, 1000);
+    expect(got?.repo.remote).toBeNull();
+    expect(got?.repo.remoteRefs).toEqual({});
+  });
+
+  it("objek sah dipertahankan", () => {
+    const store = memory();
+    const remote = { url: "u", connected: true, branches: {}, commits: {} };
+    put(store, { ...midGame().repo, remote, remoteRefs: { main: "abc" } });
+    const got = takeCarry("id", store, 1000);
+    expect(got?.repo.remote).toEqual(remote);
+    expect(got?.repo.remoteRefs).toEqual({ main: "abc" });
+  });
+});

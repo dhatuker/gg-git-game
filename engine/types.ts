@@ -33,6 +33,13 @@ export interface RebaseState {
   conflicts: string[];
 }
 
+export interface RemoteState {
+  url: string;
+  connected: boolean;
+  branches: Record<string, string>;
+  commits: Record<string, Commit>;
+}
+
 export interface RepoState {
   initialized: boolean;
   files: Files;
@@ -43,6 +50,8 @@ export interface RepoState {
   mergeState: MergeState | null;
   stash: StashEntry[];
   rebaseState: RebaseState | null;
+  remote: RemoteState | null;
+  remoteRefs: Record<string, string>;
 }
 
 export type GitEvent =

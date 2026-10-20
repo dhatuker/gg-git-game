@@ -64,7 +64,9 @@ export function takeCarry(lang: Lang, storage?: Pick<Storage, "getItem" | "remov
     const loose = repo as unknown as Record<string, unknown>;
     const stash = Array.isArray(loose.stash) ? repo.stash : [];
     const rebaseState = isObj(loose.rebaseState) ? repo.rebaseState : null;
-    return { ...parsed.state, repo: { ...repo, stash, rebaseState }, events: [] };
+    const remote = isObj(loose.remote) ? repo.remote : null;
+    const remoteRefs = isObj(loose.remoteRefs) ? repo.remoteRefs : {};
+    return { ...parsed.state, repo: { ...repo, stash, rebaseState, remote, remoteRefs }, events: [] };
   } catch {
     return null;
   }

@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { resolveRevision } from "../revision";
+import { resolveRef, resolveRevision } from "../revision";
 import { createEmptyRepo } from "../state";
 import type { RepoState } from "../types";
-import { initRepo, run, write } from "./helpers";
+import { attachRemote, initRepo, run, teammateCommit, write } from "./helpers";
 
 function commitFile(state: RepoState, content: string, message: string): RepoState {
   return run(run(write(state, "a.txt", content), "git add ."), `git commit -m "${message}"`);
@@ -75,5 +75,36 @@ describe("resolveRevision", () => {
       const r = resolveRevision(s, "HEAD");
       expect("error" in r && r.error.key).toBe("revision.unknown");
     }
+  });
+});
+
+describe("resolveRevision dengan remote", () => {
+  const s = teammateCommit(attachRemote(linear().state), "z.txt", "z", "teman");
+  const old = linear();
+
+  it("origin/main -> ujung remoteRefs.main", () => {
+    const r = attachRemote(old.state);
+    expect(resolveRevision(r, "origin/main")).toEqual({ id: r.remoteRefs.main });
+    expect(s.remoteRefs.main).toBe(old.ids[3]);
+  });
+
+  it("branch lokal origin/x menang atas remote", () => {
+    const r = { ...attachRemote(old.state), branches: { ...old.state.branches, "origin/main": old.ids[0] } };
+    expect(resolveRevision(r, "origin/main")).toEqual({ id: old.ids[0] });
+  });
+
+  it("origin/missing -> unknown", () => {
+    const r = resolveRevision(attachRemote(old.state), "origin/missing");
+    expect("error" in r && r.error.key).toBe("revision.unknown");
+  });
+});
+
+describe("resolveRef", () => {
+  it("lokal dulu, lalu origin/<b>, selain itu undefined", () => {
+    const r = attachRemote(linear().state);
+    expect(resolveRef(r, "main")).toBe(r.branches.main);
+    expect(resolveRef(r, "origin/main")).toBe(r.remoteRefs.main);
+    expect(resolveRef(r, "origin/nope")).toBeUndefined();
+    expect(resolveRef(r, "origin/main~1")).toBeUndefined();
   });
 });

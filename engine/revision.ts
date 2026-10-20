@@ -8,6 +8,18 @@ const unknownGit = (text: string) => `fatal: ambiguous argument '${text}': unkno
 
 const unknown = (text: string): Resolved => ({ error: msg("revision.unknown", { rev: text }), git: unknownGit(text) });
 
+const has = (o: Record<string, string>, k: string) => Object.prototype.hasOwnProperty.call(o, k);
+
+/** Nama polos -> id commit: branch lokal dulu, lalu `origin/<b>` bila ada di remoteRefs. */
+export function resolveRef(state: RepoState, name: string): string | undefined {
+  if (has(state.branches, name)) return state.branches[name] || undefined;
+  if (name.startsWith("origin/")) {
+    const b = name.slice("origin/".length);
+    if (has(state.remoteRefs ?? {}, b)) return state.remoteRefs[b] || undefined;
+  }
+  return undefined;
+}
+
 /**
  * Terjemahkan teks revisi menjadi id commit.
  * Dikenal: nama branch, HEAD, HEAD~N (parent pertama), hash penuh / prefix unik >= 4 karakter.
@@ -39,8 +51,8 @@ export function resolveRevision(state: RepoState, text: string): Resolved {
     return { error: msg("revision.unsupported", { rev: text }), git: `fatal: revision '${text}' is not supported here.` };
   }
 
-  const branchId = Object.prototype.hasOwnProperty.call(state.branches, rev) ? state.branches[rev] : undefined;
-  if (branchId) return { id: branchId };
+  const refId = resolveRef(state, rev);
+  if (refId) return { id: refId };
 
   if (/^[0-9a-f]+$/i.test(rev)) {
     const ambiguous = (): Resolved => ({

@@ -2,7 +2,8 @@ import { runCommand } from "../index";
 import { createEmptyRepo } from "../state";
 import { writeFile } from "../files";
 import type { MessageKey } from "../messages";
-import type { CommandResult, Files, RepoState } from "../types";
+import { shortHash } from "../hash";
+import type { Commit, CommandResult, Files, RepoState } from "../types";
 
 export function initRepo(files: Files = {}): RepoState {
   return runCommand(createEmptyRepo(files), "git init").state;
@@ -39,4 +40,30 @@ export function rawText(r: CommandResult): string {
 export function paramsOf(r: CommandResult, key: MessageKey): Record<string, string | number> | undefined {
   const m = r.output.find((l) => "key" in l && l.key === key);
   return m && "key" in m ? m.params : undefined;
+}
+
+/** Hubungkan remote berisi salinan commit lokal; main dan origin/main = ujung main lokal. */
+export function attachRemote(state: RepoState, url = "https://github.com/gg-team/taskboard.git"): RepoState {
+  const tip = state.branches.main;
+  return {
+    ...state,
+    remote: { url, connected: true, branches: tip ? { main: tip } : {}, commits: { ...state.commits } },
+    remoteRefs: tip ? { main: tip } : {},
+  };
+}
+
+/** Teman menambah satu commit di ujung main remote saja (state lokal tak tersentuh). */
+export function teammateCommit(state: RepoState, file: string, content: string, message: string): RepoState {
+  const remote = state.remote;
+  if (!remote) throw new Error("teammateCommit: remote belum terpasang");
+  const tipId = remote.branches.main;
+  const parents = tipId ? [tipId] : [];
+  const snapshot = { ...(tipId ? remote.commits[tipId].snapshot : {}), [file]: content };
+  const seq = [...Object.values(state.commits), ...Object.values(remote.commits)].reduce((m, c) => Math.max(m, c.seq + 1), 0);
+  const id = shortHash(JSON.stringify({ parents, message, snapshot, seq }));
+  const commit: Commit = { id, seq, parents, message, snapshot };
+  return {
+    ...state,
+    remote: { ...remote, commits: { ...remote.commits, [id]: commit }, branches: { ...remote.branches, main: id } },
+  };
 }

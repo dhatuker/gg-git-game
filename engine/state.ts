@@ -1,5 +1,5 @@
 import { msg, raw, type Msg, type OutputLine } from "./messages";
-import type { CommandResult, Files, GitEvent, RepoState } from "./types";
+import type { CommandResult, Files, GitEvent, RemoteState, RepoState } from "./types";
 
 export function createEmptyRepo(files: Files = {}): RepoState {
   return {
@@ -12,7 +12,14 @@ export function createEmptyRepo(files: Files = {}): RepoState {
     mergeState: null,
     stash: [],
     rebaseState: null,
+    remote: null,
+    remoteRefs: {},
   };
+}
+
+/** Remote yang sudah terhubung (setelah clone); null bila belum ada atau belum terhubung. */
+export function connectedRemote(state: RepoState): RemoteState | null {
+  return state.remote?.connected ? state.remote : null;
 }
 
 export function getHeadCommitId(state: RepoState): string | null {
@@ -127,7 +134,7 @@ export function markResolved(
 
 /** Id commit yang tak terjangkau dari branch, HEAD, atau state merge/rebase; urut seq menurun. */
 export function unreachableCommits(state: RepoState): string[] {
-  const roots = [...Object.values(state.branches)];
+  const roots = [...Object.values(state.branches), ...Object.values(state.remoteRefs ?? {})];
   const head = getHeadCommitId(state);
   if (head) roots.push(head);
   if (state.mergeState) roots.push(state.mergeState.fromCommit);

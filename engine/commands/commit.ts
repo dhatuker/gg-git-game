@@ -12,7 +12,7 @@ function sameFiles(a: Record<string, string>, b: Record<string, string>): boolea
 export function createCommit(state: RepoState, message: string, parents: string[]): { state: RepoState; commit: Commit } {
   const snapshot = { ...state.index };
   // seq ikut di-hash agar commit dengan isi, pesan, dan parent sama tetap mendapat id berbeda.
-  const seq = Object.values(state.commits).reduce((m, c) => Math.max(m, c.seq + 1), 0);
+  const seq = [...Object.values(state.commits), ...Object.values(state.remote?.commits ?? {})].reduce((m, c) => Math.max(m, c.seq + 1), 0);
   const id = shortHash(JSON.stringify({ parents, message, snapshot, seq }));
   const commit: Commit = { id, seq, parents, message, snapshot };
   const commits = { ...state.commits, [id]: commit };

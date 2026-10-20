@@ -34,11 +34,11 @@ Prinsip: **commit dipindahkan seperti objek git**. Commit tidak berubah (immutab
 
 Turunan:
 - `unreachableCommits` menambahkan nilai `remoteRefs` sebagai root (commit yang hanya terjangkau dari `origin/main` tidak yatim).
-- `resolveRef(state, name)` (baru, di `engine/revision.ts`): mencari branch lokal, lalu `origin/<b>` di `remoteRefs`. Dipakai oleh `merge`, `rebase` (sebagai target), `log`, dan `resolveRevision` (sehingga `reset`, `revert`, `cherry-pick` menerima `origin/main` dan `origin/main~1`). Perintah yang menulis ref (`switch`, `branch -d`, dan sejenisnya) tidak menerima `origin/main`; pesan "bukan branch lokal".
+- `resolveRef(state, name)` (baru, di `engine/revision.ts`): mencari branch lokal, lalu `origin/<b>` di `remoteRefs`. Hanya nama polos (tanpa `~`/`^`; `origin/main~1` tidak didukung). Dipakai oleh `merge`, `rebase` (sebagai target), `log`, dan `resolveRevision` (sehingga `reset`, `revert`, `cherry-pick` menerima `origin/main`). Perintah yang menulis ref (`switch`, `branch -d`, dan sejenisnya) tidak menerima `origin/main`; pesan "bukan branch lokal".
 - Penentu "terhubung": `remote !== null && remote.connected`.
 - Pelacakan: `main` lokal melacak `origin/main` bila `remoteRefs.main` ada. Tidak ada field `upstream` terpisah.
 
-Id commit unik: `createCommit` memakai `seq = max(seq)+1` dari `state.commits`. Dunia level (lokal + remote) dibangun dari satu penghitung `seq` bersama (lihat §6) sehingga commit teman dan commit lokal tidak bertabrakan.
+Id commit unik: `createCommit` memakai `seq = max(seq)+1` dari gabungan commit lokal (`state.commits`) dan remote (`remote.commits`). Dunia level (lokal + remote) dibangun dari satu penghitung `seq` bersama (lihat §6) sehingga commit teman dan commit lokal tidak bertabrakan.
 
 Persistensi/carry: `ui/carry.ts` menormalkan `remote ?? null` (objek polos saja) dan `remoteRefs ?? {}` (objek polos saja), seperti normalisasi `stash`/`rebaseState` di 2A.
 
