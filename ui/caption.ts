@@ -28,6 +28,10 @@ function describe(e: GitEvent): TMsg {
     case "konflik-selesai":
       return { key: "caption.conflictResolved" };
     case "reset-dilakukan": {
+      if (e.from === e.to) {
+        const stay = { soft: "caption.resetSoftStay", mixed: "caption.resetMixedStay", hard: "caption.resetHardStay" } as const;
+        return { key: stay[e.mode], params: { to: e.to } };
+      }
       const key = { soft: "caption.resetSoft", mixed: "caption.resetMixed", hard: "caption.resetHard" } as const;
       return { key: key[e.mode], params: { from: e.from, to: e.to } };
     }

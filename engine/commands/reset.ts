@@ -52,7 +52,7 @@ export const reset: Handler = (state, args) => {
       ? { ...next, branches: { ...next.branches, [state.head.name]: to } }
       : { ...next, head: { type: "detached", id: to } };
 
-  const output: OutputLine[] = [msg(`reset.${mode}`, { to })];
+  const output: OutputLine[] = [from === to ? msg(`reset.${mode}Stay`, { to }) : msg(`reset.${mode}`, { to })];
   if (mode === "hard") output.push(raw(`HEAD is now at ${to} ${state.commits[to].message}`));
   return success(next, output, [{ type: "reset-dilakukan", mode, from, to }]);
 };

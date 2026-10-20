@@ -58,6 +58,12 @@ describe("describeEvents", () => {
     expect(m).toEqual({ key, params: { from: "a", to: "b" } });
   });
 
+  it.each(["soft", "mixed", "hard"] as const)("reset %s tanpa pindah memakai kunci Stay", (mode) => {
+    const m = describeEvents([{ type: "reset-dilakukan", mode, from: "a", to: "a" }]);
+    const key = { soft: "caption.resetSoftStay", mixed: "caption.resetMixedStay", hard: "caption.resetHardStay" }[mode];
+    expect(m).toEqual({ key, params: { to: "a" } });
+  });
+
   it("revert, cherry-pick, dan rebase-selesai diprioritaskan atas event lain", () => {
     const commit: GitEvent = { type: "commit-dibuat", id: "x", parents: ["p"] };
     expect(describeEvents([commit, { type: "revert-dibuat", id: "x", reverted: "c" }])).toEqual({

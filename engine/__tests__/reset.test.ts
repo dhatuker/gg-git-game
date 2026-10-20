@@ -14,6 +14,19 @@ function history(): RepoState {
   return commitFile(s, "app.js", "v3", "tiga");
 }
 
+describe("git reset tanpa pindah (target = HEAD)", () => {
+  it.each([
+    ["git reset", "reset.mixedStay"],
+    ["git reset --soft", "reset.softStay"],
+    ["git reset --hard", "reset.hardStay"],
+  ])("%s memakai pesan 'tidak pindah'", (cmd, key) => {
+    const s = history();
+    const r = exec(s, cmd);
+    expect(keys(r)[0]).toBe(key);
+    expect(r.state.branches.main).toBe(s.branches.main);
+  });
+});
+
 describe("git reset", () => {
   it("soft memindah branch dan menjaga index dan files", () => {
     const s = run(write(history(), "app.js", "v4"), "git add app.js");

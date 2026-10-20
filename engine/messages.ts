@@ -80,6 +80,9 @@ export type MessageKey =
   | "reset.soft"
   | "reset.mixed"
   | "reset.hard"
+  | "reset.softStay"
+  | "reset.mixedStay"
+  | "reset.hardStay"
   // revert dan cherry-pick
   | "revert.needTarget"
   | "revert.noCommits"
