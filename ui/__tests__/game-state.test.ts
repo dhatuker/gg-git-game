@@ -145,6 +145,18 @@ describe("reduce", () => {
   });
 });
 
+describe("level 20 lewat reducer", () => {
+  it("git fetch lalu git merge origin/main menyelesaikan level", () => {
+    let s = reduce(initGame([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]), { type: "goto-level", index: 19 });
+    expect(s.levelIndex).toBe(19);
+    s = run(s, "git fetch");
+    expect(s.levelComplete).toBe(false);
+    s = run(s, "git merge origin/main");
+    expect(s.levelComplete).toBe(true);
+    expect(s.completed).toContain(20);
+  });
+});
+
 describe("initGame", () => {
   it("mulai di level terakhir bila semua selesai", () => {
     expect(initGame([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21]).levelIndex).toBe(20);

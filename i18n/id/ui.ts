@@ -29,8 +29,6 @@ export const id: UiDict = {
   "caption.clone": "Repositori disalin dari server. `main` lokalmu dan `origin/main` sama-sama mulai di commit `{tip}`, jadi kamu sudah sinkron dengan server.",
   "caption.fetch": "`git fetch` menyalin commit baru dari `origin` dan menggeser `origin/main` dari `{from}` ke `{to}`. Branch dan file-mu tidak disentuh.",
   "caption.push": "`git push` mengirim {count} commit ke server. `main` di `origin` dan `origin/main` sama-sama bergeser ke `{to}`.",
-  "caption.pushRejectedFetchFirst": "Push ditolak: `origin` punya pekerjaan yang belum kamu unduh. Jalankan `git pull` dulu, lalu push lagi.",
-  "caption.pushRejectedNonFastForward": "Push ditolak: kamu dan `origin` sama-sama punya commit baru. Jalankan `git pull` untuk menggabungkannya dulu, lalu push lagi.",
   "caption.readOnly": "Perintah ini hanya menampilkan informasi. Repositori tidak berubah.",
   "game.notAllowed": "Perintah ini belum dipakai di level ini.",
   "ui.appTitle": "Belajar Git",

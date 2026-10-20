@@ -31,6 +31,9 @@ describe("git pull", () => {
     expect(r.events.map((e) => e.type)).toEqual(["fetch-selesai", "merge-fast-forward"]);
     expect(r.events[0]).toEqual({ type: "fetch-selesai", from: old, to: tip });
     expect(keys(r)).toContain("merge.fastForward");
+    expect(keys(r)).toContain("pull.fetched");
+    expect(keys(r)).not.toContain("fetch.done");
+    expect(paramsOf(r, "pull.fetched")).toEqual({ from: old, to: tip });
   });
   it("pull origin dan pull origin main diterima", () => {
     const s = teammateCommit(base(), "b.txt", "x", "teman");

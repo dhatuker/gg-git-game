@@ -30,14 +30,14 @@ export const push: Handler = (state, args) => {
       [`! [rejected]        main -> main (${why})`, `error: failed to push some refs to '${remote.url}'`, ...hint.map((h) => `hint: ${h}`)].join("\n");
     const pullHint = "If you want to integrate the remote changes, use 'git pull' before pushing again.";
     if (!state.commits[remoteTip]) {
-      return failure(state, msg("push.rejected", { reason: "fetch-first" }), rejectedRaw("fetch first", [
+      return failure(state, msg("push.rejectedFetchFirst"), rejectedRaw("fetch first", [
         "Updates were rejected because the remote contains work that you do not have",
         "locally. This is usually caused by another repository pushing to the same ref.",
         pullHint,
       ]));
     }
     if (!isReachable(state, localTip, remoteTip)) {
-      return failure(state, msg("push.rejected", { reason: "non-fast-forward" }), rejectedRaw("non-fast-forward", [
+      return failure(state, msg("push.rejectedNonFastForward"), rejectedRaw("non-fast-forward", [
         "Updates were rejected because the tip of your current branch is behind",
         "its remote counterpart. " + pullHint,
       ]));

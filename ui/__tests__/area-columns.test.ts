@@ -52,8 +52,8 @@ describe("columns remote", () => {
     expect(columns(createEmptyRepo()).remote).toEqual([]);
     expect(columns(initRepo()).remote).toEqual([]);
   });
-  it("satu chip origin/main bila terhubung", () => {
-    expect(columns(connected()).remote).toEqual([{ file: "origin/main" }]);
+  it("satu chip main bila terhubung", () => {
+    expect(columns(connected()).remote).toEqual([{ file: "main" }]);
   });
 });
 

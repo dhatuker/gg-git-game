@@ -43,7 +43,6 @@ export const level20: Level = {
       en: "A single command with no arguments can both fetch and combine. You can also do it in two steps: fetch first, then merge.",
     },
   ],
-  mustRun: ["pull"],
   isGoalReached: (s) => {
     const r = s.remote;
     const tip = r?.branches.main;

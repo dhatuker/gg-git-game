@@ -126,8 +126,7 @@ describe("git push", () => {
     expect(r.ok).toBe(false);
     expect(r.state).toBe(s);
     expect(r.events).toEqual([]);
-    expect(keys(r)).toEqual(["push.rejected"]);
-    expect(paramsOf(r, "push.rejected")).toEqual({ reason: "fetch-first" });
+    expect(keys(r)).toEqual(["push.rejectedFetchFirst"]);
     expect(rawText(r)).toContain("main -> main (fetch first)");
     expect(rawText(r)).toContain("error: failed to push some refs to '{}'".replace("{}", s.remote!.url));
     expect(rawText(r)).toMatch(/hint: .*git pull/);
@@ -139,7 +138,7 @@ describe("git push", () => {
     expect(r.ok).toBe(false);
     expect(r.state).toBe(s);
     expect(r.events).toEqual([]);
-    expect(paramsOf(r, "push.rejected")).toEqual({ reason: "non-fast-forward" });
+    expect(keys(r)).toEqual(["push.rejectedNonFastForward"]);
     expect(rawText(r)).toContain("main -> main (non-fast-forward)");
     expect(rawText(r)).toContain("error: failed to push some refs to '{}'".replace("{}", s.remote!.url));
     expect(rawText(r)).toMatch(/hint: .*git pull/);

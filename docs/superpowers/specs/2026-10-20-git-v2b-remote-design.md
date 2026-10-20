@@ -68,7 +68,7 @@ Persistensi/carry: `ui/carry.ts` menormalkan `remote ?? null` (objek polos saja)
 - Ditolak bila tidak fast-forward. Dua varian pesan git asli, satu kunci ramah:
   - ujung remote tidak ada di `state.commits` (belum di-fetch): `! [rejected] main -> main (fetch first)`;
   - ada tetapi bukan leluhur: `! [rejected] main -> main (non-fast-forward)`.
-  Pesan ramah menjelaskan bahwa remote punya pekerjaan yang belum kamu punya dan menyarankan `git pull`. Event `push-ditolak`. State tidak berubah.
+  Pesan ramah menjelaskan bahwa remote punya pekerjaan yang belum kamu punya dan menyarankan `git pull`. Tidak ada event yang dipancarkan pada penolakan. State tidak berubah.
 - `push` dengan branch tanpa commit (belum ada commit): gagal seperti perintah lain.
 
 **`git remote -v`** menampilkan dua baris `origin <url> (fetch)` / `(push)` bila terhubung, kosong bila tidak. `git remote` mencetak `origin`. Subperintah lain (`add`, `remove`, ...) gagal dengan pesan "tidak didukung".
@@ -81,7 +81,7 @@ Persistensi/carry: `ui/carry.ts` menormalkan `remote ?? null` (objek polos saja)
 
 ## 4. Event, tampilan, dan caption
 
-Event baru: `clone-selesai { tip }`, `fetch-selesai { from, to }`, `push-berhasil { from, to, count }`, `push-ditolak { reason: "fetch-first" | "non-fast-forward" }`. `pull` menghasilkan `fetch-selesai` lalu event merge yang sudah ada.
+Event baru: `clone-selesai { tip }`, `fetch-selesai { from, to }`, `push-berhasil { from, to, count }`. Penolakan `push` tidak memancarkan event. `pull` menghasilkan `fetch-selesai` lalu event merge yang sudah ada.
 
 - **Graf:** label `origin/main` digambar di samping label `main` pada commit yang ditunjuk, dengan kelas CSS berbeda (`gg-label-remote`: garis putus-putus atau warna sekunder). Bila `main` dan `origin/main` di commit yang sama, label ditumpuk. `origin/main` yang menunjuk commit di luar riwayat `main` tampil seperti branch biasa (commit sudah ada di `state.commits` setelah fetch).
 - **Panel area:** satu kotak "Remote" saat level mengizinkan perintah remote, aturan tampil seperti kotak Stash (`showRemote`, dari `allowedCommands`). Isi: satu chip untuk ujung `origin` saat ini (`id` + pesan, diambil dari `remote.commits`, jadi pemain **bisa melihat** commit teman sebelum `fetch`), ditambah ringkasan ahead/behind. Label langkah `git push` / `git pull` mengikuti pola `gg-area-step`. Mulai level 18 kotak Stash (sejak level 14) dan Remote tampil bersamaan, sehingga grid `.gg-areas` mendukung hingga lima kotak (Working, Staging, Repo, Stash, Remote): satu baris di layar lebar, membungkus (`auto-fit`) di lebar menengah, dan bertumpuk di bawah 640px. Sorotan kolom (`litColumn`): `push-berhasil` menyalakan Remote, `fetch-selesai` dan `clone-selesai` menyalakan Local/Repo sesuai pola yang ada.
@@ -91,7 +91,7 @@ Event baru: `clone-selesai { tip }`, `fetch-selesai { from, to }`, `push-berhasi
 
 ## 5. Pesan
 
-Kunci engine baru (id + en): `clone.*` (`alreadyInit`, `notFound`, `badFlag`, `done`), `fetch.*` (`noRemote`, `upToDate`, `done`), `pull.*` (`onlyMain`, `upToDate`, `done`, `badFlag`), `push.*` (`onlyMain`, `upToDate`, `done`, `rejectedFetchFirst`, `rejectedNonFastForward`, `badFlag`, `noCommits`), `remote.*` (`none`, `unsupported`), `status.tracking*` (up to date, ahead, behind, diverged). Format sama dengan 2A: pesan berkunci di baris pertama, pesan asli git (`raw`) di bawahnya. Pesan penolakan `push` diakhiri petunjuk hint `git pull`.
+Kunci engine baru (id + en): `clone.*` (`alreadyInit`, `notFound`, `badFlag`, `done`), `fetch.*` (`upToDate`, `done`, `badFlag`), `pull.*` (`onlyMain`, `upToDate`, `done`, `badFlag`), `push.*` (`onlyMain`, `upToDate`, `done`, `rejectedFetchFirst`, `rejectedNonFastForward`, `badFlag`, `noCommits`), `remote.*` (`unsupported`, `noRepo`), `status.tracking*` (up to date, ahead, behind, diverged). Format sama dengan 2A: pesan berkunci di baris pertama, pesan asli git (`raw`) di bawahnya. Pesan penolakan `push` diakhiri petunjuk hint `git pull`.
 
 ## 6. Level 18–21
 

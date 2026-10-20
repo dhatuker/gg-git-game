@@ -186,6 +186,13 @@ describe("level 21 (push ditolak)", () => {
     const r = runCommand(l.initialState, "git push");
     expect(r.ok).toBe(false);
     expect(r.state).toEqual(l.initialState);
+    expect(JSON.stringify(r.output)).toContain("(fetch first)");
+  });
+  it("setelah git fetch, push ditolak sebagai non-fast-forward", () => {
+    const fetched = run(21, "git fetch");
+    const r = runCommand(fetched, "git push");
+    expect(r.ok).toBe(false);
+    expect(JSON.stringify(r.output)).toContain("(non-fast-forward)");
   });
   it("selesai dengan git pull lalu git push", () => {
     expect(l.isGoalReached(applySteps(l.initialState, [cmd("git pull"), cmd("git push")]))).toBe(true);

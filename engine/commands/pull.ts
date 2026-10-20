@@ -1,9 +1,8 @@
-import { msg, raw } from "../messages";
+import { msg } from "../messages";
 import { connectedRemote, failure, getHeadCommitId, inProgressBlock } from "../state";
-import type { Handler, RepoState } from "../types";
-import { NO_REPO_GIT } from "./fetch";
+import type { Handler } from "../types";
+import { NO_REPO_GIT, fetchMain } from "./fetch";
 import { mergeCommit } from "./merge";
-import { copyMissing } from "./transfer";
 
 export const pull: Handler = (state, args) => {
   const remote = connectedRemote(state);
@@ -27,20 +26,11 @@ export const pull: Handler = (state, args) => {
   const tip = remote.branches.main;
   if (!tip) return failure(state, msg("pull.onlyMain"), "fatal: couldn't find remote ref main");
 
-  const current = state.remoteRefs.main;
-  let fetched: RepoState = state;
-  const output = [];
-  const events = [];
-  if (tip !== current) {
-    fetched = {
-      ...state,
-      commits: copyMissing(remote.commits, state.commits, tip),
-      remoteRefs: { ...state.remoteRefs, main: tip },
-    };
-    output.push(msg("fetch.done", { from: current ?? "", to: tip }), raw(`From ${remote.url}`), raw(`   ${current ?? "[new branch]"}..${tip}  main       -> origin/main`));
-    events.push({ type: "fetch-selesai" as const, from: current ?? "", to: tip });
-  }
-  const merged = mergeCommit(fetched, tip, "origin/main", `Merge branch 'main' of ${remote.url}`);
+  const fetched = fetchMain(state, remote, "pull.fetched");
+  const base = fetched ? fetched.state : state;
+  const output = fetched ? fetched.output : [];
+  const events = fetched ? fetched.events : [];
+  const merged = mergeCommit(base, tip, "origin/main", `Merge branch 'main' of ${remote.url}`);
   if (!merged.ok) return { ...merged, state };
   return { ...merged, output: [...output, ...merged.output], events: [...events, ...merged.events] };
 };

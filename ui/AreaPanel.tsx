@@ -26,7 +26,7 @@ export function columns(repo: RepoState): { working: Chip[]; staging: Chip[]; co
     .sort()
     .map((file) => ({ file }));
   const stash: Chip[] = repo.stash.map((_, i) => ({ file: `stash@{${i}}` }));
-  const remote: Chip[] = connectedRemote(repo) ? [{ file: "origin/main" }] : [];
+  const remote: Chip[] = connectedRemote(repo) ? [{ file: "main" }] : [];
   return { working, staging, committed, stash, remote };
 }
 

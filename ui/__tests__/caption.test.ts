@@ -39,8 +39,6 @@ describe("describeEvents", () => {
     { type: "clone-selesai", tip: "abc1234" },
     { type: "fetch-selesai", from: "a1", to: "b2" },
     { type: "push-berhasil", from: "a1", to: "b2", count: 2 },
-    { type: "push-ditolak", reason: "fetch-first" },
-    { type: "push-ditolak", reason: "non-fast-forward" },
   ];
   it.each(all.map((e) => [e.type, e] as const))("event %s menghasilkan kalimat", (_t, e) => {
     const m = describeEvents([e]);
@@ -49,11 +47,9 @@ describe("describeEvents", () => {
     expect(translate("en", m!.key, m!.params)).not.toMatch(/\{\w+\}/);
   });
 
-  it("fetch, push, dan penolakan memakai kunci masing-masing", () => {
+  it("fetch dan push memakai kunci masing-masing", () => {
     expect(describeEvents([{ type: "fetch-selesai", from: "a1", to: "b2" }])).toEqual({ key: "caption.fetch", params: { from: "a1", to: "b2" } });
     expect(describeEvents([{ type: "push-berhasil", from: "a1", to: "b2", count: 2 }])).toEqual({ key: "caption.push", params: { count: 2, to: "b2" } });
-    expect(describeEvents([{ type: "push-ditolak", reason: "fetch-first" }])?.key).toBe("caption.pushRejectedFetchFirst");
-    expect(describeEvents([{ type: "push-ditolak", reason: "non-fast-forward" }])?.key).toBe("caption.pushRejectedNonFastForward");
   });
   it("clone-selesai memakai caption.clone dengan tip", () => {
     const m = describeEvents([{ type: "clone-selesai", tip: "abc1234" }]);

@@ -33,8 +33,6 @@ export type UiKey =
   | "caption.clone"
   | "caption.fetch"
   | "caption.push"
-  | "caption.pushRejectedFetchFirst"
-  | "caption.pushRejectedNonFastForward"
   | "caption.readOnly"
   | "game.notAllowed"
   | "ui.appTitle"

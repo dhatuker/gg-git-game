@@ -1,6 +1,5 @@
-import { raw } from "../messages";
+import { msg, raw } from "../messages";
 import { connectedRemote, failure, success } from "../state";
-import { msg } from "../messages";
 import type { Handler } from "../types";
 
 export const remote: Handler = (state, args) => {
