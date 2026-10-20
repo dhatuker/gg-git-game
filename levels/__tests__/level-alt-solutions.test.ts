@@ -165,3 +165,38 @@ describe("level 19 (push)", () => {
     expect(l.isGoalReached(r.state)).toBe(false);
   });
 });
+
+describe("level 20 (pull)", () => {
+  const l = level(20);
+  it("selesai dengan git pull", () => {
+    expect(l.isGoalReached(run(20, "git pull"))).toBe(true);
+  });
+  it("selesai dengan git fetch lalu git merge origin/main", () => {
+    const s = applySteps(l.initialState, [cmd("git fetch"), cmd("git merge origin/main")]);
+    expect(l.isGoalReached(s)).toBe(true);
+  });
+  it("tidak selesai dengan git fetch saja", () => {
+    expect(l.isGoalReached(run(20, "git fetch"))).toBe(false);
+  });
+});
+
+describe("level 21 (push ditolak)", () => {
+  const l = level(21);
+  it("git push di state awal ditolak dan state tidak berubah", () => {
+    const r = runCommand(l.initialState, "git push");
+    expect(r.ok).toBe(false);
+    expect(r.state).toEqual(l.initialState);
+  });
+  it("selesai dengan git pull lalu git push", () => {
+    expect(l.isGoalReached(applySteps(l.initialState, [cmd("git pull"), cmd("git push")]))).toBe(true);
+  });
+  it("selesai dengan git fetch, git rebase origin/main, git push (riwayat linear)", () => {
+    const s = applySteps(l.initialState, [cmd("git fetch"), cmd("git rebase origin/main"), cmd("git push")]);
+    expect(l.isGoalReached(s)).toBe(true);
+    const tip = s.branches["main"];
+    expect(s.commits[tip].parents).toHaveLength(1);
+  });
+  it("tidak selesai hanya dengan git pull tanpa push", () => {
+    expect(l.isGoalReached(run(21, "git pull"))).toBe(false);
+  });
+});

@@ -17,8 +17,10 @@ import { level16 } from "./level-16";
 import { level17 } from "./level-17";
 import { level18 } from "./level-18";
 import { level19 } from "./level-19";
+import { level20 } from "./level-20";
+import { level21 } from "./level-21";
 import type { Level } from "./types";
 
-export const LEVELS: Level[] = [level01, level02, level03, level04, level05, level06, level07, level08, level09, level10, level11, level12, level13, level14, level15, level16, level17, level18, level19];
+export const LEVELS: Level[] = [level01, level02, level03, level04, level05, level06, level07, level08, level09, level10, level11, level12, level13, level14, level15, level16, level17, level18, level19, level20, level21];
 
 export type { Level, Localized, SolutionStep } from "./types";

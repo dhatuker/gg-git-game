@@ -23,8 +23,8 @@ function solutionCommandForms(level: (typeof LEVELS)[number]): string[] {
 }
 
 describe("LEVELS", () => {
-  it("berisi 19 level dengan id berurutan", () => {
-    expect(LEVELS.map((l) => l.id)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]);
+  it("berisi 21 level dengan id berurutan", () => {
+    expect(LEVELS.map((l) => l.id)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21]);
   });
 
   describe.each(LEVELS.map((l) => [l.id, l] as const))("level %i", (_id, level) => {
