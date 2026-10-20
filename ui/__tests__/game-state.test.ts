@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { LEVELS } from "../../levels";
-import { hintNudge, initGame, isUnlocked, reduce, visibleHints, type GameState } from "../game-state";
+import { firstOpenIndex, hintNudge, initGame, isUnlocked, reduce, startAt, visibleHints, type GameState } from "../game-state";
 
 const run = (s: GameState, input: string) => reduce(s, { type: "run", input });
 
@@ -231,5 +231,33 @@ describe("level 16 wajib rebase", () => {
   it("level 16 dan 17 mewajibkan rebase", () => {
     expect(LEVELS[15].mustRun).toEqual(["rebase"]);
     expect(LEVELS[16].mustRun).toEqual(["rebase"]);
+  });
+});
+
+describe("masuk level lewat URL", () => {
+  it("startAt membuka level yang diminta tanpa memeriksa kunci (render server)", () => {
+    expect(startAt(4).levelIndex).toBe(4);
+    expect(startAt(4).completed).toEqual([]);
+  });
+
+  it("enter-level membuka level terbuka dengan progres tersimpan", () => {
+    const s = reduce(startAt(2), { type: "enter-level", completed: [1, 2], index: 2 });
+    expect(s.levelIndex).toBe(2);
+    expect(s.completed).toEqual([1, 2]);
+  });
+
+  it("enter-level ke level terkunci jatuh ke level terbuka pertama", () => {
+    const s = reduce(startAt(5), { type: "enter-level", completed: [1], index: 5 });
+    expect(s.levelIndex).toBe(1);
+  });
+
+  it("enter-level ke level yang sudah selesai tetap diizinkan (ulangi)", () => {
+    const s = reduce(startAt(0), { type: "enter-level", completed: [1, 2, 3], index: 0 });
+    expect(s.levelIndex).toBe(0);
+  });
+
+  it("firstOpenIndex: level terakhir bila semua selesai", () => {
+    expect(firstOpenIndex([])).toBe(0);
+    expect(firstOpenIndex(LEVELS.map((l) => l.id))).toBe(LEVELS.length - 1);
   });
 });

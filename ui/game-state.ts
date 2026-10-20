@@ -35,7 +35,9 @@ export type GameAction =
   | { type: "reveal-hint" }
   /** Pulihkan state yang dibawa saat ganti bahasa; level selesai digabung dengan progres tersimpan agar tidak hilang. */
   | { type: "restore"; state: GameState; savedCompleted: number[] }
-  | { type: "load-progress"; completed: number[] };
+  | { type: "load-progress"; completed: number[] }
+  /** Masuk ke level dari rute /play/[level] dengan progres tersimpan; level terkunci jatuh ke level terbuka pertama. */
+  | { type: "enter-level"; completed: number[]; index: number };
 
 export const NOT_ALLOWED: TMsg = { key: "game.notAllowed" };
 export const READ_ONLY_CAPTION: TMsg = { key: "caption.readOnly" };
@@ -62,9 +64,22 @@ function startLevel(index: number, completed: number[]): GameState {
   };
 }
 
-export function initGame(completed: number[]): GameState {
+/** State awal sebuah level tanpa memeriksa kunci; dipakai render server untuk rute /play/[level]. */
+export function startAt(index: number, completed: number[] = []): GameState {
+  return startLevel(index, completed);
+}
+
+/** Level pertama yang belum selesai; bila semuanya selesai, level terakhir. */
+export function firstOpenIndex(completed: number[]): number {
   const first = LEVELS.findIndex((l) => !completed.includes(l.id));
-  return startLevel(first === -1 ? LEVELS.length - 1 : first, completed);
+  return first === -1 ? LEVELS.length - 1 : first;
+}
+
+/** Tanpa `index`, mulai di level pertama yang belum selesai. Dengan `index` yang masih terkunci, jatuh ke level itu juga. */
+export function initGame(completed: number[], index?: number): GameState {
+  const open = firstOpenIndex(completed);
+  const ok = index !== undefined && index >= 0 && index < LEVELS.length && isUnlocked(completed, index);
+  return startLevel(ok ? index : open, completed);
 }
 
 function withGoalCheck(state: GameState): GameState {
@@ -135,6 +150,8 @@ export function reduce(state: GameState, action: GameAction): GameState {
       };
     case "load-progress":
       return initGame(action.completed);
+    case "enter-level":
+      return initGame(action.completed, action.index);
   }
 }
 

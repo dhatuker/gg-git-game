@@ -1,3 +1,5 @@
+import { LEVELS } from "../levels";
+import { tierOf } from "../levels/tiers";
 import type { Level, Localized } from "../levels/types";
 import { useLang } from "./LanguageProvider";
 import { RichText } from "./RichText";
@@ -13,14 +15,23 @@ interface Props {
   isLast: boolean;
   onReset: () => void;
   onNext: () => void;
+  onOpenSummary: () => void;
 }
 
-export function LevelPanel({ level, hints, hintsTotal, nudge, onRevealHint, complete, isLast, onReset, onNext }: Props) {
+export function LevelPanel({ level, hints, hintsTotal, nudge, onRevealHint, complete, isLast, onReset, onNext, onOpenSummary }: Props) {
   const { t, tl } = useLang();
+  const tier = tierOf(level.id);
   const allShown = hints.length >= hintsTotal;
   return (
     <section className="gg-panel gg-level" aria-labelledby="gg-level-title">
-      <p className="gg-level-num">{t("ui.levelOf", { n: level.id, total: 10 })}</p>
+      <p className="gg-level-num">
+        {tier && (
+          <span className="gg-tag" style={{ "--c": `var(--lane-${tier.lane})` } as React.CSSProperties}>
+            {tl(tier.name)}
+          </span>
+        )}
+        {t("ui.levelOf", { n: level.id, total: LEVELS.length })}
+      </p>
       <h2 id="gg-level-title">{tl(level.title)}</h2>
       <p className="gg-story">
         <RichText text={tl(level.story)} />
@@ -41,11 +52,16 @@ export function LevelPanel({ level, hints, hintsTotal, nudge, onRevealHint, comp
       {complete ? (
         <div className="gg-complete" role="status">
           <span>{t(isLast ? "ui.allDone" : "ui.levelDone")}</span>
-          {!isLast && (
-            <button type="button" className="gg-btn gg-btn-primary" onClick={onNext}>
-              {t("ui.nextLevel", { n: level.id + 1 })}
+          <span className="gg-complete-actions">
+            <button type="button" className="gg-btn" onClick={onOpenSummary}>
+              {t("ui.viewSummary")}
             </button>
-          )}
+            {!isLast && (
+              <button type="button" className="gg-btn gg-btn-primary" onClick={onNext}>
+                {t("ui.nextLevel", { n: level.id + 1 })}
+              </button>
+            )}
+          </span>
         </div>
       ) : null}
       {nudge && !complete && (

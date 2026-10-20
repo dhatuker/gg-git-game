@@ -1,13 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useReducer, useRef } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { LEVELS } from "../levels";
+import { tierOf } from "../levels/tiers";
 import { AreaPanel } from "./AreaPanel";
 import { FileEditor } from "./FileEditor";
-import { hintNudge, initGame, isUnlocked, reduce, visibleHints } from "./game-state";
+import { firstOpenIndex, hintNudge, isUnlocked, reduce, startAt, visibleHints } from "./game-state";
 import { GitGraph } from "./GitGraph";
 import { computeGraphLayout } from "./layout";
-import { LevelMap } from "./LevelMap";
 import { LevelPanel } from "./LevelPanel";
 import type { Lang, TMsg } from "../i18n/types";
 import { saveCarry, takeCarry } from "./carry";
@@ -16,8 +18,10 @@ import { LanguageProvider, useLang } from "./LanguageProvider";
 import { LanguageToggle } from "./LanguageToggle";
 import { RichText } from "./RichText";
 import { loadCompleted, saveCompleted } from "./progress";
+import { SummaryDialog } from "./SummaryDialog";
 import { Terminal } from "./Terminal";
 import { useEventQueue } from "./useEventQueue";
+import { useReducedMotion } from "./useReducedMotion";
 import { activeConflicts } from "../engine/state";
 
 function Caption({ message }: { message: TMsg | null }) {
@@ -29,65 +33,108 @@ function Caption({ message }: { message: TMsg | null }) {
   );
 }
 
-export default function Game({ lang }: { lang: Lang }) {
+/** Halaman belajar untuk satu level (rute /[lang]/play/[level]). `levelIndex` datang dari URL. */
+export default function Game({ lang, levelIndex }: { lang: Lang; levelIndex: number }) {
   return (
     <LanguageProvider lang={lang}>
-      <GameView />
+      <GameView levelIndex={levelIndex} />
     </LanguageProvider>
   );
 }
 
-function GameView() {
-  const { t, lang } = useLang();
-  const [state, dispatch] = useReducer(reduce, undefined, () => initGame([]));
+function GameView({ levelIndex }: { levelIndex: number }) {
+  const { t, tl, lang } = useLang();
+  const router = useRouter();
+  const reduced = useReducedMotion();
+  const [state, dispatch] = useReducer(reduce, levelIndex, (i) => startAt(i));
+  const [summaryOpen, setSummaryOpen] = useState(false);
   const level = LEVELS[state.levelIndex];
+  const tier = tierOf(level.id);
   const layout = useMemo(() => computeGraphLayout(state.repo), [state.repo]);
   const queue = useEventQueue(state.events);
 
   // Progres dibaca setelah mount agar HTML server dan client sama.
-  // Saat pindah bahasa, state level dibawa lewat sessionStorage; selain itu muat progres tersimpan.
+  // Saat pindah bahasa, state level dibawa lewat sessionStorage; selain itu masuk ke level dari URL.
+  // Level yang masih terkunci dialihkan ke level terbuka pertama.
   // Penjaga ref: StrictMode di `next dev` menjalankan efek mount dua kali; tanpa ini, putaran kedua menimpa
-  // state yang baru dipulihkan dengan load-progress.
+  // state yang baru dipulihkan.
   const started = useRef(false);
+  const restored = useRef(false);
   useEffect(() => {
     if (started.current) return;
     started.current = true;
     const saved = loadCompleted();
     const carried = takeCarry(lang);
-    if (carried) dispatch({ type: "restore", state: carried, savedCompleted: saved });
-    else dispatch({ type: "load-progress", completed: saved });
-  }, [lang]);
+    if (carried && carried.levelIndex === levelIndex) {
+      restored.current = true;
+      dispatch({ type: "restore", state: carried, savedCompleted: saved });
+      return;
+    }
+    if (!isUnlocked(saved, levelIndex)) {
+      router.replace(`/${lang}/play/${LEVELS[firstOpenIndex(saved)].id}`);
+      return;
+    }
+    dispatch({ type: "enter-level", completed: saved, index: levelIndex });
+  }, [lang, levelIndex, router]);
   // Hanya simpan bila ada progres, supaya render pertama ([]) tidak menimpa data tersimpan.
   useEffect(() => {
     if (state.completed.length > 0) saveCompleted(state.completed);
   }, [state.completed]);
 
+  // Rangkuman terbuka sendiri sesaat setelah level selesai, kecuali selesainya berasal dari pemulihan state (ganti bahasa).
+  useEffect(() => {
+    if (!state.levelComplete) return;
+    if (restored.current) {
+      restored.current = false;
+      return;
+    }
+    const timer = setTimeout(() => setSummaryOpen(true), reduced ? 200 : 1100);
+    return () => clearTimeout(timer);
+  }, [state.levelComplete, reduced]);
+
   const run = (input: string) => dispatch({ type: "run", input });
   const isLast = state.levelIndex === LEVELS.length - 1;
+  const doneInTier = tier ? state.completed.filter((id) => id >= tier.from && id <= tier.to).length : 0;
+  const tierSize = tier ? tier.to - tier.from + 1 : 0;
 
   return (
     <div className="gg-shell">
-      <header className="gg-header">
-        <div className="gg-title-row">
-          <h1>{t("ui.appTitle")}</h1>
-          <LanguageToggle
-            onSwitch={(next) => {
-              saveCarry(state, next);
-              document.cookie = langCookie(next);
-              // Sengaja reload dokumen penuh: dengan cacheComponents, router.push menyimpan halaman bahasa lama
-              // secara tersembunyi (React Activity), sehingga saat kembali ke bahasa itu state lamanya yang muncul.
-              // eslint-disable-next-line @next/next/no-location-assign-relative-destination
-              window.location.assign(`/${next}`);
-            }}
-          />
+      <header className="gg-learn-bar">
+        <Link className="gg-btn gg-btn-sm" href={`/${lang}/levels`} aria-label={t("play.backLabel")}>
+          {t("play.back")}
+        </Link>
+        <div className="gg-where">
+          <b>{t("play.levelTitle", { n: level.id, title: tl(level.title) })}</b>
+          {tier && <span>{t("play.where", { tier: tl(tier.name), n: level.id, total: LEVELS.length })}</span>}
         </div>
-        <LevelMap
-          levels={LEVELS}
-          current={state.levelIndex}
-          completed={state.completed}
-          unlocked={(i) => isUnlocked(state.completed, i)}
-          onGoto={(index) => dispatch({ type: "goto-level", index })}
+        {tier && (
+          <div
+            className="gg-segs"
+            style={{ "--c": `var(--lane-${tier.lane})` } as React.CSSProperties}
+            role="img"
+            aria-label={t("play.segs", { tier: tl(tier.name), done: doneInTier, total: tierSize })}
+          >
+            {Array.from({ length: tierSize }, (_, i) => {
+              const id = tier.from + i;
+              const cls = state.completed.includes(id) ? "gg-seg-done" : id === level.id ? "gg-seg-cur" : "";
+              return <i key={id} className={cls} />;
+            })}
+          </div>
+        )}
+        <span className="gg-bar-spacer" />
+        <LanguageToggle
+          onSwitch={(next) => {
+            saveCarry(state, next);
+            document.cookie = langCookie(next);
+            // Sengaja reload dokumen penuh: dengan cacheComponents, router.push menyimpan halaman bahasa lama
+            // secara tersembunyi (React Activity), sehingga saat kembali ke bahasa itu state lamanya yang muncul.
+            // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+            window.location.assign(`/${next}/play/${level.id}`);
+          }}
         />
+        <button type="button" className="gg-btn gg-btn-sm" disabled={!state.levelComplete} onClick={() => setSummaryOpen(true)}>
+          {t("play.summary")}
+        </button>
       </header>
 
       <div className="gg-left">
@@ -100,7 +147,8 @@ function GameView() {
           complete={state.levelComplete}
           isLast={isLast}
           onReset={() => dispatch({ type: "reset-level" })}
-          onNext={() => dispatch({ type: "goto-level", index: state.levelIndex + 1 })}
+          onNext={() => router.push(`/${lang}/play/${level.id + 1}`)}
+          onOpenSummary={() => setSummaryOpen(true)}
         />
         <Terminal key={state.levelIndex} lines={state.lines} onSubmit={run} />
         {level.editor && (
@@ -133,6 +181,12 @@ function GameView() {
           />
         </section>
       </div>
+      <SummaryDialog
+        state={state}
+        open={summaryOpen}
+        onClose={() => setSummaryOpen(false)}
+        onRestart={() => dispatch({ type: "reset-level" })}
+      />
     </div>
   );
 }
