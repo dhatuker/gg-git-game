@@ -74,7 +74,10 @@ export type GitEvent =
   | { type: "rebase-commit-disalin"; from: string; to: string }
   | { type: "rebase-selesai"; branch: string; tip: string }
   | { type: "rebase-dibatalkan"; branch: string }
-  | { type: "clone-selesai"; tip: string };
+  | { type: "clone-selesai"; tip: string }
+  | { type: "fetch-selesai"; from: string; to: string }
+  | { type: "push-berhasil"; from: string; to: string; count: number }
+  | { type: "push-ditolak"; reason: "fetch-first" | "non-fast-forward" };
 
 export interface CommandResult {
   state: RepoState;

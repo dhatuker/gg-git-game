@@ -13,6 +13,8 @@ import { stash } from "./commands/stash";
 import { rebase } from "./commands/rebase";
 import { clone } from "./commands/clone";
 import { remote } from "./commands/remote";
+import { fetch } from "./commands/fetch";
+import { push } from "./commands/push";
 import { msg } from "./messages";
 import { parseInput } from "./parse";
 import { failure } from "./state";
@@ -36,6 +38,8 @@ export const HANDLERS: Record<string, Handler> = {
   rebase,
   clone,
   remote,
+  fetch,
+  push,
 };
 
 export function runCommand(state: RepoState, input: string): CommandResult {

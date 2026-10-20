@@ -51,6 +51,12 @@ function describe(e: GitEvent): TMsg {
       return { key: "caption.rebaseAborted", params: { branch: e.branch } };
     case "clone-selesai":
       return { key: "caption.clone", params: { tip: e.tip } };
+    case "fetch-selesai":
+      return { key: "caption.fetch", params: { from: e.from, to: e.to } };
+    case "push-berhasil":
+      return { key: "caption.push", params: { count: e.count, to: e.to } };
+    case "push-ditolak":
+      return { key: e.reason === "fetch-first" ? "caption.pushRejectedFetchFirst" : "caption.pushRejectedNonFastForward" };
   }
 }
 

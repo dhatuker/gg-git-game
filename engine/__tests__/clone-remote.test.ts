@@ -118,6 +118,6 @@ describe("guard dan suggest", () => {
   });
 
   it("perintah yang belum terdaftar tetap lewat jalur unknown", () => {
-    expect(keys(exec(initRepo(), "git push"))).toEqual(["command.unknown"]);
+    expect(keys(exec(initRepo(), "git pull"))).toEqual(["command.unknown"]);
   });
 });
