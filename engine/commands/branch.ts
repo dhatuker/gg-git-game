@@ -35,7 +35,7 @@ export const branch: Handler = (state, args) => {
     const current = state.head.type === "branch" ? state.head.name : null;
     const lines = names.map((n) => `${n === current ? "* " : "  "}${n}`);
     if (state.head.type === "detached") lines.unshift(`* (HEAD detached at ${state.head.id})`);
-    return success(state, lines.map(raw));
+    return success(state, lines.map((t) => raw(t)));
   }
   if (args[0] === "-d" || args[0] === "-D") {
     const force = args[0] === "-D";

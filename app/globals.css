@@ -23,6 +23,8 @@
   --term-ink: #dfe8e4;
   --term-muted: #8fa3ac;
   --term-error: #ff8a80;
+  --term-add: #7ee2a8;
+  --term-del: #ff8a80;
   --focus: #2360c4;
   --on-accent: #ffffff;
 }
@@ -277,8 +279,15 @@ code,
 .gg-term-error {
   color: var(--term-error);
 }
-.gg-term-muted {
+.gg-term-muted,
+.gg-term-meta {
   color: var(--term-muted);
+}
+.gg-term-add {
+  color: var(--term-add);
+}
+.gg-term-del {
+  color: var(--term-del);
 }
 .gg-term code {
   background: none;

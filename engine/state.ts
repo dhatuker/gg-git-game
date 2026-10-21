@@ -38,7 +38,7 @@ export function success(state: RepoState, output: OutputLine[], events: GitEvent
 
 /** Teks mentah multi-baris menjadi baris-baris raw. */
 export function rawLines(text: string): OutputLine[] {
-  return text.split("\n").map(raw);
+  return text.split("\n").map((t) => raw(t));
 }
 
 /** Pesan ramah (berkunci) di baris pertama, pesan asli git (raw) di bawahnya. */

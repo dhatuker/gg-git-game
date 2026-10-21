@@ -1,5 +1,7 @@
 import { useLang } from "./LanguageProvider";
-import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
+import { Fragment, useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
+import type { RawStyle } from "../engine/messages";
+import type { TLine } from "../i18n/types";
 import { COMMAND_FLAGS } from "../engine";
 import { COMMAND_NOTES } from "../levels/summaries";
 import type { TerminalLine } from "./game-state";
@@ -11,6 +13,22 @@ interface Props {
   /** Input sebelumnya untuk ↑/↓, dari yang paling lama. */
   history: string[];
   onSubmit: (input: string) => void;
+}
+
+const STYLE_CLASS: Record<RawStyle, string> = { add: "gg-term-add", del: "gg-term-del", meta: "gg-term-meta" };
+
+/** Baris output dipisah "\n" (log memakai white-space: pre-wrap); baris raw bergaya (diff) diberi warna. */
+function OutputText({ lines, format }: { lines: TLine[]; format: (l: TLine) => string }) {
+  return (
+    <>
+      {lines.map((l, i) => (
+        <Fragment key={i}>
+          {i > 0 && "\n"}
+          {"raw" in l && l.style ? <span className={STYLE_CLASS[l.style]}>{format(l)}</span> : format(l)}
+        </Fragment>
+      ))}
+    </>
+  );
 }
 
 /** Output `git help`: daftar perintah, kegunaan, dan opsi yang ada di game ini. */
@@ -127,7 +145,7 @@ export function Terminal({ lines, history, onSubmit }: Props) {
             </div>
           ) : (
             <div key={i} className={line.kind === "input" ? "gg-term-input-line" : line.kind === "error" ? "gg-term-error" : undefined}>
-              {line.kind === "input" ? line.text : line.lines.map(fmt).join("\n")}
+              {line.kind === "input" ? line.text : <OutputText lines={line.lines} format={fmt} />}
             </div>
           ),
         )}

@@ -1,4 +1,4 @@
-import type { MessageKey, Params } from "../engine/messages";
+import type { MessageKey, Params, RawLine } from "../engine/messages";
 
 export type Lang = "id" | "en";
 export const LANGS: readonly Lang[] = ["id", "en"];
@@ -178,7 +178,7 @@ export interface TMsg {
   params?: Params;
 }
 
-export type TLine = TMsg | { raw: string };
+export type TLine = TMsg | RawLine;
 
 export type EngineDict = Record<MessageKey, string>;
 export type UiDict = Record<UiKey, string>;

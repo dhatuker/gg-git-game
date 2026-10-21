@@ -165,15 +165,23 @@ export interface Msg {
   params?: Params;
 }
 
+/** Gaya opsional baris mentah, untuk pewarnaan terminal (baris diff). */
+export type RawStyle = "add" | "del" | "meta";
+
+export interface RawLine {
+  raw: string;
+  style?: RawStyle;
+}
+
 /** Baris output: pesan yang diterjemahkan, atau teks mentah (pesan asli git, nama file, baris log). */
-export type OutputLine = Msg | { raw: string };
+export type OutputLine = Msg | RawLine;
 
 export function msg(key: MessageKey, params?: Params): Msg {
   return params ? { key, params } : { key };
 }
 
-export function raw(text: string): { raw: string } {
-  return { raw: text };
+export function raw(text: string, style?: RawStyle): RawLine {
+  return style ? { raw: text, style } : { raw: text };
 }
 
 export function isRaw(line: { raw: string } | { key: string }): line is { raw: string } {
