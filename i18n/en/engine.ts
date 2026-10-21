@@ -54,6 +54,9 @@ export const en: EngineDict = {
   "add.nothingNew": "No new changes to stage.",
 
   "commit.needMessage": 'A commit needs a message. Write it like this: `git commit -m "short message"`.',
+  "commit.amendNothing": "There are no commits yet, so there is nothing to fix. Make a normal commit first.",
+  "commit.amendNeedsMessage": "Add a new message with `-m \"message\"`, or `--no-edit` to keep the old one.",
+  "commit.amended": "Commit `{from}` was replaced by the new commit `{to}`. The old commit still exists in git, but no branch points to it.",
   "commit.conflictsRemain": "Conflicts remain in: {files}. Fix their contents, then run `git add` for those files.",
   "commit.nothingStaged": "Nothing is staged yet. Run `git add` first.",
   "commit.mergeDone": "Merge complete.",

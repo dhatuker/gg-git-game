@@ -33,6 +33,7 @@ export type UiKey =
   | "caption.diffStaged"
   | "caption.restore"
   | "caption.restoreStaged"
+  | "caption.amend"
   | "caption.rebaseDone"
   | "caption.rebaseAborted"
   | "caption.clone"

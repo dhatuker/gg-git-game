@@ -54,6 +54,9 @@ export const id: EngineDict = {
   "add.nothingNew": "Tidak ada perubahan baru untuk di-stage.",
 
   "commit.needMessage": 'Commit butuh pesan. Tulis seperti ini: `git commit -m "pesan singkat"`.',
+  "commit.amendNothing": "Belum ada commit, jadi tidak ada yang bisa diperbaiki. Buat commit biasa dulu.",
+  "commit.amendNeedsMessage": "Tambahkan pesan baru dengan `-m \"pesan\"`, atau `--no-edit` untuk memakai pesan lama.",
+  "commit.amended": "Commit `{from}` diganti dengan commit baru `{to}`. Commit lama masih ada di git, tapi tidak lagi ditunjuk branch.",
   "commit.conflictsRemain": "Masih ada konflik di: {files}. Selesaikan isinya lalu jalankan `git add` untuk file tersebut.",
   "commit.nothingStaged": "Belum ada perubahan di staging. Jalankan `git add` dulu.",
   "commit.mergeDone": "Merge selesai.",

@@ -57,6 +57,9 @@ export type MessageKey =
   | "add.nothingNew"
   // commit
   | "commit.needMessage"
+  | "commit.amendNothing"
+  | "commit.amendNeedsMessage"
+  | "commit.amended"
   | "commit.conflictsRemain"
   | "commit.nothingStaged"
   | "commit.mergeDone"

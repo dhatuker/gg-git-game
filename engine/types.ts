@@ -59,6 +59,7 @@ export type GitEvent =
   | { type: "file-di-stage"; file: string }
   | { type: "diff-ditampilkan"; staged: boolean }
   | { type: "restore-dilakukan"; files: string[]; staged: boolean }
+  | { type: "commit-diperbaiki"; from: string; to: string }
   | { type: "commit-dibuat"; id: string; parents: string[] }
   | { type: "branch-dibuat"; name: string; at: string }
   | { type: "branch-dihapus"; name: string }

@@ -31,7 +31,7 @@ describe("opsi yang belum didukung", () => {
     ["git add -p", "-p", "add"],
     ["git switch -b x", "-b", "switch"],
     ["git rebase -i main", "-i", "rebase"],
-    ['git commit -m "x" --amend', "--amend", "commit"],
+    ['git commit -m "x" --fixup', "--fixup", "commit"],
     ["git commit -ax", "-ax", "commit"],
   ])("%s → pesan opsi tidak didukung, state tidak berubah", (input, flag, cmd) => {
     const s = base();

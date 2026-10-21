@@ -28,6 +28,7 @@ export const commit: Handler = (state, args) => {
   // Saat rebase, salinan commit dibuat oleh `git rebase --continue`, bukan `git commit`.
   const blocked = state.rebaseState && inProgressBlock(state);
   if (blocked) return blocked;
+  if (hasFlag(args, "--amend", ["-m"])) return amend(state, args);
   const message = flagValue(args, "-m", ["-m"]);
   if (!message || !message.trim()) {
     return failure(
@@ -90,4 +91,26 @@ function commitStaged(original: RepoState, state: RepoState, message: string, st
     ...stagedEvents,
     { type: "commit-dibuat", id: made.commit.id, parents },
   ]);
+}
+
+/**
+ * `git commit --amend`: ganti commit HEAD dengan commit baru (parent sama, isi dari staging).
+ * Commit lama tidak dihapus; ia jadi yatim kecuali masih ditunjuk ref lain (misalnya origin/main).
+ */
+function amend(state: RepoState, args: string[]): CommandResult {
+  const blocked = inProgressBlock(state);
+  if (blocked) return blocked;
+  const headId = getHeadCommitId(state);
+  if (!headId) return failure(state, msg("commit.amendNothing"), "fatal: You have nothing to amend.");
+  const old = state.commits[headId];
+  const message = hasFlag(args, "--no-edit", ["-m"]) && !hasFlag(args, "-m", ["-m"]) ? old.message : flagValue(args, "-m", ["-m"]);
+  if (!message || !message.trim()) return failure(state, msg("commit.amendNeedsMessage"));
+  const staged = hasFlag(args, "-a", ["-m"]) ? stageTracked(state) : { state, events: [] };
+  const made = createCommit(staged.state, message, old.parents);
+  const label = state.head.type === "branch" ? state.head.name : "detached HEAD";
+  return success(
+    made.state,
+    [msg("commit.amended", { from: headId, to: made.commit.id }), raw(`[${label} ${made.commit.id}] ${message}`)],
+    [...staged.events, { type: "commit-diperbaiki", from: headId, to: made.commit.id }],
+  );
 }
