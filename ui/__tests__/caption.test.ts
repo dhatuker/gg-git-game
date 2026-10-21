@@ -41,7 +41,8 @@ describe("describeEvents", () => {
     { type: "diff-ditampilkan", staged: true },
     { type: "restore-dilakukan", files: ["a.txt"], staged: false },
     { type: "restore-dilakukan", files: ["a.txt"], staged: true },
-    { type: "commit-diperbaiki", from: "a1", to: "b2" },
+    { type: "commit-diperbaiki", from: "a1", to: "b2", orphaned: true },
+    { type: "commit-diperbaiki", from: "a1", to: "b2", orphaned: false },
     { type: "clone-selesai", tip: "abc1234" },
     { type: "fetch-selesai", from: "a1", to: "b2" },
     { type: "push-berhasil", from: "a1", to: "b2", count: 2 },
@@ -118,8 +119,14 @@ describe("caption v2c", () => {
     expect(
       describeEvents([
         { type: "file-di-stage", file: "a.txt" },
-        { type: "commit-diperbaiki", from: "a1", to: "b2" },
+        { type: "commit-diperbaiki", from: "a1", to: "b2", orphaned: true },
       ])?.key,
     ).toBe("caption.amend");
+  });
+});
+
+describe("caption amend saat commit lama masih ditunjuk", () => {
+  it("memakai kunci yang tidak menyebut pudar", () => {
+    expect(describeEvents([{ type: "commit-diperbaiki", from: "a1", to: "b2", orphaned: false }])?.key).toBe("caption.amendStillReferenced");
   });
 });

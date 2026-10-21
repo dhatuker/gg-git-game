@@ -24,7 +24,7 @@ describe("highlightTargets (v2c)", () => {
     expect(highlightTargets({ type: "restore-dilakukan", files: ["a.txt"], staged: true }, {})).toEqual({ commits: [], labels: [], files: ["a.txt"] });
   });
   it("commit-diperbaiki menyorot commit baru dan HEAD", () => {
-    expect(highlightTargets({ type: "commit-diperbaiki", from: "a", to: "b" }, {})).toEqual({ commits: ["b"], labels: ["HEAD"], files: [] });
+    expect(highlightTargets({ type: "commit-diperbaiki", from: "a", to: "b", orphaned: true }, {})).toEqual({ commits: ["b"], labels: ["HEAD"], files: [] });
   });
 });
 

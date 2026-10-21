@@ -1,6 +1,6 @@
 import { msg, raw } from "../messages";
 import { shortHash } from "../hash";
-import { failure, getHeadCommitId, headSnapshot, inProgressBlock, success } from "../state";
+import { failure, getHeadCommitId, headSnapshot, inProgressBlock, success, unreachableCommits } from "../state";
 import { flagValue, hasFlag } from "../flags";
 import type { CommandResult, Commit, GitEvent, Handler, RepoState } from "../types";
 
@@ -108,9 +108,13 @@ function amend(state: RepoState, args: string[]): CommandResult {
   const staged = hasFlag(args, "-a", ["-m"]) ? stageTracked(state) : { state, events: [] };
   const made = createCommit(staged.state, message, old.parents);
   const label = state.head.type === "branch" ? state.head.name : "detached HEAD";
+  const orphaned = unreachableCommits(made.state).includes(headId);
   return success(
     made.state,
-    [msg("commit.amended", { from: headId, to: made.commit.id }), raw(`[${label} ${made.commit.id}] ${message}`)],
-    [...staged.events, { type: "commit-diperbaiki", from: headId, to: made.commit.id }],
+    [
+      msg(orphaned ? "commit.amended" : "commit.amendedStillReferenced", { from: headId, to: made.commit.id }),
+      raw(`[${label} ${made.commit.id}] ${message}`),
+    ],
+    [...staged.events, { type: "commit-diperbaiki", from: headId, to: made.commit.id, orphaned }],
   );
 }

@@ -32,7 +32,8 @@ function changed(left: Files, right: Files, only: string[] | null): string[] {
  */
 export const diff: Handler = (state, args) => {
   const staged = args.includes("--staged") || args.includes("--cached");
-  const paths = args.filter((a) => !a.startsWith("-"));
+  // `.` berarti semua file (sama seperti tanpa argumen), seperti di git.
+  const paths = args.filter((a) => !a.startsWith("-") && a !== ".");
   const head = headSnapshot(state);
   const unknown = paths.find((p) => !(p in state.files) && !(p in state.index) && !(p in head));
   if (unknown) {
@@ -58,5 +59,7 @@ export const diff: Handler = (state, args) => {
   if (untracked) return success(state, [msg("diff.untracked", { file: untracked })], events);
   if (staged) return success(state, [msg("diff.noneStaged")], events);
   const anyStaged = changed(head, state.index, null).length > 0;
-  return success(state, [msg(anyStaged ? "diff.noneUnstagedButStaged" : "diff.noneUnstaged")], events);
+  if (anyStaged) return success(state, [msg("diff.noneUnstagedButStaged")], events);
+  const anyUntracked = Object.keys(state.files).some((p) => !(p in state.index));
+  return success(state, [msg(anyUntracked ? "diff.noneButUntracked" : "diff.noneUnstaged")], events);
 };

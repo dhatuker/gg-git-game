@@ -59,6 +59,9 @@ describe("level 15 (reset, commit tetap ada di riwayat)", () => {
   it("tidak terpenuhi oleh --hard", () => {
     expect(l.isGoalReached(run(15, "git reset --hard HEAD~1"))).toBe(false);
   });
+  it("tidak terpenuhi oleh amend yang memakai ulang pesan commit sebelumnya", () => {
+    expect(l.isGoalReached(run(15, 'git commit --amend -m "Refactor app init"'))).toBe(false);
+  });
 });
 
 describe("level 16 (buang eksperimen)", () => {
@@ -246,5 +249,15 @@ describe("level 25 (push ditolak)", () => {
   });
   it("tidak selesai hanya dengan git pull tanpa push", () => {
     expect(l.isGoalReached(run(25, "git pull"))).toBe(false);
+  });
+});
+
+describe("jalan pintas dari perintah 2C", () => {
+  const shortcuts = ["git commit --amend --no-edit", "git commit -a --amend --no-edit", "git restore .", "git restore --staged ."];
+  it.each(LEVELS.map((l) => [l.id, l] as const))("level %i tidak selesai oleh satu perintah amend/restore", (_id, l) => {
+    for (const input of shortcuts) {
+      const r = runCommand(l.initialState, input);
+      if (r.ok) expect(l.isGoalReached(r.state), input).toBe(false);
+    }
   });
 });

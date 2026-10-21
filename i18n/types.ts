@@ -34,6 +34,7 @@ export type UiKey =
   | "caption.restore"
   | "caption.restoreStaged"
   | "caption.amend"
+  | "caption.amendStillReferenced"
   | "caption.rebaseDone"
   | "caption.rebaseAborted"
   | "caption.clone"

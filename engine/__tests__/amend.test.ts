@@ -28,7 +28,7 @@ describe("git commit --amend", () => {
     expect(keys(r)).toEqual(["commit.amended"]);
     expect(paramsOf(r, "commit.amended")).toEqual({ from: old, to: now.id });
     expect(rawText(r)).toBe(`[main ${now.id}] second`);
-    expect(r.events.at(-1)).toEqual({ type: "commit-diperbaiki", from: old, to: now.id });
+    expect(r.events.at(-1)).toEqual({ type: "commit-diperbaiki", from: old, to: now.id, orphaned: true });
     expect(unreachableCommits(r.state)).toContain(old);
   });
 
@@ -110,6 +110,8 @@ describe("git commit --amend", () => {
     const old = getHeadCommitId(s) as string;
     const r = exec(s, 'git commit --amend -m "second"');
     expect(unreachableCommits(r.state)).not.toContain(old);
+    expect(keys(r)).toEqual(["commit.amendedStillReferenced"]);
+    expect(r.events.at(-1)).toMatchObject({ type: "commit-diperbaiki", orphaned: false });
     const push = exec(r.state, "git push");
     expect(push.ok).toBe(false);
     expect(keys(push)).toEqual(["push.rejectedNonFastForward"]);

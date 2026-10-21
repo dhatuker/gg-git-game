@@ -30,6 +30,7 @@ export const en: UiDict = {
   "caption.restore": "{files} in the working directory was replaced with the staged version. Unstaged changes are gone.",
   "caption.restoreStaged": "{files} in staging was set back to the last commit. The working directory did not change.",
   "caption.amend": "The new commit `{to}` replaces `{from}` with the same parent. `{from}` is not deleted: it still exists in git and is drawn faded because no branch points to it.",
+  "caption.amendStillReferenced": "The new commit `{to}` replaces `{from}` on this branch, but another ref (for example `origin/main`) still points to `{from}`, so it is still drawn. The two histories now split from the same parent.",
   "caption.mergeAborted": "The merge with `{branch}` was aborted. No new commit was made; HEAD stays put and the conflict is gone.",
   "caption.rebaseAborted": "Rebase on `{branch}` was aborted and the branch is back exactly as it was before the rebase started.",
   "caption.clone": "The repository was copied from the server. Your local `main` and `origin/main` both start at the same commit `{tip}`, so you are in sync with the server.",

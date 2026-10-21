@@ -1,6 +1,6 @@
 import { getHeadCommitId } from "../engine/state";
 import { projectSetup } from "./history";
-import { cmd, write } from "./solve";
+import { cmd, idByMessage, write } from "./solve";
 import type { Level } from "./types";
 
 const APP_JS = "function init() {\n  track('open');\n}\ninit();";
@@ -43,8 +43,9 @@ export const level15: Level = {
   isGoalReached: (s) => {
     const head = getHeadCommitId(s);
     return (
+      // HEAD harus commit "Refactor app init" yang asli (dibuat paling awal), bukan salinan hasil amend berpesan sama.
       head !== null &&
-      s.commits[head].message === "Refactor app init" &&
+      head === idByMessage(s, "Refactor app init") &&
       Object.values(s.commits).some((c) => c.message === "Add debug logging") &&
       (s.files["app.js"] ?? "").includes("debug")
     );

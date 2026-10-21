@@ -25,6 +25,7 @@ export type MessageKey =
   | "diff.noneUnstaged"
   | "diff.noneUnstagedButStaged"
   | "diff.noneStaged"
+  | "diff.noneButUntracked"
   | "diff.untracked"
   | "diff.unknownPath"
   // restore
@@ -60,6 +61,7 @@ export type MessageKey =
   | "commit.amendNothing"
   | "commit.amendNeedsMessage"
   | "commit.amended"
+  | "commit.amendedStillReferenced"
   | "commit.conflictsRemain"
   | "commit.nothingStaged"
   | "commit.mergeDone"

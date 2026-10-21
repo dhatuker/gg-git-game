@@ -1,10 +1,11 @@
 import { projectSetup } from "./history";
-import { cmd, commitCount, write } from "./solve";
+import { getHeadCommitId, isReachable } from "../engine/state";
+import { cmd, write } from "./solve";
 import type { Level } from "./types";
 
-/** Proyek tim yang sudah berjalan; tujuan level dihitung relatif terhadap jumlah commit awal. */
+/** Proyek tim yang sudah berjalan; tujuan level: ada commit baru di atas ujung awal `main`. */
 const INITIAL = projectSetup();
-const INITIAL_COMMITS = commitCount(INITIAL);
+const INITIAL_HEAD = getHeadCommitId(INITIAL) as string;
 
 export const level05: Level = {
   id: 5,
@@ -37,7 +38,11 @@ export const level05: Level = {
       en: "The next steps are the same as levels 3 and 4: move the change into staging, then make a commit with a message.",
     },
   ],
-  isGoalReached: (s) => commitCount(s) > INITIAL_COMMITS,
+  // Commit baru harus menumpuk di atas ujung awal (amend hanya mengganti commit itu, jadi tidak dihitung).
+  isGoalReached: (s) => {
+    const head = getHeadCommitId(s);
+    return head !== null && head !== INITIAL_HEAD && isReachable(s, head, INITIAL_HEAD);
+  },
   mustRun: ["log"],
   solution: [cmd("git log"), write("idea.txt", "A new feature idea"), cmd("git add ."), cmd('git commit -m "Add idea notes"')],
 };

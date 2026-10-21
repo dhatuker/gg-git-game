@@ -5,6 +5,9 @@ import type { Level } from "./types";
 
 const APP_WIP = "function init() {\n  track('open');\n}\ninit();\nrenderSidebar(); // work in progress";
 
+const INITIAL = projectSetup([cmd("git branch hotfix"), write("app.js", APP_WIP)]);
+const INITIAL_MAIN = INITIAL.branches["main"];
+
 export const level18: Level = {
   id: 18,
   title: {
@@ -21,7 +24,7 @@ export const level18: Level = {
   },
   editor: true,
   allowedCommands: ["init", "status", "add", "commit", "log", "diff", "restore", "branch", "switch", "checkout", "merge", "reset", "revert", "stash"],
-  initialState: projectSetup([cmd("git branch hotfix"), write("app.js", APP_WIP)]),
+  initialState: INITIAL,
   hints: [
     {
       id: "Coba pindah ke `hotfix` langsung dan baca pesan gagalnya. Kerjaanmu harus disimpan sementara dulu, tanpa di-commit.",
@@ -45,10 +48,11 @@ export const level18: Level = {
       s.head.name === "main" &&
       s.files["app.js"] === APP_WIP &&
       s.stash.length === 0 &&
-      main !== undefined &&
+      // main tidak berubah; perbaikan berupa commit baru di atas hotfix (bukan amend di main).
+      main === INITIAL_MAIN &&
       hotfix !== undefined &&
-      hotfix !== main &&
-      !isReachable(s, main, hotfix) &&
+      hotfix !== INITIAL_MAIN &&
+      isReachable(s, hotfix, INITIAL_MAIN) &&
       getHeadCommitId(s) === main
     );
   },

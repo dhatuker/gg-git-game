@@ -30,6 +30,7 @@ export const id: UiDict = {
   "caption.restore": "{files} di working directory diganti dengan isi staging. Perubahan yang belum di-stage hilang.",
   "caption.restoreStaged": "{files} di staging dikembalikan ke isi commit terakhir. Working directory tidak berubah.",
   "caption.amend": "Commit baru `{to}` menggantikan `{from}` dengan parent yang sama. `{from}` tidak dihapus: ia masih ada di git dan digambar pudar karena tidak ditunjuk branch mana pun.",
+  "caption.amendStillReferenced": "Commit baru `{to}` menggantikan `{from}` di branch ini, tapi `{from}` masih ditunjuk ref lain (misalnya `origin/main`) sehingga tetap tergambar. Dua riwayat kini bercabang dari parent yang sama.",
   "caption.mergeAborted": "Merge dengan `{branch}` dibatalkan. Tidak ada commit baru; HEAD tetap di tempatnya dan konflik dibuang.",
   "caption.rebaseAborted": "Rebase pada `{branch}` dibatalkan dan branch kembali persis seperti sebelum rebase dimulai.",
   "caption.clone": "Repositori disalin dari server. `main` lokalmu dan `origin/main` sama-sama mulai di commit `{tip}`, jadi kamu sudah sinkron dengan server.",

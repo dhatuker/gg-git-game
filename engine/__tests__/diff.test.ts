@@ -39,6 +39,17 @@ describe("git diff (working vs staging)", () => {
     expect(keys(exec(base(), "git diff"))).toEqual(["diff.noneUnstaged"]);
   });
 
+  it("tidak mengklaim semuanya sama bila ada file tak terlacak", () => {
+    expect(keys(exec(write(base(), "new.txt", "x"), "git diff"))).toEqual(["diff.noneButUntracked"]);
+  });
+
+  it("git diff . berarti semua file", () => {
+    const s = write(base(), "app.js", "a\nB");
+    const r = exec(s, "git diff .");
+    expect(r.ok).toBe(true);
+    expect(rawText(r)).toBe(APP_DIFF);
+  });
+
   it("filter file", () => {
     let s = initRepo({ "app.js": "a", "b.js": "b" });
     s = run(run(s, "git add ."), 'git commit -m "first"');
