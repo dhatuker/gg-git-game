@@ -12,6 +12,8 @@ export type MessageKey =
   | "repo.notInitialized"
   | "command.unknown"
   | "command.unknownSuggest"
+  | "flag.unsupported"
+  | "flag.unsupportedNone"
   | "state.dirty"
   | "untracked.switch"
   | "untracked.merge"
@@ -57,6 +59,7 @@ export type MessageKey =
   | "branch.deleteCurrent"
   | "branch.notMerged"
   | "branch.deleted"
+  | "branch.forceDeleted"
   // switch
   | "switch.needTarget"
   | "switch.mergeInProgress"
@@ -74,6 +77,8 @@ export type MessageKey =
   | "merge.conflict"
   | "merge.conflictNext"
   | "merge.commitCreated"
+  | "merge.aborted"
+  | "merge.nothingToAbort"
   // reset
   | "reset.noCommits"
   | "reset.badFlag"

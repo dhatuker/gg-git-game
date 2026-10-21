@@ -5,16 +5,22 @@ export interface ParsedCommand {
   args: string[];
 }
 
+/** Kutip "pintar" dari keyboard HP diperlakukan seperti kutip biasa. */
+function normalizeQuotes(input: string): string {
+  return input.replace(/[“”„]/g, '"').replace(/[‘’]/g, "'");
+}
+
+/** Pecah input seperti shell: kutip ganda atau tunggal mengelompokkan kata; kutip jenis lain di dalamnya dibaca apa adanya. */
 function tokenize(input: string): string[] | null {
   const tokens: string[] = [];
   let current = "";
-  let inQuote = false;
+  let quote: '"' | "'" | null = null;
   let hasToken = false;
-  for (const ch of input) {
-    if (ch === '"') {
-      inQuote = !inQuote;
+  for (const ch of normalizeQuotes(input)) {
+    if (quote ? ch === quote : ch === '"' || ch === "'") {
+      quote = quote ? null : (ch as '"' | "'");
       hasToken = true;
-    } else if (/\s/.test(ch) && !inQuote) {
+    } else if (/\s/.test(ch) && !quote) {
       if (hasToken) tokens.push(current);
       current = "";
       hasToken = false;
@@ -23,7 +29,7 @@ function tokenize(input: string): string[] | null {
       hasToken = true;
     }
   }
-  if (inQuote) return null;
+  if (quote) return null;
   if (hasToken) tokens.push(current);
   return tokens;
 }

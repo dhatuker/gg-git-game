@@ -5,6 +5,7 @@ import {
   failure,
   getHeadCommitId,
   hasUncommittedChanges,
+  headSnapshot,
   inProgressBlock,
   isReachable,
   success,
@@ -27,6 +28,7 @@ export const merge: Handler = (state, args) => {
   const blocked = state.rebaseState && inProgressBlock(state);
   if (blocked) return blocked;
   const target = args[0];
+  if (target === "--abort") return abortMerge(state);
   if (!target) return failure(state, msg("merge.needTarget"), "fatal: No commit specified and merge.defaultToUpstream not set.");
   if (state.mergeState) {
     return failure(
@@ -42,6 +44,17 @@ export const merge: Handler = (state, args) => {
   const message = target.startsWith("origin/") ? `Merge remote-tracking branch '${target}'` : `Merge branch '${target}'`;
   return mergeCommit(state, theirs, target, message);
 };
+
+/** `git merge --abort`: buang hasil merge yang konflik, kembalikan index dan file terlacak ke HEAD. File tak terlacak tetap. */
+function abortMerge(state: RepoState): CommandResult {
+  const ms = state.mergeState;
+  if (!ms) return failure(state, msg("merge.nothingToAbort"), "fatal: There is no merge to abort (MERGE_HEAD missing).");
+  return success(
+    { ...state, ...checkoutSnapshot(state, headSnapshot(state)), mergeState: null },
+    [msg("merge.aborted", { branch: ms.from })],
+    [{ type: "merge-dibatalkan", branch: ms.from }],
+  );
+}
 
 /** Inti merge: dari "sudah terbaru" sampai merge commit atau konflik. `label` dipakai untuk pesan dan mergeState.from. */
 export function mergeCommit(state: RepoState, targetId: string, label: string, mergeMessage: string): CommandResult {

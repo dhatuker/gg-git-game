@@ -7,7 +7,8 @@ export const add: Handler = (state, args) => {
     return failure(state, msg("add.nothingSpecified"), "Nothing specified, nothing added.");
   }
   let paths: string[];
-  if (args.includes(".")) {
+  // `-A` / `--all` di game ini sama dengan `.`: belum ada file yang bisa dihapus, jadi tidak ada perbedaan.
+  if (args.includes(".") || args.includes("-A") || args.includes("--all")) {
     paths = Object.keys(state.files);
   } else {
     const missing = args.find((a) => !(a in state.files));

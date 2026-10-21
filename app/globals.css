@@ -277,6 +277,54 @@ code,
 .gg-term-error {
   color: var(--term-error);
 }
+.gg-term-muted {
+  color: var(--term-muted);
+}
+.gg-term code {
+  background: none;
+  padding: 0;
+  color: #fff;
+  font: inherit;
+}
+.gg-term-help {
+  white-space: normal;
+  margin-top: 2px;
+}
+.gg-term-help p {
+  margin: 2px 0;
+}
+.gg-term-help dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 2px 16px;
+  margin: 6px 0;
+}
+.gg-term-help dl > div {
+  display: contents;
+}
+.gg-term-help dt {
+  color: #fff;
+}
+.gg-term-help dd {
+  margin: 0;
+}
+@media (max-width: 520px) {
+  .gg-term-help dl {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .gg-term-help dd {
+    margin-bottom: 6px;
+  }
+}
+.gg-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
 .gg-term-form {
   display: flex;
   align-items: center;

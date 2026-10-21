@@ -1,13 +1,15 @@
 import type { EngineDict } from "../types";
 
 export const id: EngineDict = {
-  "parse.unclosedQuote": 'Tanda kutip belum ditutup. Pastikan pesan diapit "...".',
+  "parse.unclosedQuote": `Tanda kutip belum ditutup. Pastikan pesan diapit "..." atau '...'.`,
   "parse.empty": "Ketik sebuah perintah, misalnya `git status`.",
   "parse.notGit": "Perintah harus diawali `git`, misalnya `git status`.",
   "parse.missingCommand": "Tambahkan nama perintah setelah `git`, misalnya `git status`.",
 
   "repo.notInitialized": "Folder ini belum menjadi repositori git (bukan repositori git). Jalankan `git init` dulu.",
   "command.unknown": "Perintah `git {cmd}` tidak dikenal di game ini.",
+  "flag.unsupported": "Opsi `{flag}` untuk `git {cmd}` belum ada di game ini. Opsi yang bisa dipakai: {options}.",
+  "flag.unsupportedNone": "Opsi `{flag}` belum ada di game ini. Di sini `git {cmd}` dipakai tanpa opsi.",
   "command.unknownSuggest": "Perintah `git {cmd}` tidak dikenal di game ini. Mungkin maksudmu `git {suggestion}`?",
   "state.dirty": "Ada perubahan yang belum di-commit, jadi git tidak mau menjalankan perintah ini sekarang. Commit dulu (`git add` lalu `git commit`), atau simpan sementara dengan `git stash`.",
   "untracked.switch":
@@ -57,6 +59,7 @@ export const id: EngineDict = {
   "branch.deleteCurrent": "Tidak bisa menghapus branch `{name}` karena sedang dipakai. Pindah ke branch lain dulu.",
   "branch.notMerged": "Branch `{name}` punya commit yang belum di-merge. Merge dulu agar commit-nya tidak hilang.",
   "branch.deleted": "Branch `{name}` dihapus.",
+  "branch.forceDeleted": "Branch `{name}` dihapus paksa. Commit yang hanya ada di branch itu tidak lagi ditunjuk branch mana pun.",
 
   "switch.needTarget": "Sebutkan branch tujuan, misalnya `git switch main`.",
   "switch.mergeInProgress": "Selesaikan merge yang sedang berlangsung dulu.",
@@ -66,7 +69,7 @@ export const id: EngineDict = {
   "switch.notFound": "Branch atau commit `{target}` tidak ditemukan.",
 
   "merge.needTarget": "Sebutkan branch yang mau di-merge, misalnya `git merge feature`.",
-  "merge.inProgress": "Masih ada merge yang belum selesai. Selesaikan konfliknya, `git add`, lalu `git commit`.",
+  "merge.inProgress": "Masih ada merge yang belum selesai. Selesaikan konfliknya, `git add`, lalu `git commit`. Atau batalkan dengan `git merge --abort`.",
   "merge.notFound": "Branch `{branch}` tidak ditemukan.",
   "merge.noCommits": "Buat commit pertama dulu sebelum melakukan merge.",
   "merge.upToDate": "Branch `{branch}` sudah tercakup, tidak ada yang perlu di-merge.",
@@ -74,6 +77,8 @@ export const id: EngineDict = {
   "merge.conflict": "Konflik! File berikut diubah berbeda di kedua branch: {files}.",
   "merge.conflictNext": "Pilih isi yang benar, lalu `git add <file>` dan `git commit`.",
   "merge.commitCreated": "Merge commit {id} dibuat dengan dua parent.",
+  "merge.aborted": "Merge dengan `{branch}` dibatalkan. Staging area dan file kembali seperti sebelum merge.",
+  "merge.nothingToAbort": "Tidak ada merge yang sedang berjalan, jadi tidak ada yang bisa dibatalkan.",
   "reset.noCommits": "Belum ada commit, jadi belum ada yang bisa di-reset. Buat commit pertamamu dulu.",
   "reset.badFlag": "Opsi `{flag}` tidak dikenal. Pakai `--soft`, `--mixed`, atau `--hard`.",
   "reset.soft": "Pointer branch dipindah ke {to}. Staging dan file kerjamu tidak berubah, jadi perubahannya masih siap di-commit.",

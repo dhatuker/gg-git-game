@@ -16,6 +16,7 @@ import { remote } from "./commands/remote";
 import { fetch } from "./commands/fetch";
 import { push } from "./commands/push";
 import { pull } from "./commands/pull";
+import { checkFlags } from "./flags";
 import { msg } from "./messages";
 import { parseInput } from "./parse";
 import { failure } from "./state";
@@ -63,9 +64,12 @@ export function runCommand(state: RepoState, input: string): CommandResult {
       `git: '${parsed.name}' is not a git command. See 'git --help'.`,
     );
   }
-  return handler(state, parsed.args);
+  const checked = checkFlags(parsed.name, parsed.args);
+  if ("error" in checked) return failure(state, checked.error);
+  return handler(state, checked.args);
 }
 
 export * from "./types";
 export * from "./messages";
 export { createEmptyRepo, getHeadCommitId } from "./state";
+export { COMMAND_FLAGS } from "./flags";

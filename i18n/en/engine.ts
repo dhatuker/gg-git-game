@@ -1,13 +1,15 @@
 import type { EngineDict } from "../types";
 
 export const en: EngineDict = {
-  "parse.unclosedQuote": 'The quote is not closed. Make sure the message is wrapped in "...".',
+  "parse.unclosedQuote": `The quote is not closed. Make sure the message is wrapped in "..." or '...'.`,
   "parse.empty": "Type a command, for example `git status`.",
   "parse.notGit": "Commands must start with `git`, for example `git status`.",
   "parse.missingCommand": "Add a command name after `git`, for example `git status`.",
 
   "repo.notInitialized": "This folder is not a git repository yet. Run `git init` first.",
   "command.unknown": "The command `git {cmd}` is not available in this game.",
+  "flag.unsupported": "The option `{flag}` for `git {cmd}` is not available in this game. Options you can use: {options}.",
+  "flag.unsupportedNone": "The option `{flag}` is not available in this game. Here `git {cmd}` is used without options.",
   "command.unknownSuggest": "The command `git {cmd}` is not available in this game. Did you mean `git {suggestion}`?",
   "state.dirty": "You have uncommitted changes, so git will not run this command now. Commit them first (`git add`, then `git commit`), or set them aside with `git stash`.",
   "untracked.switch":
@@ -57,6 +59,7 @@ export const en: EngineDict = {
   "branch.deleteCurrent": "Cannot delete branch `{name}` because you are on it. Switch to another branch first.",
   "branch.notMerged": "Branch `{name}` has commits that are not merged yet. Merge it first so those commits are not lost.",
   "branch.deleted": "Deleted branch `{name}`.",
+  "branch.forceDeleted": "Branch `{name}` was force-deleted. Commits that were only on that branch are no longer pointed to by any branch.",
 
   "switch.needTarget": "Name the branch to switch to, for example `git switch main`.",
   "switch.mergeInProgress": "Finish the merge in progress first.",
@@ -66,7 +69,7 @@ export const en: EngineDict = {
   "switch.notFound": "Branch or commit `{target}` was not found.",
 
   "merge.needTarget": "Name the branch to merge, for example `git merge feature`.",
-  "merge.inProgress": "A merge is still in progress. Resolve the conflicts, run `git add`, then `git commit`.",
+  "merge.inProgress": "A merge is still in progress. Resolve the conflicts, run `git add`, then `git commit`. Or cancel it with `git merge --abort`.",
   "merge.notFound": "Branch `{branch}` was not found.",
   "merge.noCommits": "Make your first commit before merging.",
   "merge.upToDate": "Branch `{branch}` is already included; there is nothing to merge.",
@@ -74,6 +77,8 @@ export const en: EngineDict = {
   "merge.conflict": "Conflict! These files were changed differently on both branches: {files}.",
   "merge.conflictNext": "Choose the right content, then run `git add <file>` and `git commit`.",
   "merge.commitCreated": "Merge commit {id} created with two parents.",
+  "merge.aborted": "The merge with `{branch}` was aborted. The staging area and files are back to how they were before the merge.",
+  "merge.nothingToAbort": "No merge is in progress, so there is nothing to abort.",
   "reset.noCommits": "There are no commits yet, so there is nothing to reset. Make your first commit first.",
   "reset.badFlag": "Option `{flag}` is not recognised. Use `--soft`, `--mixed`, or `--hard`.",
   "reset.soft": "The branch pointer moved to {to}. Your staging area and working files are unchanged, so the changes are still ready to commit.",

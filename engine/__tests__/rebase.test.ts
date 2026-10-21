@@ -218,12 +218,12 @@ describe("git rebase <branch>", () => {
     expect(r.state).toEqual(s);
   });
 
-  it("flag lain yang tidak dikenal tetap dianggap nama branch (notFound)", () => {
+  it("flag lain yang tidak dikenal ditolak sebagai opsi, bukan dianggap nama branch", () => {
     const s = setup();
     const r = exec(s, "git rebase --skip");
     expect(r.ok).toBe(false);
-    expect(keys(r)).toEqual(["rebase.notFound"]);
-    expect(paramsOf(r, "rebase.notFound")).toEqual({ branch: "--skip" });
+    expect(keys(r)).toEqual(["flag.unsupported"]);
+    expect(paramsOf(r, "flag.unsupported")).toMatchObject({ flag: "--skip", cmd: "rebase" });
     expect(r.state).toEqual(s);
   });
 

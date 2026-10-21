@@ -37,7 +37,8 @@ export const branch: Handler = (state, args) => {
     if (state.head.type === "detached") lines.unshift(`* (HEAD detached at ${state.head.id})`);
     return success(state, lines.map(raw));
   }
-  if (args[0] === "-d") {
+  if (args[0] === "-d" || args[0] === "-D") {
+    const force = args[0] === "-D";
     const name = args[1];
     if (!name) return failure(state, msg("branch.deleteNeedsName"), "fatal: branch name required");
     if (!(name in state.branches)) {
@@ -51,7 +52,7 @@ export const branch: Handler = (state, args) => {
       );
     }
     const headId = getHeadCommitId(state);
-    if (!headId || !isReachable(state, headId, state.branches[name])) {
+    if (!force && (!headId || !isReachable(state, headId, state.branches[name]))) {
       return failure(
         state,
         msg("branch.notMerged", { name }),
@@ -60,7 +61,10 @@ export const branch: Handler = (state, args) => {
     }
     const branches = { ...state.branches };
     delete branches[name];
-    return success({ ...state, branches }, [msg("branch.deleted", { name })], [{ type: "branch-dihapus", name }]);
+    const output = force
+      ? [msg("branch.forceDeleted", { name }), raw(`Deleted branch ${name} (was ${state.branches[name]}).`)]
+      : [msg("branch.deleted", { name })];
+    return success({ ...state, branches }, output, [{ type: "branch-dihapus", name }]);
   }
   return createBranch(state, args[0]);
 };

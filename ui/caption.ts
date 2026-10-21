@@ -47,6 +47,8 @@ function describe(e: GitEvent): TMsg {
       return { key: "caption.rebaseCopied", params: { from: e.from, to: e.to } };
     case "rebase-selesai":
       return { key: "caption.rebaseDone", params: { branch: e.branch, tip: e.tip } };
+    case "merge-dibatalkan":
+      return { key: "caption.mergeAborted", params: { branch: e.branch } };
     case "rebase-dibatalkan":
       return { key: "caption.rebaseAborted", params: { branch: e.branch } };
     case "clone-selesai":

@@ -7,7 +7,7 @@ import { LEVELS } from "../levels";
 import { tierOf } from "../levels/tiers";
 import { AreaPanel } from "./AreaPanel";
 import { FileEditor } from "./FileEditor";
-import { firstOpenIndex, hintNudge, isUnlocked, reduce, startAt, visibleHints } from "./game-state";
+import { firstOpenIndex, hintNudge, inputHistory, isUnlocked, reduce, startAt, visibleHints } from "./game-state";
 import { GitGraph } from "./GitGraph";
 import { computeGraphLayout } from "./layout";
 import { LevelPanel } from "./LevelPanel";
@@ -52,6 +52,7 @@ function GameView({ levelIndex }: { levelIndex: number }) {
   const tier = tierOf(level.id);
   const layout = useMemo(() => computeGraphLayout(state.repo), [state.repo]);
   const queue = useEventQueue(state.events);
+  const history = useMemo(() => inputHistory(state.lines), [state.lines]);
 
   // Progres dibaca setelah mount agar HTML server dan client sama.
   // Saat pindah bahasa, state level dibawa lewat sessionStorage; selain itu masuk ke level dari URL.
@@ -150,7 +151,7 @@ function GameView({ levelIndex }: { levelIndex: number }) {
           onNext={() => router.push(`/${lang}/play/${level.id + 1}`)}
           onOpenSummary={() => setSummaryOpen(true)}
         />
-        <Terminal key={state.levelIndex} lines={state.lines} onSubmit={run} />
+        <Terminal key={state.levelIndex} lines={state.lines.slice(state.clearedAt)} history={history} onSubmit={run} />
         {level.editor && (
           <FileEditor
             files={state.repo.files}

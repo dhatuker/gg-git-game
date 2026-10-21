@@ -1,4 +1,4 @@
-import { HANDLERS, runCommand } from "../engine";
+import { COMMAND_FLAGS, HANDLERS, runCommand } from "../engine";
 import { resolveConflict, writeFile, type EditResult } from "../engine/files";
 import { parseInput } from "../engine/parse";
 import type { GitEvent, RepoState } from "../engine/types";
@@ -6,8 +6,14 @@ import { LEVELS, type Localized } from "../levels";
 import type { TLine, TMsg } from "../i18n/types";
 import { describeEvents } from "./caption";
 
-/** Baris terminal: input pemain apa adanya, atau output berupa pesan berkunci + baris raw. */
-export type TerminalLine = { kind: "input"; text: string } | { kind: "output" | "error"; lines: TLine[] };
+/**
+ * Baris terminal: input pemain apa adanya, output berupa pesan berkunci + baris raw, atau bantuan `git help`
+ * (input + daftar perintah; teksnya disusun saat render agar ikut bahasa aktif).
+ */
+export type TerminalLine =
+  | { kind: "input"; text: string }
+  | { kind: "output" | "error"; lines: TLine[] }
+  | { kind: "help"; text: string; commands: string[]; topic?: string; unknown?: string };
 
 export interface GameState {
   levelIndex: number;
@@ -20,6 +26,8 @@ export interface GameState {
   /** Kegagalan sejak petunjuk terakhir dibuka; dipakai untuk menyorot tombol petunjuk. */
   failedSinceHint: number;
   lines: TerminalLine[];
+  /** Baris sebelum indeks ini disembunyikan oleh `clear`; tetap ada untuk rangkuman dan statistik. */
+  clearedAt: number;
   events: GitEvent[];
   /** Pesan penjelasan untuk perintah sukses terakhir; diterjemahkan saat render. */
   caption: TMsg | null;
@@ -58,6 +66,7 @@ function startLevel(index: number, completed: number[]): GameState {
     hintsRevealed: 0,
     failedSinceHint: 0,
     lines: [],
+    clearedAt: 0,
     events: [],
     caption: null,
     levelComplete: false,
@@ -98,7 +107,37 @@ function applyEdit(state: GameState, result: EditResult): GameState {
   return withGoalCheck({ ...state, repo: result.state });
 }
 
+const CLEAR = /^(clear|cls)$/i;
+const HELP = /^(?:help|git\s+(?:help|--help|-h))(?:\s+(\S+))?$/i;
+
+/** Perintah milik terminal game (bukan git): bersihkan layar atau tampilkan bantuan. Null bila bukan. */
+function runTerminalCommand(state: GameState, input: string): GameState | null {
+  if (CLEAR.test(input)) return { ...state, clearedAt: state.lines.length };
+  const help = HELP.exec(input);
+  if (!help) return null;
+  const allowed = LEVELS[state.levelIndex].allowedCommands;
+  const topic = help[1];
+  const line: TerminalLine =
+    topic === undefined
+      ? { kind: "help", text: input, commands: allowed }
+      : topic in COMMAND_FLAGS
+        ? { kind: "help", text: input, commands: [topic], topic }
+        : { kind: "help", text: input, commands: allowed, unknown: topic };
+  return { ...state, lines: [...state.lines, line] };
+}
+
+/** Riwayat input pemain untuk tombol ↑/↓ (termasuk `git help`), tanpa duplikat berurutan. */
+export function inputHistory(lines: TerminalLine[]): string[] {
+  const out: string[] = [];
+  for (const line of lines) {
+    if ((line.kind === "input" || line.kind === "help") && out.at(-1) !== line.text) out.push(line.text);
+  }
+  return out;
+}
+
 function runInput(state: GameState, input: string): GameState {
+  const terminal = runTerminalCommand(state, input.trim());
+  if (terminal) return terminal;
   const level = LEVELS[state.levelIndex];
   const lines: TerminalLine[] = [...state.lines, { kind: "input", text: input }];
   const parsed = parseInput(input);
@@ -146,6 +185,7 @@ export function reduce(state: GameState, action: GameAction): GameState {
     case "restore":
       return {
         ...action.state,
+        clearedAt: Number.isInteger(action.state.clearedAt) ? action.state.clearedAt : 0,
         completed: [...new Set([...action.state.completed, ...action.savedCompleted])].sort((a, b) => a - b),
       };
     case "load-progress":

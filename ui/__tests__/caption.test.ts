@@ -36,6 +36,7 @@ describe("describeEvents", () => {
     { type: "rebase-commit-disalin", from: "a", to: "b" },
     { type: "rebase-selesai", branch: "fitur", tip: "t1" },
     { type: "rebase-dibatalkan", branch: "fitur" },
+    { type: "merge-dibatalkan", branch: "fitur" },
     { type: "clone-selesai", tip: "abc1234" },
     { type: "fetch-selesai", from: "a1", to: "b2" },
     { type: "push-berhasil", from: "a1", to: "b2", count: 2 },

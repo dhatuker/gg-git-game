@@ -1,7 +1,8 @@
 import { msg, raw } from "../messages";
 import { shortHash } from "../hash";
 import { failure, getHeadCommitId, headSnapshot, inProgressBlock, success } from "../state";
-import type { Commit, GitEvent, Handler, RepoState } from "../types";
+import { flagValue, hasFlag } from "../flags";
+import type { CommandResult, Commit, GitEvent, Handler, RepoState } from "../types";
 
 function sameFiles(a: Record<string, string>, b: Record<string, string>): boolean {
   const ka = Object.keys(a);
@@ -27,8 +28,7 @@ export const commit: Handler = (state, args) => {
   // Saat rebase, salinan commit dibuat oleh `git rebase --continue`, bukan `git commit`.
   const blocked = state.rebaseState && inProgressBlock(state);
   if (blocked) return blocked;
-  const m = args.indexOf("-m");
-  const message = m >= 0 ? args[m + 1] : undefined;
+  const message = flagValue(args, "-m", ["-m"]);
   if (!message || !message.trim()) {
     return failure(
       state,
@@ -36,12 +36,33 @@ export const commit: Handler = (state, args) => {
       "Aborting commit due to empty commit message.",
     );
   }
+  const unresolved = (state.mergeState?.conflicts.length ?? 0) > 0;
+  // `-a` men-stage perubahan file yang sudah terlacak dulu (file baru tetap tidak ikut), kecuali saat konflik belum selesai.
+  const staged = hasFlag(args, "-a", ["-m"]) && !unresolved ? stageTracked(state) : { state, events: [] };
+  return commitStaged(state, staged.state, message, staged.events);
+};
+
+/** Perubahan file terlacak di working directory dipindah ke index, seperti `git commit -a`. */
+function stageTracked(state: RepoState): { state: RepoState; events: GitEvent[] } {
+  const index = { ...state.index };
+  const events: GitEvent[] = [];
+  for (const p of Object.keys(index).sort()) {
+    if (p in state.files && state.files[p] !== index[p]) {
+      index[p] = state.files[p];
+      events.push({ type: "file-di-stage", file: p });
+    }
+  }
+  return { state: { ...state, index }, events };
+}
+
+/** Commit isi index `state`; kegagalan selalu mengembalikan `original` (sebelum `-a` men-stage apa pun). */
+function commitStaged(original: RepoState, state: RepoState, message: string, stagedEvents: GitEvent[]): CommandResult {
   const headId = getHeadCommitId(state);
   const label = state.head.type === "branch" ? state.head.name : "detached HEAD";
   if (state.mergeState) {
     if (state.mergeState.conflicts.length > 0) {
       return failure(
-        state,
+        original,
         msg("commit.conflictsRemain", { files: state.mergeState.conflicts.join(", ") }),
         "error: Committing is not possible because you have unmerged files.",
       );
@@ -49,6 +70,7 @@ export const commit: Handler = (state, args) => {
     const parents = [headId as string, state.mergeState.fromCommit];
     const made = createCommit({ ...state, mergeState: null }, message, parents);
     const events: GitEvent[] = [
+      ...stagedEvents,
       { type: "commit-dibuat", id: made.commit.id, parents },
       { type: "merge-commit-dibuat", id: made.commit.id, parents: [parents[0], parents[1]] },
       { type: "konflik-selesai" },
@@ -57,7 +79,7 @@ export const commit: Handler = (state, args) => {
   }
   if (sameFiles(state.index, headSnapshot(state))) {
     return failure(
-      state,
+      original,
       msg("commit.nothingStaged"),
       "nothing to commit, working tree clean",
     );
@@ -65,6 +87,7 @@ export const commit: Handler = (state, args) => {
   const parents = headId ? [headId] : [];
   const made = createCommit(state, message, parents);
   return success(made.state, [raw(`[${label} ${made.commit.id}] ${message}`)], [
+    ...stagedEvents,
     { type: "commit-dibuat", id: made.commit.id, parents },
   ]);
-};
+}

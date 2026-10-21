@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { LEVELS } from "../../levels";
-import { firstOpenIndex, hintNudge, initGame, isUnlocked, reduce, startAt, visibleHints, type GameState } from "../game-state";
+import { firstOpenIndex, hintNudge, initGame, inputHistory, isUnlocked, reduce, startAt, visibleHints, type GameState } from "../game-state";
+import { countInputs, succeededInputs } from "../level-info";
 
 const run = (s: GameState, input: string) => reduce(s, { type: "run", input });
 
@@ -179,7 +180,7 @@ describe("perbaikan review", () => {
     const s = run(atLevel(4), "git stauts");
     const last = s.lines.at(-1)!;
     expect(last.kind).toBe("error");
-    expect(last.kind !== "input" && last.lines[0]).toMatchObject({ key: "command.unknownSuggest", params: { suggestion: "status" } });
+    expect(last.kind === "error" && last.lines[0]).toMatchObject({ key: "command.unknownSuggest", params: { suggestion: "status" } });
   });
 
   it("perintah git asli yang belum dibuka tetap mendapat pesan 'belum dipakai'", () => {
@@ -259,5 +260,59 @@ describe("masuk level lewat URL", () => {
   it("firstOpenIndex: level terakhir bila semua selesai", () => {
     expect(firstOpenIndex([])).toBe(0);
     expect(firstOpenIndex(LEVELS.map((l) => l.id))).toBe(LEVELS.length - 1);
+  });
+});
+
+describe("perintah terminal: clear dan git help", () => {
+  it("clear menyembunyikan baris lama tanpa menghapus catatan perintah", () => {
+    let s = run(initGame([1]), "git status");
+    s = run(s, "clear");
+    expect(s.clearedAt).toBe(s.lines.length);
+    expect(s.lines).toHaveLength(2);
+    expect(s.failedAttempts).toBe(0);
+    s = run(s, "git status");
+    expect(s.lines.slice(s.clearedAt).map((l) => l.kind)).toEqual(["input", "output"]);
+  });
+
+  it.each(["cls", "  CLEAR  "])("%j juga membersihkan layar", (input) => {
+    const s = run(run(initGame([1]), "git status"), input);
+    expect(s.clearedAt).toBe(2);
+  });
+
+  it("ulangi level mengembalikan layar dari awal", () => {
+    const s = reduce(run(run(initGame([1]), "git status"), "clear"), { type: "reset-level" });
+    expect(s.clearedAt).toBe(0);
+  });
+
+  it.each(["git help", "git --help", "git -h", "help"])("%s mendaftar perintah level ini tanpa dihitung gagal", (input) => {
+    const s = run(initGame([1]), input);
+    expect(s.lines.at(-1)).toEqual({ kind: "help", text: input, commands: LEVELS[1].allowedCommands });
+    expect(s.failedAttempts).toBe(0);
+    expect(s.ran).toEqual([]);
+  });
+
+  it("git help <perintah> hanya menampilkan perintah itu", () => {
+    const s = run(initGame([1]), "git help commit");
+    expect(s.lines.at(-1)).toEqual({ kind: "help", text: "git help commit", commands: ["commit"], topic: "commit" });
+  });
+
+  it("git help <perintah tak dikenal> memberi tahu lalu mendaftar perintah level ini", () => {
+    const s = run(initGame([1]), "git help diff");
+    expect(s.lines.at(-1)).toEqual({ kind: "help", text: "git help diff", commands: LEVELS[1].allowedCommands, unknown: "diff" });
+  });
+
+  it("git help tidak masuk statistik atau catatan perintah", () => {
+    const s = run(initGame([]), "git help");
+    expect(countInputs(s.lines)).toBe(0);
+    expect(succeededInputs(s.lines)).toEqual([]);
+  });
+});
+
+describe("inputHistory", () => {
+  it("mengambil input pemain berurutan, termasuk git help, tanpa duplikat berurutan", () => {
+    let s = initGame([1]);
+    for (const input of ["git status", "git status", "git help", "git add x", "git status"]) s = run(s, input);
+    s = run(s, "clear");
+    expect(inputHistory(s.lines)).toEqual(["git status", "git help", "git add x", "git status"]);
   });
 });
