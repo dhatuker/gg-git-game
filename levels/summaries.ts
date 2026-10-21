@@ -22,6 +22,22 @@ export const SUMMARIES: Record<number, Localized> = {
     id: "`git log` membaca riwayat dari commit terbaru ke yang paling lama. Setiap commit menunjuk ke parent-nya, dan itulah yang membentuk garis di graf.",
     en: "`git log` reads history from the newest commit to the oldest. Each commit points to its parent, and that forms the line in the graph.",
   },
+  6: {
+    id: "`git diff` menampilkan baris yang berubah di working directory tapi belum di-stage. Periksa dulu sebelum `add`, supaya yang tak sengaja tidak ikut ter-commit.",
+    en: "`git diff` shows lines that changed in the working directory but are not staged yet. Check before you `add`, so accidental changes stay out of the commit.",
+  },
+  7: {
+    id: "`git restore <file>` membuang perubahan yang belum di-stage dan mengembalikan file ke isi staging. Sebutkan file satu per satu agar pekerjaan lain tidak ikut hilang.",
+    en: "`git restore <file>` throws away unstaged changes and puts the file back to what is in staging. Name files one at a time so other work is not lost.",
+  },
+  8: {
+    id: "`git diff --staged` menunjukkan isi commit berikutnya, dan `git restore --staged <file>` mengeluarkan file dari staging tanpa menghapus isinya.",
+    en: "`git diff --staged` shows what the next commit will contain, and `git restore --staged <file>` takes a file out of staging without deleting it.",
+  },
+  9: {
+    id: "`git commit --amend` mengganti commit terakhir dengan commit baru berparent sama. Commit lama tetap ada di git, hanya tidak lagi ditunjuk branch.",
+    en: "`git commit --amend` replaces the last commit with a new one that has the same parent. The old commit still exists in git; no branch points to it anymore.",
+  },
   10: {
     id: "Branch hanyalah label yang menempel di sebuah commit. Membuatnya murah karena tidak ada file yang disalin.",
     en: "A branch is just a label attached to a commit. Creating one is cheap because no files are copied.",

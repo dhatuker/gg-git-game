@@ -7,6 +7,47 @@ import { REMOTE_URL, remoteWorld } from "../history";
 const level = (id: number) => LEVELS.find((l) => l.id === id)!;
 const run = (id: number, input: string) => applySteps(level(id).initialState, [cmd(input)]);
 
+const steps = (id: number, inputs: string[]) => applySteps(level(id).initialState, inputs.map((i) => cmd(i)));
+
+describe("level 6 (diff)", () => {
+  it("terpenuhi juga dengan diff per file", () => {
+    expect(level(6).isGoalReached(steps(6, ["git diff config.js", "git add app.js", 'git commit -m "x"']))).toBe(true);
+  });
+  it("tidak terpenuhi bila config.js ikut di-commit", () => {
+    expect(level(6).isGoalReached(steps(6, ["git add .", 'git commit -m "x"']))).toBe(false);
+  });
+});
+
+describe("level 7 (restore)", () => {
+  it("git restore . ikut membuang catatan, jadi tidak terpenuhi", () => {
+    expect(level(7).isGoalReached(steps(7, ["git restore ."]))).toBe(false);
+  });
+  it("terpenuhi dengan restore satu file", () => {
+    expect(level(7).isGoalReached(steps(7, ["git restore style.css"]))).toBe(true);
+  });
+});
+
+describe("level 8 (restore --staged)", () => {
+  it("terpenuhi dengan commit -am setelah .env dikeluarkan", () => {
+    expect(level(8).isGoalReached(steps(8, ["git restore --staged .env", 'git commit -am "x"']))).toBe(true);
+  });
+  it("tidak terpenuhi bila langsung commit", () => {
+    expect(level(8).isGoalReached(steps(8, ['git commit -m "x"']))).toBe(false);
+  });
+});
+
+describe("level 9 (amend)", () => {
+  it("--no-edit tidak memperbaiki pesan, jadi tidak terpenuhi", () => {
+    expect(level(9).isGoalReached(steps(9, ["git add .", "git commit --amend --no-edit"]))).toBe(false);
+  });
+  it("commit baru (bukan amend) tidak terpenuhi", () => {
+    expect(level(9).isGoalReached(steps(9, ["git add login.css", 'git commit -m "Add login css"']))).toBe(false);
+  });
+  it("amend dengan -a tidak menyertakan file tak terlacak", () => {
+    expect(level(9).isGoalReached(steps(9, ['git commit -a --amend -m "Add login page"']))).toBe(false);
+  });
+});
+
 describe("level 15 (reset, commit tetap ada di riwayat)", () => {
   const l = level(15);
   it("terpenuhi oleh mixed, soft, dan hash eksplisit", () => {

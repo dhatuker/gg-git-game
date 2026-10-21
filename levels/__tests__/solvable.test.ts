@@ -23,8 +23,8 @@ function solutionCommandForms(level: (typeof LEVELS)[number]): string[] {
 }
 
 describe("LEVELS", () => {
-  it("berisi level dengan id berurutan, menyisakan 6–9 untuk jalur Periksa & rapikan", () => {
-    expect(LEVELS.map((l) => l.id)).toEqual([1, 2, 3, 4, 5, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25]);
+  it("berisi 25 level dengan id berurutan", () => {
+    expect(LEVELS.map((l) => l.id)).toEqual(Array.from({ length: 25 }, (_, i) => i + 1));
   });
 
   describe.each(LEVELS.map((l) => [l.id, l] as const))("level %i", (_id, level) => {
@@ -78,12 +78,13 @@ describe("applySteps", () => {
 });
 
 describe("petunjuk EN setara dengan ID", () => {
-  it("petunjuk level 7 tidak menyebut nama perintah pindah branch", () => {
-    for (const h of LEVELS[6].hints) expect(h.en).not.toMatch(/\b(switch|checkout)\b/i);
+  const byId = (id: number) => LEVELS.find((l) => l.id === id)!;
+  it("petunjuk level 11 (pindah branch) tidak menyebut nama perintahnya", () => {
+    for (const h of byId(11).hints) expect(h.en).not.toMatch(/\b(switch|checkout)\b/i);
   });
 
-  it("petunjuk ke-2 level 8 mengarahkan ke kata di tujuan level, bukan teka-teki bahasa", () => {
-    expect(LEVELS[7].hints[1].en).toMatch(/goal/i);
-    expect(LEVELS[7].hints[1].en).not.toMatch(/English verb/i);
+  it("petunjuk ke-2 level 12 mengarahkan ke kata di tujuan level, bukan teka-teki bahasa", () => {
+    expect(byId(12).hints[1].en).toMatch(/goal/i);
+    expect(byId(12).hints[1].en).not.toMatch(/English verb/i);
   });
 });

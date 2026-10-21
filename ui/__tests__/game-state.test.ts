@@ -64,9 +64,9 @@ describe("reduce", () => {
     expect(s.lines.at(-1)).toEqual({ kind: "error", lines: [{ key: "files.invalidName" }] });
   });
 
-  it("menyelesaikan level 10 lewat resolve", () => {
-    let s = reduce(initGame([]), { type: "load-progress", completed: [1, 2, 3, 4, 5, 10, 11, 12, 13] });
-    expect(s.levelIndex).toBe(9);
+  it("menyelesaikan level 14 (konflik merge) lewat resolve", () => {
+    let s = reduce(initGame([]), { type: "load-progress", completed: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13] });
+    expect(s.levelIndex).toBe(13);
     s = run(s, "git merge feature");
     s = reduce(s, { type: "resolve", file: "README.md", choice: "theirs" });
     s = run(s, "git add README.md");
@@ -146,21 +146,21 @@ describe("reduce", () => {
   });
 });
 
-describe("level 20 lewat reducer", () => {
+describe("level 24 (pull) lewat reducer", () => {
   it("git fetch lalu git merge origin/main menyelesaikan level", () => {
-    let s = reduce(initGame([1, 2, 3, 4, 5, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]), { type: "goto-level", index: 19 });
-    expect(s.levelIndex).toBe(19);
+    let s = reduce(initGame(Array.from({ length: 23 }, (_, i) => i + 1)), { type: "goto-level", index: 23 });
+    expect(s.levelIndex).toBe(23);
     s = run(s, "git fetch");
     expect(s.levelComplete).toBe(false);
     s = run(s, "git merge origin/main");
     expect(s.levelComplete).toBe(true);
-    expect(s.completed).toContain(20);
+    expect(s.completed).toContain(24);
   });
 });
 
 describe("initGame", () => {
   it("mulai di level terakhir bila semua selesai", () => {
-    expect(initGame([1, 2, 3, 4, 5, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25]).levelIndex).toBe(20);
+    expect(initGame(Array.from({ length: 25 }, (_, i) => i + 1)).levelIndex).toBe(24);
   });
 });
 
@@ -189,14 +189,14 @@ describe("perbaikan review", () => {
   });
 
   it("status level selesai tetap bertahan walau pemain bereksperimen sesudahnya", () => {
-    let s = run(atLevel(6), "git switch feature");
+    let s = run(atLevel(10), "git switch feature");
     expect(s.levelComplete).toBe(true);
     s = run(s, "git switch main");
     expect(s.levelComplete).toBe(true);
   });
 
   it("ulangi level mengembalikan status selesai ke false", () => {
-    let s = run(atLevel(6), "git switch feature");
+    let s = run(atLevel(10), "git switch feature");
     s = reduce(s, { type: "reset-level" });
     expect(s.levelComplete).toBe(false);
   });
@@ -212,9 +212,9 @@ describe("caption berkunci", () => {
   });
 });
 
-describe("level 16 wajib rebase", () => {
-  it("reset --hard main lalu cherry-pick tidak menyelesaikan level 16", () => {
-    const index = 15;
+describe("level 20 wajib rebase", () => {
+  it("reset --hard main lalu cherry-pick tidak menyelesaikan level 20", () => {
+    const index = 19;
     const level = LEVELS[index];
     const ids = ["Add profile page", "Style profile page"].map((m) => {
       const c = Object.values(level.initialState.commits).find((x) => x.message === m);
@@ -229,9 +229,9 @@ describe("level 16 wajib rebase", () => {
     expect(s.levelComplete).toBe(false);
   });
 
-  it("level 16 dan 17 mewajibkan rebase", () => {
-    expect(LEVELS[15].mustRun).toEqual(["rebase"]);
-    expect(LEVELS[16].mustRun).toEqual(["rebase"]);
+  it("level 20 dan 21 mewajibkan rebase", () => {
+    expect(LEVELS[19].mustRun).toEqual(["rebase"]);
+    expect(LEVELS[20].mustRun).toEqual(["rebase"]);
   });
 });
 
