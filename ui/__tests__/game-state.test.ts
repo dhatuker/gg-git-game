@@ -297,8 +297,8 @@ describe("perintah terminal: clear dan git help", () => {
   });
 
   it("git help <perintah tak dikenal> memberi tahu lalu mendaftar perintah level ini", () => {
-    const s = run(initGame([1]), "git help diff");
-    expect(s.lines.at(-1)).toEqual({ kind: "help", text: "git help diff", commands: LEVELS[1].allowedCommands, unknown: "diff" });
+    const s = run(initGame([1]), "git help bisect");
+    expect(s.lines.at(-1)).toEqual({ kind: "help", text: "git help bisect", commands: LEVELS[1].allowedCommands, unknown: "bisect" });
   });
 
   it("git help tidak masuk statistik atau catatan perintah", () => {

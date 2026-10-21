@@ -29,6 +29,8 @@ export type UiKey =
   | "caption.stashRestored"
   | "caption.rebaseCopied"
   | "caption.mergeAborted"
+  | "caption.diff"
+  | "caption.diffStaged"
   | "caption.rebaseDone"
   | "caption.rebaseAborted"
   | "caption.clone"

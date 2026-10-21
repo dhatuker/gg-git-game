@@ -19,6 +19,14 @@ export type MessageKey =
   | "untracked.merge"
   | "files.invalidName"
   | "files.notConflicted"
+  // diff
+  | "diff.unstaged"
+  | "diff.staged"
+  | "diff.noneUnstaged"
+  | "diff.noneUnstagedButStaged"
+  | "diff.noneStaged"
+  | "diff.untracked"
+  | "diff.unknownPath"
   // init
   | "init.done"
   | "init.already"

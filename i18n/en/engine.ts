@@ -19,6 +19,13 @@ export const en: EngineDict = {
   "files.invalidName": "File names may only contain letters, numbers, dots, underscores, or hyphens, without spaces.",
   "files.notConflicted": "The file `{file}` is not in conflict.",
 
+  "diff.unstaged": "Changes in the working directory that are not staged yet (`-` lines removed, `+` lines added):",
+  "diff.staged": "Staged changes that will go into the next commit (`-` lines removed, `+` lines added):",
+  "diff.noneUnstaged": "No changes: the working directory, staging, and the last commit all match.",
+  "diff.noneUnstagedButStaged": "No unstaged changes. You can see the staged changes with `git diff --staged`.",
+  "diff.noneStaged": "Nothing is staged yet. Use `git add` first, or `git diff` to see changes in the working directory.",
+  "diff.untracked": "`{file}` is not tracked yet, so `git diff` does not show it. Stage it with `git add`, then look with `git diff --staged`.",
+  "diff.unknownPath": "The file `{file}` is not in the working directory, staging, or the last commit.",
   "init.done": "Created an empty git repository.",
   "init.already": "This repository already exists.",
 

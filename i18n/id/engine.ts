@@ -19,6 +19,13 @@ export const id: EngineDict = {
   "files.invalidName": "Nama file hanya boleh berisi huruf, angka, titik, garis bawah, atau tanda minus, tanpa spasi.",
   "files.notConflicted": "File `{file}` tidak sedang konflik.",
 
+  "diff.unstaged": "Perubahan di working directory yang belum di-stage (baris `-` dihapus, `+` ditambah):",
+  "diff.staged": "Perubahan di staging yang akan masuk ke commit berikutnya (baris `-` dihapus, `+` ditambah):",
+  "diff.noneUnstaged": "Tidak ada perubahan: working directory, staging, dan commit terakhir isinya sama.",
+  "diff.noneUnstagedButStaged": "Tidak ada perubahan yang belum di-stage. Perubahan yang sudah di-stage bisa dilihat dengan `git diff --staged`.",
+  "diff.noneStaged": "Belum ada perubahan di staging. Pakai `git add` dulu, atau `git diff` untuk melihat perubahan di working directory.",
+  "diff.untracked": "`{file}` belum dilacak, jadi `git diff` tidak menampilkannya. Stage dulu dengan `git add`, lalu lihat dengan `git diff --staged`.",
+  "diff.unknownPath": "File `{file}` tidak ada di working directory, staging, maupun commit terakhir.",
   "init.done": "Repositori git kosong berhasil dibuat.",
   "init.already": "Repositori ini sudah dibuat sebelumnya.",
 

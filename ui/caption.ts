@@ -5,6 +5,8 @@ function describe(e: GitEvent): TMsg {
   switch (e.type) {
     case "repo-dibuat":
       return { key: "caption.repoCreated" };
+    case "diff-ditampilkan":
+      return { key: e.staged ? "caption.diffStaged" : "caption.diff" };
     case "file-di-stage":
       return { key: "caption.staged", params: { files: `\`${e.file}\`` } };
     case "commit-dibuat":

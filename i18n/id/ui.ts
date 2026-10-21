@@ -25,6 +25,8 @@ export const id: UiDict = {
   "caption.stashRestored": "Perubahan di {files} diambil dari stash dan dikembalikan ke working directory.",
   "caption.rebaseCopied": "Commit `{from}` disalin menjadi commit baru `{to}` di atas dasar yang baru.",
   "caption.rebaseDone": "Rebase selesai: branch `{branch}` sekarang menunjuk ke `{tip}`, ujung dari commit-commit salinan. Commit lamanya tidak lagi terjangkau dari branch.",
+  "caption.diff": "`git diff` membandingkan staging dengan working directory: yang tampil adalah perubahan yang belum di-stage. Repositori tidak berubah.",
+  "caption.diffStaged": "`git diff --staged` membandingkan commit terakhir dengan staging: yang tampil adalah isi commit berikutnya. Repositori tidak berubah.",
   "caption.mergeAborted": "Merge dengan `{branch}` dibatalkan. Tidak ada commit baru; HEAD tetap di tempatnya dan konflik dibuang.",
   "caption.rebaseAborted": "Rebase pada `{branch}` dibatalkan dan branch kembali persis seperti sebelum rebase dimulai.",
   "caption.clone": "Repositori disalin dari server. `main` lokalmu dan `origin/main` sama-sama mulai di commit `{tip}`, jadi kamu sudah sinkron dengan server.",

@@ -95,6 +95,7 @@ export const COMMAND_NOTES: Record<string, Localized> = {
   add: { id: "Memindahkan perubahan ke staging area.", en: "Moves changes to the staging area." },
   commit: { id: "Menyimpan isi staging area sebagai satu titik riwayat.", en: "Saves the staging area as one point in history." },
   log: { id: "Membaca riwayat commit.", en: "Reads the commit history." },
+  diff: { id: "Menampilkan baris yang berubah dan belum di-commit.", en: "Shows the lines that changed and are not committed yet." },
   branch: { id: "Membuat, menampilkan, atau menghapus branch.", en: "Creates, lists, or deletes branches." },
   switch: { id: "Pindah ke branch lain.", en: "Moves to another branch." },
   checkout: { id: "Pindah branch atau commit (cara lama dari switch).", en: "Moves to a branch or commit (the older form of switch)." },

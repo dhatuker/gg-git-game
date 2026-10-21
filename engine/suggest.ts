@@ -1,4 +1,4 @@
-export const KNOWN_COMMANDS = ["init", "status", "add", "commit", "log", "branch", "switch", "checkout", "merge", "reset", "revert", "stash", "cherry-pick", "rebase", "clone", "fetch", "pull", "push", "remote"];
+export const KNOWN_COMMANDS = ["init", "status", "add", "commit", "log", "diff", "branch", "switch", "checkout", "merge", "reset", "revert", "stash", "cherry-pick", "rebase", "clone", "fetch", "pull", "push", "remote"];
 
 function distance(a: string, b: string): number {
   const dp = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)]);
