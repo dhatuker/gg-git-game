@@ -148,7 +148,7 @@ function GameView({ levelIndex }: { levelIndex: number }) {
           complete={state.levelComplete}
           isLast={isLast}
           onReset={() => dispatch({ type: "reset-level" })}
-          onNext={() => router.push(`/${lang}/play/${level.id + 1}`)}
+          onNext={() => router.push(`/${lang}/play/${LEVELS[state.levelIndex + 1].id}`)}
           onOpenSummary={() => setSummaryOpen(true)}
         />
         <Terminal key={state.levelIndex} lines={state.lines.slice(state.clearedAt)} history={history} onSubmit={run} />

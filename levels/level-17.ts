@@ -1,84 +1,64 @@
-import { getHeadCommitId, isReachable, unreachableCommits } from "../engine/state";
+import { getHeadCommitId, isReachable } from "../engine/state";
 import { projectSetup } from "./history";
-import { cmd, write } from "./solve";
+import { cmd, idByMessage, treeMatchesHead, write } from "./solve";
 import type { Level } from "./types";
 
-const UNIQUE = ["Add profile page", "Rename project title"];
+const APP_BEFORE = "function init() {\n  track('open');\n}\ninit();";
+const APP_RISKY = `${APP_BEFORE}\ntrack('every-keystroke');`;
+const INDEX_NEW = "<h1>Taskboard</h1>\n<footer>Made with care by the team</footer>";
+
+const initialState = projectSetup([
+  write("app.js", APP_RISKY),
+  cmd("git add ."),
+  cmd('git commit -m "Add risky tracking"'),
+  write("index.html", INDEX_NEW),
+  cmd("git add ."),
+  cmd('git commit -m "Update footer text"'),
+]);
 
 export const level17: Level = {
   id: 17,
   title: {
-    id: "Rebase berkonflik",
-    en: "Rebase with a conflict",
+    id: "Batalkan tanpa menulis ulang",
+    en: "Undo without rewriting",
   },
   story: {
-    id: "Branch `feature` memuat dua commit, dan salah satunya mengganti judul di README.md. Sementara itu `main` juga mengubah baris judul yang sama. Saat commit `feature` diputar ulang di atas `main`, git berhenti karena konflik. Selesaikan konfliknya seperti pada merge, lalu lanjutkan rebase-nya.",
-    en: "The `feature` branch holds two commits, and one of them changes the title in README.md. Meanwhile `main` changed the very same title line. When the `feature` commits are replayed on top of `main`, git stops on a conflict. Resolve it like in a merge, then continue the rebase.",
+    id: "Commit \"Add risky tracking\" ternyata bermasalah, tetapi sudah ada commit \"Update footer text\" sesudahnya, dan riwayat yang sudah dibagikan tidak boleh ditulis ulang. `revert` membuat commit baru yang membalik efek sebuah commit lama, sementara riwayat aslinya tetap utuh.",
+    en: "The \"Add risky tracking\" commit turned out to be a problem, but \"Update footer text\" already came after it, and shared history must not be rewritten. `revert` creates a new commit that reverses the effect of an old commit, while the original history stays intact.",
   },
   goal: {
-    id: "Pindahkan commit `feature` ke atas `main` dengan rebase, selesaikan konflik di README.md, dan selesaikan rebase-nya. Riwayat harus tetap lurus.",
-    en: "Move the `feature` commits on top of `main` with a rebase, resolve the conflict in README.md, and finish the rebase. History must stay linear.",
+    id: "Batalkan efek \"Add risky tracking\" dengan commit baru: app.js kembali seperti semula, teks footer baru tetap ada, dan riwayat lama tidak hilang.",
+    en: "Undo the effect of \"Add risky tracking\" with a new commit: app.js is back to how it was, the new footer text stays, and the old history is not lost.",
   },
-  editor: true,
-  allowedCommands: ["init", "status", "add", "commit", "log", "branch", "switch", "checkout", "merge", "reset", "revert", "stash", "cherry-pick", "rebase"],
-  initialState: projectSetup([
-    cmd("git switch -c feature"),
-  write("profile.js", "export function renderProfile() {}"),
-  cmd("git add ."),
-  cmd('git commit -m "Add profile page"'),
-  write("README.md", "# Awesome Project"),
-  cmd("git add ."),
-  cmd('git commit -m "Rename project title"'),
-  cmd("git switch main"),
-  write("CONTRIBUTING.md", "Open a pull request for every change.\nRun the tests first."),
-  cmd("git add ."),
-  cmd('git commit -m "Update contributing guide"'),
-  write("README.md", "# Taskboard Pro"),
-  cmd("git add ."),
-  cmd('git commit -m "Update readme"'),
-  cmd("git switch feature"),
-  ]),
+  editor: false,
+  allowedCommands: ["init", "status", "add", "commit", "log", "diff", "restore", "branch", "switch", "checkout", "merge", "reset", "revert"],
+  initialState,
   hints: [
     {
-      id: "Commit di `feature` perlu diputar ulang di atas ujung branch lain agar riwayatnya lurus. Kalau dua sisi mengubah baris yang sama, git akan berhenti di tengah jalan dan menunggumu.",
-      en: "The commits on `feature` need to be replayed on top of the tip of another branch so history stays straight. If both sides changed the same line, git will stop halfway and wait for you.",
+      id: "Mundur dengan reset akan ikut membuang commit footer. Cari perintah yang membatalkan satu commit tertentu dengan cara menambah commit baru.",
+      en: "Going back with reset would throw away the footer commit too. Look for the command that cancels one specific commit by adding a new commit.",
     },
     {
-      id: "Mulai dengan perintah pemindah dasar dan beri nama branch tujuan (`main`). Saat git berhenti, buka README.md di Editor file, pilih versi yang dipakai, lalu masukkan file itu ke staging.",
-      en: "Start with the base-moving command and give it the target branch (`main`). When git stops, open README.md in the File editor, pick the version to keep, then put the file into staging.",
+      id: "Lihat riwayat dengan log untuk menemukan id commit yang bermasalah. Id itu yang kamu berikan ke perintah pembatal.",
+      en: "Check the history with log to find the id of the problematic commit. That id is what you give to the undoing command.",
     },
     {
-      id: "Beri tahu rebase untuk melanjutkan dengan opsi untuk meneruskan. Bila ragu, opsi untuk membatalkan mengembalikan semuanya.",
-      en: "Tell the rebase to go on using its option for continuing. If you are unsure, the option for cancelling restores everything.",
+      id: "Bentuknya: nama perintah pembatal, lalu id commit \"Add risky tracking\". Git akan menyiapkan pesan commit yang diawali kata Revert.",
+      en: "The shape: the undoing command's name, then the id of the \"Add risky tracking\" commit. Git prepares a commit message that starts with the word Revert.",
     },
   ],
-  mustRun: ["rebase"],
   isGoalReached: (s) => {
-    const feature = s.branches["feature"];
-    const main = s.branches["main"];
-    if (feature === undefined || main === undefined) return false;
-    if (s.head.type !== "branch" || s.head.name !== "feature" || s.rebaseState !== null) return false;
-    if (!isReachable(s, feature, main)) return false;
-    // Tepat dua commit unik di atas main, lurus (bukan merge), dan pesannya sesuai.
-    const unique: string[] = [];
-    let cur = feature;
-    while (cur !== main) {
-      const c = s.commits[cur];
-      if (!c || c.parents.length !== 1) return false;
-      unique.push(c.message);
-      cur = c.parents[0];
-    }
-    if (unique.length !== UNIQUE.length || !UNIQUE.every((m) => unique.includes(m))) return false;
-    if (getHeadCommitId(s) !== feature) return false;
-    if (unreachableCommits(s).length < 2) return false;
-    const readme = s.files["README.md"];
-    if (readme === undefined || readme.includes("<<<<<<<")) return false;
-    return true;
+    const head = getHeadCommitId(s);
+    const old = Object.values(s.commits).find((c) => c.message === "Update footer text");
+    return (
+      head !== null &&
+      s.commits[head].message.startsWith("Revert") &&
+      s.files["app.js"] === APP_BEFORE &&
+      (s.files["index.html"] ?? "").includes("Made with care") &&
+      old !== undefined &&
+      isReachable(s, head, old.id) &&
+      treeMatchesHead(s)
+    );
   },
-  solution: [
-    cmd("git rebase main"),
-    { kind: "resolve", file: "README.md", choice: "theirs" },
-    cmd("git add README.md"),
-    cmd("git rebase --continue"),
-  ],
+  solution: [cmd(`git revert ${idByMessage(initialState, "Add risky tracking")}`)],
 };

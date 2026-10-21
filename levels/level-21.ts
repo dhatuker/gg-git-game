@@ -1,67 +1,84 @@
-import type { RepoState } from "../engine/types";
-import { remoteWorld } from "./history";
+import { getHeadCommitId, isReachable, unreachableCommits } from "../engine/state";
+import { projectSetup } from "./history";
 import { cmd, write } from "./solve";
 import type { Level } from "./types";
 
-/** Pesan semua commit yang terjangkau dari ujung remote. */
-function remoteMessages(s: RepoState): string[] {
-  const r = s.remote;
-  if (!r) return [];
-  const seen = new Set<string>();
-  const stack = r.branches.main !== undefined ? [r.branches.main] : [];
-  while (stack.length > 0) {
-    const id = stack.pop() as string;
-    if (seen.has(id) || !r.commits[id]) continue;
-    seen.add(id);
-    stack.push(...r.commits[id].parents);
-  }
-  return [...seen].map((id) => r.commits[id].message);
-}
+const UNIQUE = ["Add profile page", "Rename project title"];
 
 export const level21: Level = {
   id: 21,
   title: {
-    id: "Push ditolak",
-    en: "Push rejected",
+    id: "Rebase berkonflik",
+    en: "Rebase with a conflict",
   },
   story: {
-    id: "Kamu selesai menulis kotak pencarian dan langsung ingin mengirimnya. Tetapi sementara kamu bekerja, teman satu tim sudah lebih dulu mendorong perubahan ke server. Kalau kamu mencoba mengirim sekarang, server akan menolaknya. Penolakan itu bukan error aneh: itu cara Git melindungi pekerjaan temanmu.",
-    en: "You finished the search box and want to send it right away. But while you were working, a teammate pushed changes to the server first. If you try to send now, the server will reject it. That rejection is not a weird error: it is how Git protects your teammate's work.",
+    id: "Branch `feature` memuat dua commit, dan salah satunya mengganti judul di README.md. Sementara itu `main` juga mengubah baris judul yang sama. Saat commit `feature` diputar ulang di atas `main`, git berhenti karena konflik. Selesaikan konfliknya seperti pada merge, lalu lanjutkan rebase-nya.",
+    en: "The `feature` branch holds two commits, and one of them changes the title in README.md. Meanwhile `main` changed the very same title line. When the `feature` commits are replayed on top of `main`, git stops on a conflict. Resolve it like in a merge, then continue the rebase.",
   },
   goal: {
-    id: "Kirim commit \"Add search box\" ke server tanpa menghilangkan commit \"Update docs\" milik teman, sehingga ujung remote sama dengan `main` lokal dan memuat search.js dan docs.md.",
-    en: "Send your \"Add search box\" commit to the server without losing your teammate's \"Update docs\" commit, so the remote tip matches local `main` and contains both search.js and docs.md.",
+    id: "Pindahkan commit `feature` ke atas `main` dengan rebase, selesaikan konflik di README.md, dan selesaikan rebase-nya. Riwayat harus tetap lurus.",
+    en: "Move the `feature` commits on top of `main` with a rebase, resolve the conflict in README.md, and finish the rebase. History must stay linear.",
   },
-  editor: false,
-  allowedCommands: ["init", "status", "add", "commit", "log", "branch", "switch", "checkout", "merge", "reset", "revert", "stash", "cherry-pick", "rebase", "clone", "push", "remote", "pull", "fetch"],
-  initialState: remoteWorld({
-    cloned: true,
-    teammate: [write("docs.md", "Setup guide"), cmd("git add ."), cmd('git commit -m "Update docs"')],
-    local: [write("search.js", "export function search() {}"), cmd("git add ."), cmd('git commit -m "Add search box"')],
-  }),
+  editor: true,
+  allowedCommands: ["init", "status", "add", "commit", "log", "diff", "restore", "branch", "switch", "checkout", "merge", "reset", "revert", "stash", "cherry-pick", "rebase"],
+  initialState: projectSetup([
+    cmd("git switch -c feature"),
+  write("profile.js", "export function renderProfile() {}"),
+  cmd("git add ."),
+  cmd('git commit -m "Add profile page"'),
+  write("README.md", "# Awesome Project"),
+  cmd("git add ."),
+  cmd('git commit -m "Rename project title"'),
+  cmd("git switch main"),
+  write("CONTRIBUTING.md", "Open a pull request for every change.\nRun the tests first."),
+  cmd("git add ."),
+  cmd('git commit -m "Update contributing guide"'),
+  write("README.md", "# Taskboard Pro"),
+  cmd("git add ."),
+  cmd('git commit -m "Update readme"'),
+  cmd("git switch feature"),
+  ]),
   hints: [
     {
-      id: "Coba kirim dulu dan baca pesan penolakannya dengan teliti. Server menolak karena ia punya sesuatu yang belum kamu punya.",
-      en: "Try sending first and read the rejection message carefully. The server refuses because it has something you do not have yet.",
+      id: "Commit di `feature` perlu diputar ulang di atas ujung branch lain agar riwayatnya lurus. Kalau dua sisi mengubah baris yang sama, git akan berhenti di tengah jalan dan menunggumu.",
+      en: "The commits on `feature` need to be replayed on top of the tip of another branch so history stays straight. If both sides changed the same line, git will stop halfway and wait for you.",
     },
     {
-      id: "Ambil dan gabungkan pekerjaan teman lebih dulu, lalu lihat graf: `main` kini memuat kedua pekerjaan dan berada di depan `origin/main`.",
-      en: "Bring in and combine your teammate's work first, then check the graph: `main` now holds both pieces of work and is ahead of `origin/main`.",
+      id: "Mulai dengan perintah pemindah dasar dan beri nama branch tujuan (`main`). Saat git berhenti, buka README.md di Editor file, pilih versi yang dipakai, lalu masukkan file itu ke staging.",
+      en: "Start with the base-moving command and give it the target branch (`main`). When git stops, open README.md in the File editor, pick the version to keep, then put the file into staging.",
     },
     {
-      id: "Setelah riwayatmu mencakup commit teman, kirim lagi. Menyusun ulang commit-mu di atas `origin/main` juga boleh, asal akhirnya terkirim.",
-      en: "Once your history includes your teammate's commit, send again. Replaying your commit on top of `origin/main` also works, as long as it ends up sent.",
+      id: "Beri tahu rebase untuk melanjutkan dengan opsi untuk meneruskan. Bila ragu, opsi untuk membatalkan mengembalikan semuanya.",
+      en: "Tell the rebase to go on using its option for continuing. If you are unsure, the option for cancelling restores everything.",
     },
   ],
-  mustRun: ["push"],
+  mustRun: ["rebase"],
   isGoalReached: (s) => {
-    const r = s.remote;
-    const tip = r?.branches.main;
-    if (!r || !r.connected || tip === undefined || tip !== s.branches["main"]) return false;
-    const msgs = remoteMessages(s);
-    if (!msgs.includes("Add search box") || !msgs.includes("Update docs")) return false;
-    const snap = r.commits[tip]?.snapshot ?? {};
-    return snap["search.js"] !== undefined && snap["docs.md"] !== undefined;
+    const feature = s.branches["feature"];
+    const main = s.branches["main"];
+    if (feature === undefined || main === undefined) return false;
+    if (s.head.type !== "branch" || s.head.name !== "feature" || s.rebaseState !== null) return false;
+    if (!isReachable(s, feature, main)) return false;
+    // Tepat dua commit unik di atas main, lurus (bukan merge), dan pesannya sesuai.
+    const unique: string[] = [];
+    let cur = feature;
+    while (cur !== main) {
+      const c = s.commits[cur];
+      if (!c || c.parents.length !== 1) return false;
+      unique.push(c.message);
+      cur = c.parents[0];
+    }
+    if (unique.length !== UNIQUE.length || !UNIQUE.every((m) => unique.includes(m))) return false;
+    if (getHeadCommitId(s) !== feature) return false;
+    if (unreachableCommits(s).length < 2) return false;
+    const readme = s.files["README.md"];
+    if (readme === undefined || readme.includes("<<<<<<<")) return false;
+    return true;
   },
-  solution: [cmd("git pull"), cmd("git push")],
+  solution: [
+    cmd("git rebase main"),
+    { kind: "resolve", file: "README.md", choice: "theirs" },
+    cmd("git add README.md"),
+    cmd("git rebase --continue"),
+  ],
 };

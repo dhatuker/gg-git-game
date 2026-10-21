@@ -11,10 +11,11 @@ function noOverlap(s: RepoState) {
   expect(new Set(pos).size).toBe(pos.length);
 }
 
-describe.each(LEVELS.slice(4).map((l) => [l.id, l] as const))("level %i: proyek yang sudah berjalan", (_id, level) => {
+// Level 5 dan level 10 ke atas memakai riwayat proyek tim; jalur Periksa & rapikan (6–9) sengaja memakai repo kecil.
+describe.each(LEVELS.filter((l) => l.id === 5 || l.id >= 10).map((l) => [l.id, l] as const))("level %i: proyek yang sudah berjalan", (_id, level) => {
   it("punya riwayat panjang dengan beberapa merge", () => {
-    // Level 18 mulai dari folder kosong; riwayat panjang baru ada setelah clone.
-    const s = level.id === 18 ? applySteps(level.initialState, level.solution) : level.initialState;
+    // Level 22 mulai dari folder kosong; riwayat panjang baru ada setelah clone.
+    const s = level.id === 22 ? applySteps(level.initialState, level.solution) : level.initialState;
     expect(commitCount(s)).toBeGreaterThanOrEqual(12);
     expect(mergeCount(s)).toBeGreaterThanOrEqual(2);
   });

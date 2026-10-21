@@ -1,64 +1,50 @@
-import { getHeadCommitId, isReachable } from "../engine/state";
 import { projectSetup } from "./history";
-import { cmd, idByMessage, treeMatchesHead, write } from "./solve";
+import { cmd, headParents, write } from "./solve";
 import type { Level } from "./types";
-
-const APP_BEFORE = "function init() {\n  track('open');\n}\ninit();";
-const APP_RISKY = `${APP_BEFORE}\ntrack('every-keystroke');`;
-const INDEX_NEW = "<h1>Taskboard</h1>\n<footer>Made with care by the team</footer>";
-
-const initialState = projectSetup([
-  write("app.js", APP_RISKY),
-  cmd("git add ."),
-  cmd('git commit -m "Add risky tracking"'),
-  write("index.html", INDEX_NEW),
-  cmd("git add ."),
-  cmd('git commit -m "Update footer text"'),
-]);
 
 export const level13: Level = {
   id: 13,
   title: {
-    id: "Batalkan tanpa menulis ulang",
-    en: "Undo without rewriting",
+    id: "Merge commit",
+    en: "Merge commit",
   },
   story: {
-    id: "Commit \"Add risky tracking\" ternyata bermasalah, tetapi sudah ada commit \"Update footer text\" sesudahnya, dan riwayat yang sudah dibagikan tidak boleh ditulis ulang. `revert` membuat commit baru yang membalik efek sebuah commit lama, sementara riwayat aslinya tetap utuh.",
-    en: "The \"Add risky tracking\" commit turned out to be a problem, but \"Update footer text\" already came after it, and shared history must not be rewritten. `revert` creates a new commit that reverses the effect of an old commit, while the original history stays intact.",
+    id: "Kali ini `main` dan `feature` sama-sama punya commit baru, jadi riwayatnya bercabang. Pointer tidak bisa sekadar digeser. Git membuat merge commit: commit khusus dengan dua parent yang menyatukan kedua cabang.",
+    en: "This time `main` and `feature` both have new commits, so the history has split. The pointer cannot just move forward. Git creates a merge commit: a special commit with two parents that joins both branches.",
   },
   goal: {
-    id: "Batalkan efek \"Add risky tracking\" dengan commit baru: app.js kembali seperti semula, teks footer baru tetap ada, dan riwayat lama tidak hilang.",
-    en: "Undo the effect of \"Add risky tracking\" with a new commit: app.js is back to how it was, the new footer text stays, and the old history is not lost.",
+    id: "Gabungkan `feature` ke `main` dengan merge commit.",
+    en: "Merge `feature` into `main` with a merge commit.",
   },
   editor: false,
-  allowedCommands: ["init", "status", "add", "commit", "log", "branch", "switch", "checkout", "merge", "reset", "revert"],
-  initialState,
+  allowedCommands: ["init", "status", "add", "commit", "log", "diff", "restore", "branch", "switch", "checkout", "merge"],
+  initialState: projectSetup([
+    cmd("git switch -c feature"),
+    write("search.js", "export function search(q) {}"),
+    cmd("git add ."),
+    cmd('git commit -m "Add search box"'),
+    write("search.js", "export function search(q) {\n  return q.trim();\n}"),
+    cmd("git add ."),
+    cmd('git commit -m "Trim search query"'),
+    cmd("git switch main"),
+    write("contact.html", "<p>hello@example.com</p>"),
+    cmd("git add ."),
+    cmd('git commit -m "Add contact page"'),
+  ]),
   hints: [
     {
-      id: "Mundur dengan reset akan ikut membuang commit footer. Cari perintah yang membatalkan satu commit tertentu dengan cara menambah commit baru.",
-      en: "Going back with reset would throw away the footer commit too. Look for the command that cancels one specific commit by adding a new commit.",
+      id: "Lihat graf: `main` dan `feature` sama-sama punya commit yang tidak dimiliki pihak lain, jadi pointer tidak bisa sekadar digeser maju.",
+      en: "Look at the graph: `main` and `feature` each have a commit the other lacks, so the pointer cannot simply move forward.",
     },
     {
-      id: "Lihat riwayat dengan log untuk menemukan id commit yang bermasalah. Id itu yang kamu berikan ke perintah pembatal.",
-      en: "Check the history with log to find the id of the problematic commit. That id is what you give to the undoing command.",
+      id: "Pastikan HEAD menempel ke `main`, karena hasil merge masuk ke branch aktif.",
+      en: "Make sure HEAD is on `main`, because the merge result goes into the current branch.",
     },
     {
-      id: "Bentuknya: nama perintah pembatal, lalu id commit \"Add risky tracking\". Git akan menyiapkan pesan commit yang diawali kata Revert.",
-      en: "The shape: the undoing command's name, then the id of the \"Add risky tracking\" commit. Git prepares a commit message that starts with the word Revert.",
+      id: "Perintahnya sama dengan level sebelumnya. Bedanya ada di hasil: perhatikan commit baru dengan dua garis parent.",
+      en: "The command is the same as in the previous level. The difference is the result: watch for a new commit with two parent lines.",
     },
   ],
-  isGoalReached: (s) => {
-    const head = getHeadCommitId(s);
-    const old = Object.values(s.commits).find((c) => c.message === "Update footer text");
-    return (
-      head !== null &&
-      s.commits[head].message.startsWith("Revert") &&
-      s.files["app.js"] === APP_BEFORE &&
-      (s.files["index.html"] ?? "").includes("Made with care") &&
-      old !== undefined &&
-      isReachable(s, head, old.id) &&
-      treeMatchesHead(s)
-    );
-  },
-  solution: [cmd(`git revert ${idByMessage(initialState, "Add risky tracking")}`)],
+  isGoalReached: (s) => headParents(s) === 2,
+  solution: [cmd("git merge feature")],
 };

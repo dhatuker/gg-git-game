@@ -1,77 +1,55 @@
-import { getHeadCommitId, isReachable, unreachableCommits } from "../engine/state";
+import { getHeadCommitId, unreachableCommits } from "../engine/state";
 import { projectSetup } from "./history";
-import { cmd, write } from "./solve";
+import { cmd, treeMatchesHead, write } from "./solve";
 import type { Level } from "./types";
-
-const UNIQUE = ["Add profile page", "Style profile page"];
 
 export const level16: Level = {
   id: 16,
   title: {
-    id: "Pindahkan dasar",
-    en: "Move the base",
+    id: "Buang eksperimen",
+    en: "Discard the experiment",
   },
   story: {
-    id: "Kamu mengerjakan halaman profil di `feature`, tetapi `main` sudah maju dengan dua commit baru. Merge akan menambah commit penggabung. Dengan `rebase`, commit `feature` dilepas lalu diputar ulang di atas ujung `main` sehingga riwayat tetap lurus. Commit lamamu diganti salinan baru dengan id berbeda.",
-    en: "You built the profile page on `feature`, but `main` has moved ahead with two new commits. A merge would add a merge commit. With `rebase`, the `feature` commits are lifted off and replayed on top of the tip of `main`, keeping history straight. Your old commits are replaced by new copies with different ids.",
+    id: "Dua commit percobaan, \"Try experiment A\" dan \"Try experiment B\", ternyata jalan buntu. Dengan `reset --hard`, branch mundur dan file ikut dikembalikan. Commit-nya dibuang dari riwayat, tetapi masih terlihat samar di graf sampai git membersihkannya.",
+    en: "Two experimental commits, \"Try experiment A\" and \"Try experiment B\", turned out to be a dead end. With `reset --hard`, the branch moves back and the files are restored too. The commits are dropped from the history, but they still show up faintly in the graph until git cleans them up.",
   },
   goal: {
-    id: "Buat `feature` berdiri tepat di atas `main` dengan rebase, tanpa commit merge. Dua commit profil tetap ada.",
-    en: "Make `feature` sit right on top of `main` using a rebase, without a merge commit. The two profile commits must remain.",
+    id: "Buang kedua commit eksperimen: HEAD kembali ke \"Refactor app init\" dan experiment.js hilang sepenuhnya.",
+    en: "Discard both experiment commits: HEAD goes back to \"Refactor app init\" and experiment.js is gone completely.",
   },
   editor: false,
-  allowedCommands: ["init", "status", "add", "commit", "log", "branch", "switch", "checkout", "merge", "reset", "revert", "stash", "cherry-pick", "rebase"],
+  allowedCommands: ["init", "status", "add", "commit", "log", "diff", "restore", "branch", "switch", "checkout", "merge", "reset"],
   initialState: projectSetup([
-    cmd("git switch -c feature"),
-  write("profile.js", "export function renderProfile() {}"),
-  cmd("git add ."),
-  cmd('git commit -m "Add profile page"'),
-  write("profile.css", ".profile { padding: 8px; }"),
-  cmd("git add ."),
-  cmd('git commit -m "Style profile page"'),
-  cmd("git switch main"),
-  write("CONTRIBUTING.md", "Open a pull request for every change.\nRun the tests first."),
-  cmd("git add ."),
-  cmd('git commit -m "Update contributing guide"'),
-  write("README.md", "# My First Project\nSee CONTRIBUTING.md before opening a pull request."),
-  cmd("git add ."),
-  cmd('git commit -m "Update readme"'),
-  cmd("git switch feature"),
+    write("experiment.js", "export const a = 1;"),
+    cmd("git add ."),
+    cmd('git commit -m "Try experiment A"'),
+    write("experiment.js", "export const a = 2;\nexport const b = 3;"),
+    cmd("git add ."),
+    cmd('git commit -m "Try experiment B"'),
   ]),
   hints: [
     {
-      id: "Kamu di `feature`, sedangkan `main` sudah maju. Menggabungkan akan membuat commit merge; cari perintah yang memindahkan dasar branch.",
-      en: "You are on `feature` while `main` moved ahead. Merging creates a merge commit; look for the command that moves a branch base.",
+      id: "Kamu perlu mundur dua commit sekaligus, dan file eksperimen harus ikut hilang dari working directory. Pilih mode reset yang paling tegas.",
+      en: "You need to go back two commits at once, and the experiment file must disappear from the working directory too. Pick the most forceful reset mode.",
     },
     {
-      id: "Perintah itu butuh satu argumen: branch yang akan menjadi dasar baru.",
-      en: "That command needs one argument: the branch that becomes the new base.",
+      id: "Perhatikan graf setelahnya: dua commit eksperimen tampil pudar karena tidak ada branch yang menunjuk ke sana lagi. Cek juga daftar file dengan status.",
+      en: "Look at the graph afterwards: the two experiment commits appear faded because no branch points to them anymore. Also check the file list with status.",
     },
     {
-      id: "Bentuknya: nama perintah pemindah dasar, lalu nama branch `main`. Jalankan saat HEAD ada di `feature`.",
-      en: "The shape: the base-moving command name, then the branch name `main`. Run it while HEAD is on `feature`.",
+      id: "Bentuknya: reset, lalu mode yang membuang perubahan, lalu penunjuk HEAD dengan tanda ~ dan jumlah commit yang dibuang.",
+      en: "The shape: reset, then the mode that discards changes, then a HEAD pointer with the ~ sign and the number of commits to drop.",
     },
   ],
-  mustRun: ["rebase"],
   isGoalReached: (s) => {
-    const feature = s.branches["feature"];
-    const main = s.branches["main"];
-    if (feature === undefined || main === undefined) return false;
-    if (s.head.type !== "branch" || s.head.name !== "feature" || s.rebaseState !== null) return false;
-    if (!isReachable(s, feature, main)) return false;
-    // Tepat dua commit unik di atas main, lurus (bukan merge), dan pesannya sesuai.
-    const unique: string[] = [];
-    let cur = feature;
-    while (cur !== main) {
-      const c = s.commits[cur];
-      if (!c || c.parents.length !== 1) return false;
-      unique.push(c.message);
-      cur = c.parents[0];
-    }
-    if (unique.length !== UNIQUE.length || !UNIQUE.every((m) => unique.includes(m))) return false;
-    if (getHeadCommitId(s) !== feature) return false;
-    if (unreachableCommits(s).length < 2) return false;
-    return true;
+    const head = getHeadCommitId(s);
+    return (
+      head !== null &&
+      s.commits[head].message === "Refactor app init" &&
+      !("experiment.js" in s.files) &&
+      treeMatchesHead(s) &&
+      unreachableCommits(s).length >= 2
+    );
   },
-  solution: [cmd("git rebase main")],
+  solution: [cmd("git reset --hard HEAD~2")],
 };

@@ -1,43 +1,64 @@
-import { REMOTE_URL, remoteWorld } from "./history";
-import { cmd } from "./solve";
+import { getHeadCommitId, isReachable } from "../engine/state";
+import { projectSetup } from "./history";
+import { cmd, write } from "./solve";
 import type { Level } from "./types";
+
+const APP_WIP = "function init() {\n  track('open');\n}\ninit();\nrenderSidebar(); // work in progress";
 
 export const level18: Level = {
   id: 18,
   title: {
-    id: "Ambil proyek",
-    en: "Get the project",
+    id: "Simpan sementara",
+    en: "Set it aside",
   },
   story: {
-    id: "Kamu baru bergabung dengan tim. Proyek Taskboard sudah ada di server tim, di alamat https://github.com/gg-team/taskboard.git, tetapi folder di komputermu masih kosong. Kamu perlu mengambil salinannya lebih dulu sebelum bisa bekerja.",
-    en: "You just joined the team. The Taskboard project already lives on the team's server at https://github.com/gg-team/taskboard.git, but the folder on your computer is still empty. You need to get a copy of it before you can start working.",
+    id: "Kamu sedang setengah jalan mengerjakan app.js ketika ada bug mendesak di branch `hotfix`. Coba pindah ke sana dulu: git menolak karena ada perubahan yang belum di-commit. Kamu belum mau commit kerjaan setengah jadi ini. `stash` menyimpannya di rak sementara supaya working directory bersih, lalu bisa diambil lagi nanti.",
+    en: "You are halfway through editing app.js when an urgent bug shows up on the `hotfix` branch. Try moving there first: git refuses because of uncommitted changes. You do not want to commit this half-done work. `stash` puts it on a temporary shelf so the working directory is clean, and you can take it back later.",
   },
   goal: {
-    id: "Ambil salinan proyek dari server tim ke folder ini, sehingga `main` lokal sama dengan `origin/main` dan file proyek (misalnya index.html) ada.",
-    en: "Get a copy of the project from the team's server into this folder, so local `main` matches `origin/main` and the project files (for example index.html) are there.",
+    id: "Perbaiki bug di `hotfix` dengan satu commit, lalu kembali ke `main` dengan kerjaan setengah jadi di app.js utuh dan rak stash kosong.",
+    en: "Fix the bug on `hotfix` with a commit, then return to `main` with the half-done work in app.js intact and the stash shelf empty.",
   },
-  editor: false,
-  allowedCommands: ["init", "status", "add", "commit", "log", "branch", "switch", "checkout", "merge", "reset", "revert", "stash", "cherry-pick", "rebase", "clone"],
-  initialState: remoteWorld({ cloned: false }),
+  editor: true,
+  allowedCommands: ["init", "status", "add", "commit", "log", "diff", "restore", "branch", "switch", "checkout", "merge", "reset", "revert", "stash"],
+  initialState: projectSetup([cmd("git branch hotfix"), write("app.js", APP_WIP)]),
   hints: [
     {
-      id: "Kamu tidak perlu membuat repo dari nol. Ada perintah yang menyalin seluruh proyek beserta riwayatnya dari tempat lain sekaligus.",
-      en: "You do not need to create a repo from scratch. There is a command that copies a whole project, history included, from somewhere else in one go.",
+      id: "Coba pindah ke `hotfix` langsung dan baca pesan gagalnya. Kerjaanmu harus disimpan sementara dulu, tanpa di-commit.",
+      en: "Try moving to `hotfix` directly and read the failure message. Your work has to be set aside first, without committing it.",
     },
     {
-      id: "Alamat proyek tertulis di cerita level ini. Setelah selesai, lihat grafnya: label `origin/main` muncul di samping `main`.",
-      en: "The project address is written in this level's story. When it is done, look at the graph: the `origin/main` label shows up next to `main`.",
+      id: "Setelah working directory bersih, pindah ke `hotfix`, buat perbaikan (misalnya di style.css), lalu add dan commit seperti biasa.",
+      en: "Once the working directory is clean, move to `hotfix`, make a fix (for example in style.css), then add and commit as usual.",
     },
     {
-      id: "Bentuknya: perintah penyalin lalu alamat proyek. Salin alamatnya persis dari cerita.",
-      en: "The shape is: the copying command, then the project address. Copy the address exactly from the story.",
+      id: "Kembali ke `main`, lalu ambil lagi kerjaan yang disimpan sementara tadi dengan subperintah yang mengeluarkannya dari rak (bukan sekadar melihat daftar).",
+      en: "Go back to `main`, then bring back the work you set aside using the subcommand that takes it off the shelf (not just listing it).",
     },
   ],
-  mustRun: ["clone"],
+  mustRun: ["stash"],
   isGoalReached: (s) => {
-    const remoteMain = s.remote?.branches.main;
-    if (!s.initialized || remoteMain === undefined) return false;
-    return s.branches["main"] === remoteMain && s.remoteRefs["main"] === remoteMain && s.files["index.html"] !== undefined;
+    const main = s.branches["main"];
+    const hotfix = s.branches["hotfix"];
+    return (
+      s.head.type === "branch" &&
+      s.head.name === "main" &&
+      s.files["app.js"] === APP_WIP &&
+      s.stash.length === 0 &&
+      main !== undefined &&
+      hotfix !== undefined &&
+      hotfix !== main &&
+      !isReachable(s, main, hotfix) &&
+      getHeadCommitId(s) === main
+    );
   },
-  solution: [cmd("git clone " + REMOTE_URL)],
+  solution: [
+    cmd("git stash"),
+    cmd("git switch hotfix"),
+    write("style.css", "body { font-family: sans-serif; }\nnav { display: flex; flex-wrap: wrap; }\n/* fix navbar typo */"),
+    cmd("git add ."),
+    cmd('git commit -m "Fix navbar typo"'),
+    cmd("git switch main"),
+    cmd("git stash pop"),
+  ],
 };

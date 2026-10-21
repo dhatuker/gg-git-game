@@ -65,7 +65,7 @@ describe("reduce", () => {
   });
 
   it("menyelesaikan level 10 lewat resolve", () => {
-    let s = reduce(initGame([]), { type: "load-progress", completed: [1, 2, 3, 4, 5, 6, 7, 8, 9] });
+    let s = reduce(initGame([]), { type: "load-progress", completed: [1, 2, 3, 4, 5, 10, 11, 12, 13] });
     expect(s.levelIndex).toBe(9);
     s = run(s, "git merge feature");
     s = reduce(s, { type: "resolve", file: "README.md", choice: "theirs" });
@@ -148,7 +148,7 @@ describe("reduce", () => {
 
 describe("level 20 lewat reducer", () => {
   it("git fetch lalu git merge origin/main menyelesaikan level", () => {
-    let s = reduce(initGame([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]), { type: "goto-level", index: 19 });
+    let s = reduce(initGame([1, 2, 3, 4, 5, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]), { type: "goto-level", index: 19 });
     expect(s.levelIndex).toBe(19);
     s = run(s, "git fetch");
     expect(s.levelComplete).toBe(false);
@@ -160,7 +160,7 @@ describe("level 20 lewat reducer", () => {
 
 describe("initGame", () => {
   it("mulai di level terakhir bila semua selesai", () => {
-    expect(initGame([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21]).levelIndex).toBe(20);
+    expect(initGame([1, 2, 3, 4, 5, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25]).levelIndex).toBe(20);
   });
 });
 

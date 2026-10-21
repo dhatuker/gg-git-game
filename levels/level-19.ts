@@ -1,48 +1,73 @@
-import { remoteWorld } from "./history";
-import { cmd, write } from "./solve";
+import { getHeadCommitId } from "../engine/state";
+import { projectSetup } from "./history";
+import { cmd, idByMessage, write } from "./solve";
 import type { Level } from "./types";
 
-const initialState = remoteWorld({ cloned: true, local: [write("notes.txt", "Standup notes")] });
-const startTip = initialState.remote?.branches.main;
+const LOGIN_FIXED = "export function login(user) {\n  if (!user) return null;\n}";
+
+const initialState = projectSetup([
+  cmd("git switch -c experiment"),
+  write("style.css", "body { font-family: sans-serif; }\nnav { display: grid; }"),
+  cmd("git add ."),
+  cmd('git commit -m "Experiment: new layout"'),
+  write("login.js", LOGIN_FIXED),
+  cmd("git add ."),
+  cmd('git commit -m "Fix null check in login"'),
+  write("style.css", "body { font-family: sans-serif; }\nnav { display: grid; }\nbody { background: #111; }"),
+  cmd("git add ."),
+  cmd('git commit -m "Experiment: dark mode"'),
+  cmd("git switch main"),
+]);
 
 export const level19: Level = {
   id: 19,
   title: {
-    id: "Kirim pekerjaanmu",
-    en: "Send your work",
+    id: "Ambil satu commit",
+    en: "Pick one commit",
   },
   story: {
-    id: "Proyek sudah kamu salin. Hari ini kamu menulis catatan standup di notes.txt. Catatan itu baru ada di komputermu; teman satu tim belum bisa melihatnya sampai kamu mengirimnya ke server tim.",
-    en: "You already have a copy of the project. Today you wrote your standup notes in notes.txt. They only exist on your computer; your teammates cannot see them until you send them to the team's server.",
+    id: "Branch `experiment` penuh percobaan tampilan yang belum layak, tetapi di tengahnya ada satu perbaikan penting: \"Fix null check in login\". Kamu hanya butuh perbaikan itu di `main`. Menggabungkan seluruh branch akan ikut membawa percobaan. `cherry-pick` menyalin satu commit saja ke branch tempat kamu berada.",
+    en: "The `experiment` branch is full of unfinished visual experiments, but in the middle there is one important fix: \"Fix null check in login\". You only need that fix on `main`. Merging the whole branch would bring the experiments along. `cherry-pick` copies just one commit onto the branch you are on.",
   },
   goal: {
-    id: "Commit notes.txt lalu kirim ke server tim, sehingga `main` di remote sama dengan `main` lokal dan memuat notes.txt.",
-    en: "Commit notes.txt and send it to the team's server, so `main` on the remote matches local `main` and contains notes.txt.",
+    id: "Bawa hanya commit \"Fix null check in login\" ke `main`, tanpa perubahan style.css dari experiment.",
+    en: "Bring only the \"Fix null check in login\" commit to `main`, without the style.css changes from the experiment.",
   },
   editor: false,
-  allowedCommands: ["init", "status", "add", "commit", "log", "branch", "switch", "checkout", "merge", "reset", "revert", "stash", "cherry-pick", "rebase", "clone", "push", "remote"],
+  allowedCommands: ["init", "status", "add", "commit", "log", "diff", "restore", "branch", "switch", "checkout", "merge", "reset", "revert", "stash", "cherry-pick"],
   initialState,
   hints: [
     {
-      id: "Commit hanya menyimpan pekerjaan di komputermu. Untuk membagikannya ke tim, ada perintah lain yang mengirim commit ke server.",
-      en: "A commit only saves work on your computer. To share it with the team, another command sends commits to the server.",
+      id: "Kamu sedang di `main`. Menggabungkan `experiment` terlalu banyak membawa; cari perintah yang menyalin satu commit saja.",
+      en: "You are on `main`. Merging `experiment` brings too much; look for the command that copies a single commit.",
     },
     {
-      id: "Lihat kotak Remote: ia menunjukkan ujung server. Setelah commit-mu terkirim, ujung itu pindah ke commit barumu dan `origin/main` ikut maju di graf.",
-      en: "Look at the Remote box: it shows the server's tip. Once your commit is sent, that tip moves to your new commit and `origin/main` advances in the graph.",
+      id: "Gunakan log pada branch `experiment` untuk menemukan id commit perbaikan login, lalu ingat id-nya.",
+      en: "Use log on the `experiment` branch to find the id of the login fix commit, then remember that id.",
     },
     {
-      id: "Siapkan commit-nya dulu seperti biasa, lalu jalankan perintah pengirim. Argumen `origin` dan `main` boleh dipakai, boleh juga tidak.",
-      en: "Prepare the commit first as usual, then run the sending command. The `origin` and `main` arguments are optional.",
+      id: "Bentuknya: nama perintah penyalin, lalu id commit perbaikan login. Pastikan HEAD ada di `main` saat menjalankannya.",
+      en: "The shape: the copying command's name, then the id of the login fix commit. Make sure HEAD is on `main` when you run it.",
     },
   ],
-  mustRun: ["push"],
   isGoalReached: (s) => {
-    const r = s.remote;
-    if (!r || !r.connected) return false;
-    const tip = r.branches.main;
-    if (tip === undefined || tip === startTip || tip !== s.branches["main"]) return false;
-    return r.commits[tip]?.snapshot["notes.txt"] !== undefined;
+    const head = getHeadCommitId(s);
+    const exp = s.branches["experiment"];
+    const refactor = Object.values(s.commits).find((c) => c.message === "Refactor app init");
+    const source = Object.values(s.commits).find((c) => c.message === "Fix null check in login");
+    return (
+      s.head.type === "branch" &&
+      s.head.name === "main" &&
+      head !== null &&
+      s.commits[head].message === "Fix null check in login" &&
+      s.files["login.js"] === LOGIN_FIXED &&
+      refactor !== undefined &&
+      s.files["style.css"] === refactor.snapshot["style.css"] &&
+      exp !== undefined &&
+      s.commits[exp].message === "Experiment: dark mode" &&
+      source !== undefined &&
+      head !== source.id
+    );
   },
-  solution: [cmd("git add ."), cmd('git commit -m "Add notes"'), cmd("git push")],
+  solution: [cmd(`git cherry-pick ${idByMessage(initialState, "Fix null check in login")}`)],
 };

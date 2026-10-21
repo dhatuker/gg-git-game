@@ -1,53 +1,38 @@
-import { getHeadCommitId } from "../engine/state";
 import { projectSetup } from "./history";
-import { cmd, write } from "./solve";
+import { cmd } from "./solve";
 import type { Level } from "./types";
-
-const APP_JS = "function init() {\n  track('open');\n}\ninit();";
 
 export const level11: Level = {
   id: 11,
   title: {
-    id: "Salah commit",
-    en: "Wrong commit",
+    id: "Pindah branch",
+    en: "Switch branches",
   },
   story: {
-    id: "Kamu baru saja commit \"Add debug logging\", padahal belum waktunya. `reset` memindahkan branch ke commit lain, dan modenya menentukan nasib perubahan: `--soft` menyimpannya di staging, `--mixed` (bawaan) membiarkannya di working directory, `--hard` membuangnya sama sekali.",
-    en: "You just made the commit \"Add debug logging\" too early. `reset` moves the branch to another commit, and the mode decides what happens to the changes: `--soft` keeps them staged, `--mixed` (the default) leaves them in the working directory, `--hard` throws them away.",
+    id: "HEAD menandai posisimu sekarang: biasanya HEAD menunjuk ke sebuah branch. `git switch` (atau `git checkout`) memindahkan HEAD ke branch lain dan menyesuaikan isi working directory.",
+    en: "HEAD marks where you are right now: usually HEAD points at a branch. `git switch` (or `git checkout`) moves HEAD to another branch and updates the working directory to match.",
   },
   goal: {
-    id: "Batalkan commit \"Add debug logging\" supaya HEAD kembali ke \"Refactor app init\", tapi jangan hilangkan baris debug di app.js.",
-    en: "Undo the \"Add debug logging\" commit so HEAD goes back to \"Refactor app init\", but keep the debug line in app.js.",
+    id: "Pindahkan HEAD ke branch `feature`.",
+    en: "Move HEAD to the `feature` branch.",
   },
   editor: false,
-  allowedCommands: ["init", "status", "add", "commit", "log", "branch", "switch", "checkout", "merge", "reset"],
-  initialState: projectSetup([
-    write("app.js", `${APP_JS}\nconsole.log('debug');`),
-    cmd("git add ."),
-    cmd('git commit -m "Add debug logging"'),
-  ]),
+  allowedCommands: ["init", "status", "add", "commit", "log", "diff", "restore", "branch", "switch", "checkout"],
+  initialState: projectSetup([cmd("git branch feature")]),
   hints: [
     {
-      id: "Kamu perlu memindahkan branch mundur satu commit, tapi perubahan di file harus tetap ada. Pilih mode reset yang tidak membuang isi file.",
-      en: "You need to move the branch back one commit, but the file changes must stay. Pick a reset mode that does not throw away file content.",
+      id: "Perhatikan label HEAD di graf. Sekarang ia menempel ke `main`, padahal tujuannya ke branch lain.",
+      en: "Look at the HEAD label on the graph. It is attached to `main` now, but it needs to be on another branch.",
     },
     {
-      id: "Setelah itu cek hasilnya: lihat riwayat dengan log dan status file dengan status. Di graf, branch main akan bergeser satu commit ke belakang.",
-      en: "Afterwards check the result: look at the history with log and the file state with status. In the graph, main moves back one commit.",
+      id: "Ada dua perintah yang bisa memindahkan HEAD. Keduanya disebut di cerita level di atas.",
+      en: "Two commands can move HEAD. Both are named in the level story above.",
     },
     {
-      id: "Bentuknya: reset, lalu sebuah mode, lalu penunjuk ke commit induk HEAD (tanda ~ diikuti jumlah langkah mundur).",
-      en: "The shape: reset, then a mode, then a pointer to HEAD's parent commit (the ~ sign followed by the number of steps back).",
+      id: "Perintah pindah branch butuh satu argumen: nama branch tujuan. Lihat tujuan level untuk namanya.",
+      en: "The command that moves HEAD needs one argument: the name of the target branch. Check the level goal for the name.",
     },
   ],
-  isGoalReached: (s) => {
-    const head = getHeadCommitId(s);
-    return (
-      head !== null &&
-      s.commits[head].message === "Refactor app init" &&
-      Object.values(s.commits).some((c) => c.message === "Add debug logging") &&
-      (s.files["app.js"] ?? "").includes("debug")
-    );
-  },
-  solution: [cmd("git reset --soft HEAD~1")],
+  isGoalReached: (s) => s.head.type === "branch" && s.head.name === "feature",
+  solution: [cmd("git switch feature")],
 };

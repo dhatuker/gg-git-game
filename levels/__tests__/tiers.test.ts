@@ -10,19 +10,21 @@ describe("jalur belajar", () => {
       expect(t.from).toBeLessThanOrEqual(t.to);
       expect(t.from).toBe(i === 0 ? 1 : TIERS[i - 1].to + 1);
     });
-    expect(TIERS.at(-1)?.to).toBe(LEVELS.length);
+    expect(TIERS.at(-1)?.to).toBe(LEVELS.at(-1)?.id);
   });
 
   it("tierOf mengembalikan jalur yang benar", () => {
     expect(tierOf(1)?.id).toBe("beginner");
+    expect(tierOf(6)?.id).toBe("tidy");
+    expect(tierOf(9)?.id).toBe("tidy");
     expect(tierOf(10)?.id).toBe("intermediate");
-    expect(tierOf(LEVELS.length)?.id).toBe("teamwork");
+    expect(tierOf(LEVELS.at(-1)!.id)?.id).toBe("teamwork");
     expect(tierOf(999)).toBeUndefined();
   });
 
-  it("tiap jalur punya warna lane 0-4 yang berbeda", () => {
+  it("tiap jalur punya warna lane 0-5 yang berbeda", () => {
     expect(new Set(TIERS.map((t) => t.lane)).size).toBe(TIERS.length);
-    for (const t of TIERS) expect(t.lane).toBeLessThan(5);
+    for (const t of TIERS) expect(t.lane).toBeLessThan(6);
   });
 });
 
