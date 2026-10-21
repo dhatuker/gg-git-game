@@ -37,6 +37,11 @@ describe("describeEvents", () => {
     { type: "rebase-selesai", branch: "fitur", tip: "t1" },
     { type: "rebase-dibatalkan", branch: "fitur" },
     { type: "merge-dibatalkan", branch: "fitur" },
+    { type: "diff-ditampilkan", staged: false },
+    { type: "diff-ditampilkan", staged: true },
+    { type: "restore-dilakukan", files: ["a.txt"], staged: false },
+    { type: "restore-dilakukan", files: ["a.txt"], staged: true },
+    { type: "commit-diperbaiki", from: "a1", to: "b2" },
     { type: "clone-selesai", tip: "abc1234" },
     { type: "fetch-selesai", from: "a1", to: "b2" },
     { type: "push-berhasil", from: "a1", to: "b2", count: 2 },
@@ -102,5 +107,19 @@ describe("describeEvents", () => {
     const commit: GitEvent = { type: "commit-dibuat", id: "x", parents: ["p"] };
     expect(describeEvents([commit, { type: "push-berhasil", from: "a", to: "b", count: 1 }])?.key).toBe("caption.push");
     expect(describeEvents([commit, { type: "clone-selesai", tip: "x" }])?.key).toBe("caption.clone");
+  });
+});
+
+describe("caption v2c", () => {
+  it("diff --staged memakai kunci tersendiri", () => {
+    expect(describeEvents([{ type: "diff-ditampilkan", staged: true }])).toEqual({ key: "caption.diffStaged" });
+  });
+  it("-a --amend: caption amend menang atas file yang di-stage", () => {
+    expect(
+      describeEvents([
+        { type: "file-di-stage", file: "a.txt" },
+        { type: "commit-diperbaiki", from: "a1", to: "b2" },
+      ])?.key,
+    ).toBe("caption.amend");
   });
 });

@@ -3,7 +3,7 @@ import { createEmptyRepo } from "../../engine/state";
 import type { GitEvent } from "../../engine/types";
 import { columns, remoteSummary } from "../AreaPanel";
 import { attachRemote, initRepo, run, teammateCommit, write } from "../../engine/__tests__/helpers";
-import { litColumn } from "../highlight";
+import { litColumns } from "../highlight";
 
 describe("columns", () => {
   it("satu chip per entri stash", () => {
@@ -22,22 +22,26 @@ describe("columns", () => {
   });
 });
 
-describe("litColumn", () => {
+describe("litColumns", () => {
   const reset = (mode: "soft" | "mixed" | "hard"): GitEvent => ({ type: "reset-dilakukan", mode, from: "a", to: "b" });
   it.each([
-    [reset("soft"), "staging"],
-    [reset("mixed"), "working"],
-    [reset("hard"), null],
-    [{ type: "stash-disimpan", files: [] } as GitEvent, "stash"],
-    [{ type: "stash-dipulihkan", files: [] } as GitEvent, "working"],
-    [{ type: "file-di-stage", file: "a" } as GitEvent, "staging"],
-    [{ type: "konflik-terjadi", files: [] } as GitEvent, "working"],
-    [{ type: "push-berhasil", from: "a", to: "b", count: 1 } as GitEvent, "remote"],
-    [{ type: "fetch-selesai", from: "a", to: "b" } as GitEvent, "repo"],
-    [{ type: "clone-selesai", tip: "a" } as GitEvent, "repo"],
-    [null, null],
+    [reset("soft"), ["staging"]],
+    [reset("mixed"), ["working"]],
+    [reset("hard"), []],
+    [{ type: "stash-disimpan", files: [] } as GitEvent, ["stash"]],
+    [{ type: "stash-dipulihkan", files: [] } as GitEvent, ["working"]],
+    [{ type: "file-di-stage", file: "a" } as GitEvent, ["staging"]],
+    [{ type: "konflik-terjadi", files: [] } as GitEvent, ["working"]],
+    [{ type: "push-berhasil", from: "a", to: "b", count: 1 } as GitEvent, ["remote"]],
+    [{ type: "fetch-selesai", from: "a", to: "b" } as GitEvent, ["repo"]],
+    [{ type: "clone-selesai", tip: "a" } as GitEvent, ["repo"]],
+    [{ type: "diff-ditampilkan", staged: false } as GitEvent, ["working", "staging"]],
+    [{ type: "diff-ditampilkan", staged: true } as GitEvent, ["staging", "repo"]],
+    [{ type: "restore-dilakukan", files: ["a"], staged: false } as GitEvent, ["working"]],
+    [{ type: "restore-dilakukan", files: ["a"], staged: true } as GitEvent, ["staging"]],
+    [null, []],
   ])("%j", (e, expected) => {
-    expect(litColumn(e)).toBe(expected);
+    expect(litColumns(e)).toEqual(expected);
   });
 });
 

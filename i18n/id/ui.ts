@@ -113,7 +113,7 @@ export const id: UiDict = {
   "home.how2Body": "Graf commit dan area git (working directory, staging, repository) berubah setiap kali perintah berhasil.",
   "home.how3Title": "Petunjuk tanpa bocoran",
   "home.how3Body": "Tombol petunjuk selalu ada. Kalau kamu beberapa kali salah, tombolnya menyala. Petunjuknya mengarahkan, tidak memberi jawaban.",
-  "home.linesTitle": "Lima jalur, dari dasar sampai kerja tim",
+  "home.linesTitle": "Enam jalur, dari dasar sampai kerja tim",
   "home.linesLabel": "Jalur belajar",
   "home.levelCount": "{c} level",
   "home.levelCountDone": "{c} level, {d} selesai",

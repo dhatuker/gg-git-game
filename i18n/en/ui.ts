@@ -113,7 +113,7 @@ export const en: UiDict = {
   "home.how2Body": "The commit graph and the git areas (working directory, staging, repository) change each time a command succeeds.",
   "home.how3Title": "Hints without spoilers",
   "home.how3Body": "The hint button is always there. After a few mistakes it lights up. Hints point the way without giving the answer.",
-  "home.linesTitle": "Five lines, from basics to teamwork",
+  "home.linesTitle": "Six lines, from basics to teamwork",
   "home.linesLabel": "Learning lines",
   "home.levelCount": "{c} levels",
   "home.levelCountDone": "{c} levels, {d} done",

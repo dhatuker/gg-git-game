@@ -19,6 +19,15 @@ describe("highlightTargets (v2a)", () => {
   });
 });
 
+describe("highlightTargets (v2c)", () => {
+  it("restore-dilakukan menyorot file yang dipulihkan", () => {
+    expect(highlightTargets({ type: "restore-dilakukan", files: ["a.txt"], staged: true }, {})).toEqual({ commits: [], labels: [], files: ["a.txt"] });
+  });
+  it("commit-diperbaiki menyorot commit baru dan HEAD", () => {
+    expect(highlightTargets({ type: "commit-diperbaiki", from: "a", to: "b" }, {})).toEqual({ commits: ["b"], labels: ["HEAD"], files: [] });
+  });
+});
+
 describe("highlightTargets (v2b)", () => {
   it("push-berhasil menyorot commit to dan label origin/main", () => {
     expect(highlightTargets({ type: "push-berhasil", from: "a", to: "b", count: 1 }, {})).toEqual({ commits: ["b"], labels: ["origin/main"], files: [] });

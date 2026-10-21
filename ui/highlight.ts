@@ -41,6 +41,10 @@ export function highlightTargets(e: GitEvent | null, branches: Record<string, st
       return { commits: [e.to], labels: ["origin/main"], files: [] };
     case "fetch-selesai":
       return { commits: [e.to], labels: [], files: [] };
+    case "restore-dilakukan":
+      return { commits: [], labels: [], files: e.files };
+    case "commit-diperbaiki":
+      return { commits: [e.to], labels: ["HEAD"], files: [] };
     default:
       return none;
   }
@@ -48,24 +52,28 @@ export function highlightTargets(e: GitEvent | null, branches: Record<string, st
 
 export type AreaColumn = "working" | "staging" | "stash" | "remote" | "repo";
 
-/** Kolom area yang disorot untuk satu event (null bila tidak ada). */
-export function litColumn(e: GitEvent | null): AreaColumn | null {
+/** Kolom area yang disorot untuk satu event: tempat perubahan "tiba", atau dua area yang dibandingkan `git diff`. */
+export function litColumns(e: GitEvent | null): AreaColumn[] {
   switch (e?.type) {
     case "file-di-stage":
-      return "staging";
+      return ["staging"];
     case "konflik-terjadi":
     case "stash-dipulihkan":
-      return "working";
+      return ["working"];
     case "stash-disimpan":
-      return "stash";
+      return ["stash"];
     case "reset-dilakukan":
-      return e.mode === "soft" ? "staging" : e.mode === "mixed" ? "working" : null;
+      return e.mode === "soft" ? ["staging"] : e.mode === "mixed" ? ["working"] : [];
     case "push-berhasil":
-      return "remote";
+      return ["remote"];
     case "fetch-selesai":
     case "clone-selesai":
-      return "repo";
+      return ["repo"];
+    case "diff-ditampilkan":
+      return e.staged ? ["staging", "repo"] : ["working", "staging"];
+    case "restore-dilakukan":
+      return [e.staged ? "staging" : "working"];
     default:
-      return null;
+      return [];
   }
 }

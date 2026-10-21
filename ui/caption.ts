@@ -74,7 +74,7 @@ export function describeEvents(events: GitEvent[]): TMsg | null {
     const files = staged.map((e) => (e.type === "file-di-stage" ? `\`${e.file}\`` : "")).join(", ");
     return { key: "caption.staged", params: { files } };
   }
-  const priority = ["push-berhasil", "clone-selesai", "rebase-selesai", "revert-dibuat", "cherry-pick-dibuat", "merge-commit-dibuat"] as const;
+  const priority = ["commit-diperbaiki", "push-berhasil", "clone-selesai", "rebase-selesai", "revert-dibuat", "cherry-pick-dibuat", "merge-commit-dibuat"] as const;
   for (const type of priority) {
     const found = events.find((e) => e.type === type);
     if (found) return describe(found);

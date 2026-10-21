@@ -2,7 +2,7 @@ import type React from "react";
 import { useLang } from "./LanguageProvider";
 import type { GitEvent, RepoState } from "../engine/types";
 import { activeConflicts, connectedRemote, headSnapshot } from "../engine/state";
-import { highlightTargets, litColumn as litColumnOf } from "./highlight";
+import { highlightTargets, litColumns, type AreaColumn } from "./highlight";
 
 /** `note` juga dipakai sebagai nama kelas CSS (gg-chip-baru, dst.), jadi nilainya tetap; labelnya diterjemahkan. */
 type Chip = { file: string; note?: "baru" | "diubah" | "konflik" };
@@ -70,10 +70,10 @@ export function AreaPanel({ repo, activeEvent, showStash, showRemote }: Props) {
   const { working, staging, committed, stash, remote } = columns(repo);
   const summary = remoteSummary(repo);
   const files = highlightTargets(activeEvent, repo.branches).files;
-  // Sorot kolom tempat perubahan "tiba" (lihat litColumnOf).
-  const litColumn = litColumnOf(activeEvent);
+  // Sorot kolom tempat perubahan "tiba", atau dua kolom yang dibandingkan `git diff` (lihat litColumns).
+  const lit = litColumns(activeEvent);
   const col = (key: string, title: string, desc: string, chips: Chip[], empty: string, extra?: React.ReactNode) => (
-    <section className={`gg-area gg-area-${key}${litColumn === key ? " gg-area-lit" : ""}`} aria-label={title}>
+    <section className={`gg-area gg-area-${key}${lit.includes(key as AreaColumn) ? " gg-area-lit" : ""}`} aria-label={title}>
       <h3>{title}</h3>
       <p className="gg-area-desc">{desc}</p>
       <ul>
@@ -81,7 +81,7 @@ export function AreaPanel({ repo, activeEvent, showStash, showRemote }: Props) {
         {chips.map((c) => (
           <li
             key={`${key}-${c.file}-${c.note ?? ""}`}
-            className={`gg-chip${c.note ? ` gg-chip-${c.note}` : ""}${litColumn === key && files.includes(c.file) ? " gg-chip-lit" : ""}`}
+            className={`gg-chip${c.note ? ` gg-chip-${c.note}` : ""}${lit.includes(key as AreaColumn) && files.includes(c.file) ? " gg-chip-lit" : ""}`}
           >
             <span className="gg-chip-name">{c.file}</span>
             {c.note && <span className="gg-chip-note">{t(NOTE_KEY[c.note])}</span>}
