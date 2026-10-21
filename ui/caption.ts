@@ -7,6 +7,8 @@ function describe(e: GitEvent): TMsg {
       return { key: "caption.repoCreated" };
     case "diff-ditampilkan":
       return { key: e.staged ? "caption.diffStaged" : "caption.diff" };
+    case "restore-dilakukan":
+      return { key: e.staged ? "caption.restoreStaged" : "caption.restore", params: { files: e.files.map((f) => `\`${f}\``).join(", ") } };
     case "file-di-stage":
       return { key: "caption.staged", params: { files: `\`${e.file}\`` } };
     case "commit-dibuat":

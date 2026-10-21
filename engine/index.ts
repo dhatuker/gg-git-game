@@ -3,6 +3,7 @@ import { branch } from "./commands/branch";
 import { switchBranch } from "./commands/switch";
 import { commit } from "./commands/commit";
 import { diff } from "./commands/diff";
+import { restore } from "./commands/restore";
 import { log } from "./commands/log";
 import { merge } from "./commands/merge";
 import { init } from "./commands/init";
@@ -31,6 +32,7 @@ export const HANDLERS: Record<string, Handler> = {
   commit,
   log,
   diff,
+  restore,
   branch,
   switch: switchBranch,
   checkout: switchBranch,

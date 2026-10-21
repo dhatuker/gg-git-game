@@ -27,6 +27,8 @@ export const en: UiDict = {
   "caption.rebaseDone": "Rebase finished: branch `{branch}` now points to `{tip}`, the tip of the copied commits. The old commits are no longer reachable from the branch.",
   "caption.diff": "`git diff` compares staging with the working directory: it shows changes that are not staged yet. The repository does not change.",
   "caption.diffStaged": "`git diff --staged` compares the last commit with staging: it shows what the next commit will contain. The repository does not change.",
+  "caption.restore": "{files} in the working directory was replaced with the staged version. Unstaged changes are gone.",
+  "caption.restoreStaged": "{files} in staging was set back to the last commit. The working directory did not change.",
   "caption.mergeAborted": "The merge with `{branch}` was aborted. No new commit was made; HEAD stays put and the conflict is gone.",
   "caption.rebaseAborted": "Rebase on `{branch}` was aborted and the branch is back exactly as it was before the rebase started.",
   "caption.clone": "The repository was copied from the server. Your local `main` and `origin/main` both start at the same commit `{tip}`, so you are in sync with the server.",

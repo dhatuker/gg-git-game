@@ -26,6 +26,11 @@ export const en: EngineDict = {
   "diff.noneStaged": "Nothing is staged yet. Use `git add` first, or `git diff` to see changes in the working directory.",
   "diff.untracked": "`{file}` is not tracked yet, so `git diff` does not show it. Stage it with `git add`, then look with `git diff --staged`.",
   "diff.unknownPath": "The file `{file}` is not in the working directory, staging, or the last commit.",
+  "restore.needPath": "Name the file to restore, for example `git restore <file>`, or `.` for every file.",
+  "restore.unknownPath": "Git does not know `{file}`: it was never staged or committed, so there is no version to restore.",
+  "restore.nothing": "Nothing to restore: the contents already match.",
+  "restore.done": "Changes in {files} were discarded. The file is back to what is in staging.",
+  "restore.unstaged": "{files} was taken out of staging. The changes are still in the working directory.",
   "init.done": "Created an empty git repository.",
   "init.already": "This repository already exists.",
 

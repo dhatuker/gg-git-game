@@ -27,6 +27,12 @@ export type MessageKey =
   | "diff.noneStaged"
   | "diff.untracked"
   | "diff.unknownPath"
+  // restore
+  | "restore.needPath"
+  | "restore.unknownPath"
+  | "restore.nothing"
+  | "restore.done"
+  | "restore.unstaged"
   // init
   | "init.done"
   | "init.already"

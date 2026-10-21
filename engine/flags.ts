@@ -19,6 +19,7 @@ export const COMMAND_FLAGS: Record<string, FlagSpec> = {
   commit: { flags: ["-m", "-a"], value: ["-m"] },
   log: { flags: ["--oneline"] },
   diff: { flags: ["--staged", "--cached"] },
+  restore: { flags: ["--staged"] },
   branch: { flags: ["-d", "-D"] },
   switch: { flags: ["-c"] },
   checkout: { flags: ["-b"] },

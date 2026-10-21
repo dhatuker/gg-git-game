@@ -31,6 +31,8 @@ export type UiKey =
   | "caption.mergeAborted"
   | "caption.diff"
   | "caption.diffStaged"
+  | "caption.restore"
+  | "caption.restoreStaged"
   | "caption.rebaseDone"
   | "caption.rebaseAborted"
   | "caption.clone"

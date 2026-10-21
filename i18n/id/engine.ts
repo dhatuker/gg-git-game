@@ -26,6 +26,11 @@ export const id: EngineDict = {
   "diff.noneStaged": "Belum ada perubahan di staging. Pakai `git add` dulu, atau `git diff` untuk melihat perubahan di working directory.",
   "diff.untracked": "`{file}` belum dilacak, jadi `git diff` tidak menampilkannya. Stage dulu dengan `git add`, lalu lihat dengan `git diff --staged`.",
   "diff.unknownPath": "File `{file}` tidak ada di working directory, staging, maupun commit terakhir.",
+  "restore.needPath": "Sebutkan file yang mau dipulihkan, misalnya `git restore <file>`, atau `.` untuk semua file.",
+  "restore.unknownPath": "`{file}` tidak dikenal git: file itu belum pernah di-stage atau di-commit, jadi tidak ada versi untuk dipulihkan.",
+  "restore.nothing": "Tidak ada yang perlu dipulihkan: isinya sudah sama.",
+  "restore.done": "Perubahan di {files} dibuang. File kembali seperti isi staging.",
+  "restore.unstaged": "{files} dikeluarkan dari staging. Perubahannya masih ada di working directory.",
   "init.done": "Repositori git kosong berhasil dibuat.",
   "init.already": "Repositori ini sudah dibuat sebelumnya.",
 
