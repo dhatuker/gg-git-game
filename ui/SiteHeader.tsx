@@ -20,6 +20,7 @@ export function SiteHeader() {
   const path = usePathname();
   const onLevels = path.startsWith(`/${lang}/levels`);
   const onHome = path === `/${lang}`;
+  const onSandbox = path.startsWith(`/${lang}/sandbox`);
   return (
     <header className="gg-site-head">
       <Link className="gg-brand" href={`/${lang}`} aria-label={t("site.brandLabel")}>
@@ -37,6 +38,9 @@ export function SiteHeader() {
           </Link>
           <Link href={`/${lang}/levels`} aria-current={onLevels ? "page" : undefined}>
             {t("site.levels")}
+          </Link>
+          <Link href={`/${lang}/sandbox`} aria-current={onSandbox ? "page" : undefined}>
+            {t("site.sandbox")}
           </Link>
         </nav>
         <LanguageToggle onSwitch={switchLanguagePath} />
