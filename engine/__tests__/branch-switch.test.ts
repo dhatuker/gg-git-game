@@ -141,3 +141,55 @@ describe("isReachable", () => {
     expect(isReachable(two, one.branches.main, two.branches.main)).toBe(false);
   });
 });
+
+describe("titik awal dan switch -", () => {
+  const twoCommits = () => run(run(write(oneCommit(), "b.txt", "2"), "git add ."), 'git commit -m "dua"');
+
+  it("switch -c <nama> <titik-awal> membuat branch di titik awal dan mengganti isi working directory", () => {
+    const s = twoCommits();
+    const first = s.commits[s.branches.main].parents[0];
+    const r = exec(s, "git switch -c lama HEAD~1");
+    expect(r.ok).toBe(true);
+    expect(r.state.branches.lama).toBe(first);
+    expect(r.state.head).toEqual({ type: "branch", name: "lama" });
+    expect(r.state.files["b.txt"]).toBeUndefined();
+  });
+
+  it("checkout -b menerima titik awal berupa nama branch", () => {
+    const s = run(run(twoCommits(), "git branch tanda HEAD~1"), "git checkout -b dari-tanda tanda");
+    expect(s.branches["dari-tanda"]).toBe(s.branches.tanda);
+  });
+
+  it("menolak titik awal lain bila ada perubahan belum di-commit", () => {
+    const s = write(twoCommits(), "a.txt", "ubah");
+    const r = exec(run(s, "git add ."), "git switch -c lama HEAD~1");
+    expect(r.ok).toBe(false);
+    expect(keys(r)).toContain("state.dirty");
+  });
+
+  it("menolak titik awal yang tidak dikenal", () => {
+    const r = exec(oneCommit(), "git switch -c baru tidak-ada");
+    expect(r.ok).toBe(false);
+    expect(keys(r)).toContain("revision.unknown");
+  });
+
+  it("git branch <nama> <titik-awal>", () => {
+    const s = twoCommits();
+    expect(run(s, "git branch lama HEAD~1").branches.lama).toBe(s.commits[s.branches.main].parents[0]);
+  });
+
+  it("switch - kembali ke branch sebelumnya, bolak-balik", () => {
+    let s = run(oneCommit(), "git switch -c fitur");
+    s = run(s, "git switch main");
+    s = run(s, "git switch -");
+    expect(s.head).toEqual({ type: "branch", name: "fitur" });
+    s = run(s, "git switch -");
+    expect(s.head).toEqual({ type: "branch", name: "main" });
+  });
+
+  it("switch - tanpa riwayat pindah memberi pesan jelas", () => {
+    const r = exec(oneCommit(), "git switch -");
+    expect(r.ok).toBe(false);
+    expect(keys(r)).toEqual(["switch.noPrevious"]);
+  });
+});
