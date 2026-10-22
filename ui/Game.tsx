@@ -2,36 +2,20 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useReducer, useRef, useState } from "react";
+import { useEffect, useReducer, useRef, useState } from "react";
 import { LEVELS } from "../levels";
 import { tierOf } from "../levels/tiers";
-import { AreaPanel } from "./AreaPanel";
-import { FileEditor } from "./FileEditor";
-import { firstOpenIndex, hintNudge, inputHistory, isUnlocked, reduce, startAt, visibleHints } from "./game-state";
-import { GitGraph } from "./GitGraph";
-import { computeGraphLayout } from "./layout";
+import { firstOpenIndex, hintNudge, isUnlocked, reduce, startAt, visibleHints } from "./game-state";
 import { LevelPanel } from "./LevelPanel";
-import type { Lang, TMsg } from "../i18n/types";
+import type { Lang } from "../i18n/types";
 import { saveCarry, takeCarry } from "./carry";
 import { langCookie } from "./language";
 import { LanguageProvider, useLang } from "./LanguageProvider";
 import { LanguageToggle } from "./LanguageToggle";
-import { RichText } from "./RichText";
 import { loadCompleted, saveCompleted } from "./progress";
 import { SummaryDialog } from "./SummaryDialog";
-import { Terminal } from "./Terminal";
-import { useEventQueue } from "./useEventQueue";
 import { useReducedMotion } from "./useReducedMotion";
-import { activeConflicts } from "../engine/state";
-
-function Caption({ message }: { message: TMsg | null }) {
-  const { line } = useLang();
-  return (
-    <p className="gg-caption" aria-live="polite">
-      {message && <RichText text={line(message)} />}
-    </p>
-  );
-}
+import { Workspace } from "./Workspace";
 
 /** Halaman belajar untuk satu level (rute /[lang]/play/[level]). `levelIndex` datang dari URL. */
 export default function Game({ lang, levelIndex }: { lang: Lang; levelIndex: number }) {
@@ -50,9 +34,6 @@ function GameView({ levelIndex }: { levelIndex: number }) {
   const [summaryOpen, setSummaryOpen] = useState(false);
   const level = LEVELS[state.levelIndex];
   const tier = tierOf(level.id);
-  const layout = useMemo(() => computeGraphLayout(state.repo), [state.repo]);
-  const queue = useEventQueue(state.events);
-  const history = useMemo(() => inputHistory(state.lines), [state.lines]);
 
   // Progres dibaca setelah mount agar HTML server dan client sama.
   // Saat pindah bahasa, state level dibawa lewat sessionStorage; selain itu masuk ke level dari URL.
@@ -138,50 +119,30 @@ function GameView({ levelIndex }: { levelIndex: number }) {
         </button>
       </header>
 
-      <div className="gg-left">
-        <LevelPanel
-          level={level}
-          hints={visibleHints(state)}
-          hintsTotal={level.hints.length}
-          nudge={hintNudge(state)}
-          onRevealHint={() => dispatch({ type: "reveal-hint" })}
-          complete={state.levelComplete}
-          isLast={isLast}
-          onReset={() => dispatch({ type: "reset-level" })}
-          onNext={() => router.push(`/${lang}/play/${LEVELS[state.levelIndex + 1].id}`)}
-          onOpenSummary={() => setSummaryOpen(true)}
-        />
-        <Terminal key={state.levelIndex} lines={state.lines.slice(state.clearedAt)} history={history} onSubmit={run} />
-        {level.editor && (
-          <FileEditor
-            files={state.repo.files}
-            conflicts={activeConflicts(state.repo)}
-            rebasing={!!state.repo.rebaseState}
-            onWrite={(file, content) => dispatch({ type: "write", file, content })}
-            onResolve={(file, choice) => dispatch({ type: "resolve", file, choice })}
+      <Workspace
+        session={state}
+        terminalKey={state.levelIndex}
+        top={
+          <LevelPanel
+            level={level}
+            hints={visibleHints(state)}
+            hintsTotal={level.hints.length}
+            nudge={hintNudge(state)}
+            onRevealHint={() => dispatch({ type: "reveal-hint" })}
+            complete={state.levelComplete}
+            isLast={isLast}
+            onReset={() => dispatch({ type: "reset-level" })}
+            onNext={() => router.push(`/${lang}/play/${LEVELS[state.levelIndex + 1].id}`)}
+            onOpenSummary={() => setSummaryOpen(true)}
           />
-        )}
-      </div>
-
-      <div className="gg-right">
-        <section className="gg-panel gg-graph-panel" aria-label={t("ui.graphTitle")}>
-          <div className="gg-graph-head">
-            <h3 className="gg-section-title">{t("ui.graphTitle")}</h3>
-            {queue.playing && (
-              <button type="button" className="gg-btn" onClick={queue.skip}>
-                {t("ui.skipAnimation")}
-              </button>
-            )}
-          </div>
-          <GitGraph repo={state.repo} layout={layout} activeEvent={queue.active} />
-          <Caption message={state.caption} />
-        </section>
-        <section className="gg-panel" aria-label={t("ui.areasLabel")}>
-          <AreaPanel repo={state.repo} activeEvent={queue.active} showStash={level.allowedCommands.includes("stash")}
-            showRemote={level.allowedCommands.includes("push")}
-          />
-        </section>
-      </div>
+        }
+        editor={level.editor}
+        showStash={level.allowedCommands.includes("stash")}
+        showRemote={level.allowedCommands.includes("push")}
+        onRun={run}
+        onWrite={(file, content) => dispatch({ type: "write", file, content })}
+        onResolve={(file, choice) => dispatch({ type: "resolve", file, choice })}
+      />
       <SummaryDialog
         state={state}
         open={summaryOpen}
