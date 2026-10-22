@@ -1,23 +1,11 @@
-import { COMMAND_FLAGS, HANDLERS, runCommand } from "../engine";
 import { resolveConflict, writeFile, type EditResult } from "../engine/files";
-import { parseInput } from "../engine/parse";
-import type { GitEvent, RepoState } from "../engine/types";
 import { LEVELS, type Localized } from "../levels";
-import type { TLine, TMsg } from "../i18n/types";
-import { describeEvents } from "./caption";
+import { runSessionInput, type Session } from "./session";
 
-/**
- * Baris terminal: input pemain apa adanya, output berupa pesan berkunci + baris raw, atau bantuan `git help`
- * (input + daftar perintah; teksnya disusun saat render agar ikut bahasa aktif).
- */
-export type TerminalLine =
-  | { kind: "input"; text: string }
-  | { kind: "output" | "error"; lines: TLine[] }
-  | { kind: "help"; text: string; commands: string[]; topic?: string; unknown?: string };
+export { inputHistory, NOT_ALLOWED, READ_ONLY_CAPTION, type TerminalLine } from "./session";
 
-export interface GameState {
+export interface GameState extends Session {
   levelIndex: number;
-  repo: RepoState;
   completed: number[];
   ran: string[];
   failedAttempts: number;
@@ -25,12 +13,6 @@ export interface GameState {
   hintsRevealed: number;
   /** Kegagalan sejak petunjuk terakhir dibuka; dipakai untuk menyorot tombol petunjuk. */
   failedSinceHint: number;
-  lines: TerminalLine[];
-  /** Baris sebelum indeks ini disembunyikan oleh `clear`; tetap ada untuk rangkuman dan statistik. */
-  clearedAt: number;
-  events: GitEvent[];
-  /** Pesan penjelasan untuk perintah sukses terakhir; diterjemahkan saat render. */
-  caption: TMsg | null;
   levelComplete: boolean;
 }
 
@@ -47,8 +29,6 @@ export type GameAction =
   /** Masuk ke level dari rute /play/[level] dengan progres tersimpan; level terkunci jatuh ke level terbuka pertama. */
   | { type: "enter-level"; completed: number[]; index: number };
 
-export const NOT_ALLOWED: TMsg = { key: "game.notAllowed" };
-export const READ_ONLY_CAPTION: TMsg = { key: "caption.readOnly" };
 
 export function isUnlocked(completed: number[], index: number): boolean {
   if (index === 0) return true;
@@ -107,61 +87,18 @@ function applyEdit(state: GameState, result: EditResult): GameState {
   return withGoalCheck({ ...state, repo: result.state });
 }
 
-const CLEAR = /^(clear|cls)$/i;
-const HELP = /^(?:help|git\s+(?:help|--help|-h))(?:\s+(\S+))?$/i;
-
-/** Perintah milik terminal game (bukan git): bersihkan layar atau tampilkan bantuan. Null bila bukan. */
-function runTerminalCommand(state: GameState, input: string): GameState | null {
-  if (CLEAR.test(input)) return { ...state, clearedAt: state.lines.length };
-  const help = HELP.exec(input);
-  if (!help) return null;
-  const allowed = LEVELS[state.levelIndex].allowedCommands;
-  const topic = help[1];
-  const line: TerminalLine =
-    topic === undefined
-      ? { kind: "help", text: input, commands: allowed }
-      : topic in COMMAND_FLAGS
-        ? { kind: "help", text: input, commands: [topic], topic }
-        : { kind: "help", text: input, commands: allowed, unknown: topic };
-  return { ...state, lines: [...state.lines, line] };
-}
-
-/** Riwayat input pemain untuk tombol ↑/↓ (termasuk `git help`), tanpa duplikat berurutan. */
-export function inputHistory(lines: TerminalLine[]): string[] {
-  const out: string[] = [];
-  for (const line of lines) {
-    if ((line.kind === "input" || line.kind === "help") && out.at(-1) !== line.text) out.push(line.text);
-  }
-  return out;
-}
-
 function runInput(state: GameState, input: string): GameState {
-  const terminal = runTerminalCommand(state, input.trim());
-  if (terminal) return terminal;
-  const level = LEVELS[state.levelIndex];
-  const lines: TerminalLine[] = [...state.lines, { kind: "input", text: input }];
-  const parsed = parseInput(input);
-  // Hanya perintah yang dikenal engine yang bisa "terkunci"; typo diteruskan ke engine agar mendapat saran.
-  if (!("error" in parsed) && parsed.name in HANDLERS && !level.allowedCommands.includes(parsed.name)) {
-    return {
-      ...state,
-      lines: [...lines, { kind: "error", lines: [NOT_ALLOWED] }],
-      failedAttempts: state.failedAttempts + 1,
-      failedSinceHint: state.failedSinceHint + 1,
-    };
-  }
-  const r = runCommand(state.repo, input);
-  const next: GameState = {
-    ...state,
-    repo: r.state,
-    lines: [...lines, { kind: r.ok ? "output" : "error", lines: r.output }],
-    failedAttempts: r.ok ? state.failedAttempts : state.failedAttempts + 1,
-    failedSinceHint: r.ok ? state.failedSinceHint : state.failedSinceHint + 1,
-    ran: r.ok && !("error" in parsed) && !state.ran.includes(parsed.name) ? [...state.ran, parsed.name] : state.ran,
-    events: r.events,
-    caption: r.ok ? (describeEvents(r.events) ?? READ_ONLY_CAPTION) : state.caption,
+  const { state: next, outcome } = runSessionInput(state, input, LEVELS[state.levelIndex].allowedCommands);
+  if (outcome.kind === "terminal") return next;
+  const failed = outcome.kind === "blocked" || !outcome.ok;
+  const name = outcome.kind === "git" && outcome.ok ? outcome.name : null;
+  const counted: GameState = {
+    ...next,
+    failedAttempts: failed ? state.failedAttempts + 1 : state.failedAttempts,
+    failedSinceHint: failed ? state.failedSinceHint + 1 : state.failedSinceHint,
+    ran: name && !state.ran.includes(name) ? [...state.ran, name] : state.ran,
   };
-  return withGoalCheck(next);
+  return outcome.kind === "blocked" ? counted : withGoalCheck(counted);
 }
 
 export function reduce(state: GameState, action: GameAction): GameState {

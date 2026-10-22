@@ -86,6 +86,7 @@ export type MessageKey =
   | "switch.switched"
   | "switch.detached"
   | "switch.notFound"
+  | "switch.noPrevious"
   // merge
   | "merge.needTarget"
   | "merge.inProgress"

@@ -74,6 +74,16 @@ export function HomePage() {
             })}
           </div>
         </section>
+
+        <section className="gg-sbx-promo" aria-labelledby="gg-sbx-promo">
+          <div>
+            <h2 id="gg-sbx-promo">{t("home.sandboxTitle")}</h2>
+            <p>{t("home.sandboxBody")}</p>
+          </div>
+          <Link className="gg-btn gg-btn-lg" href={`/${lang}/sandbox`}>
+            {t("home.sandboxCta")}
+          </Link>
+        </section>
       </main>
     </div>
   );

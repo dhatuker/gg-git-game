@@ -1,9 +1,11 @@
 import { msg, raw } from "../messages";
+import { resolveRevision } from "../revision";
 import { failure, getHeadCommitId, isReachable, isValidBranchName, success } from "../state";
 import type { CommandResult, Handler, RepoState } from "../types";
 
-export function createBranch(state: RepoState, name: string): CommandResult {
-  const headId = getHeadCommitId(state);
+/** Buat branch `name` di commit `at` (bawaan: commit HEAD). */
+export function createBranch(state: RepoState, name: string, at?: string): CommandResult {
+  const headId = at ?? getHeadCommitId(state);
   if (!headId) {
     return failure(
       state,
@@ -65,6 +67,11 @@ export const branch: Handler = (state, args) => {
       ? [msg("branch.forceDeleted", { name }), raw(`Deleted branch ${name} (was ${state.branches[name]}).`)]
       : [msg("branch.deleted", { name })];
     return success({ ...state, branches }, output, [{ type: "branch-dihapus", name }]);
+  }
+  if (args.length > 1) {
+    const start = resolveRevision(state, args[1]);
+    if ("error" in start) return failure(state, start.error, start.git);
+    return createBranch(state, args[0], start.id);
   }
   return createBranch(state, args[0]);
 };

@@ -52,6 +52,8 @@ export interface RepoState {
   rebaseState: RebaseState | null;
   remote: RemoteState | null;
   remoteRefs: Record<string, string>;
+  /** Posisi HEAD sebelum `switch`/`checkout` terakhir (nama branch atau id commit), untuk `git switch -`. */
+  previousHead?: string;
 }
 
 export type GitEvent =

@@ -55,7 +55,8 @@ export function checkFlags(name: string, args: string[]): { args: string[] } | {
   const out: string[] = [];
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
-    if (!arg.startsWith("-")) {
+    // `-` sendirian bukan opsi: `git switch -` berarti "kembali ke branch sebelumnya".
+    if (!arg.startsWith("-") || arg === "-") {
       out.push(arg);
       continue;
     }

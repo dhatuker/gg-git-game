@@ -84,6 +84,7 @@ export const id: EngineDict = {
   "switch.switched": "HEAD sekarang menunjuk ke branch `{branch}`.",
   "switch.detached": "HEAD sekarang menunjuk langsung ke commit {id} (detached HEAD).",
   "switch.notFound": "Branch atau commit `{target}` tidak ditemukan.",
+  "switch.noPrevious": "Belum ada branch sebelumnya untuk dituju. `git switch -` kembali ke branch terakhir yang kamu tinggalkan.",
 
   "merge.needTarget": "Sebutkan branch yang mau di-merge, misalnya `git merge feature`.",
   "merge.inProgress": "Masih ada merge yang belum selesai. Selesaikan konfliknya, `git add`, lalu `git commit`. Atau batalkan dengan `git merge --abort`.",

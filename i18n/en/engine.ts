@@ -84,6 +84,7 @@ export const en: EngineDict = {
   "switch.switched": "HEAD now points to branch `{branch}`.",
   "switch.detached": "HEAD now points directly at commit {id} (detached HEAD).",
   "switch.notFound": "Branch or commit `{target}` was not found.",
+  "switch.noPrevious": "There is no previous branch yet. `git switch -` goes back to the last branch you left.",
 
   "merge.needTarget": "Name the branch to merge, for example `git merge feature`.",
   "merge.inProgress": "A merge is still in progress. Resolve the conflicts, run `git add`, then `git commit`. Or cancel it with `git merge --abort`.",

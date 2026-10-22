@@ -1,0 +1,26 @@
+@@@19cf100be8d8f33dcff07448e1a8801006309e4c|5157b585988610a1934c16320e9695b7bf2080eb|docs|Remove b
+D	b.txt
+
+@@@5157b585988610a1934c16320e9695b7bf2080eb|fa5dafefe6ed29a2ab011eb016e96d052ebe0140||Rename readme
+R100	README.md	DOCS.md
+
+@@@6de14c95c84feb5fab4326e8bdb11828b3f91194|34d79c23c4037ecf6bc82a685c071b292a0ddd58|HEAD -> main|Local only
+A	d.txt
+
+@@@34d79c23c4037ecf6bc82a685c071b292a0ddd58|6ebda2a11fe9782450732a7d4213d4d647ae4200|tag: v1, origin/main|Add c
+A	c.txt
+
+@@@6ebda2a11fe9782450732a7d4213d4d647ae4200|fa5dafefe6ed29a2ab011eb016e96d052ebe0140 e5093da568a059668542f86136c5fcc78a94dead||Merge branch 'feature/login'
+@@@e5093da568a059668542f86136c5fcc78a94dead|4f4b22adfda19585f3768094adc9e216b233be8b|feature/login|Add login | form
+M	a.txt
+A	login.js
+
+@@@fa5dafefe6ed29a2ab011eb016e96d052ebe0140|4f4b22adfda19585f3768094adc9e216b233be8b||Change a on main
+M	a.txt
+
+@@@4f4b22adfda19585f3768094adc9e216b233be8b|e39c95b441480faf55e710066016f385ab5ac0f1||Add b
+A	b.txt
+
+@@@e39c95b441480faf55e710066016f385ab5ac0f1|||Initial commit
+A	README.md
+A	a.txt
