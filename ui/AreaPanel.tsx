@@ -2,6 +2,7 @@ import type React from "react";
 import { useLang } from "./LanguageProvider";
 import type { GitEvent, RepoState } from "../engine/types";
 import { activeConflicts, connectedRemote, headSnapshot } from "../engine/state";
+import { hasOwn } from "../engine/own";
 import { highlightTargets, litColumns, type AreaColumn } from "./highlight";
 
 /** `note` juga dipakai sebagai nama kelas CSS (gg-chip-baru, dst.), jadi nilainya tetap; labelnya diterjemahkan. */
@@ -15,13 +16,13 @@ export function columns(repo: RepoState): { working: Chip[]; staging: Chip[]; co
   const working: Chip[] = [];
   for (const file of Object.keys(repo.files).sort()) {
     if (conflicts.includes(file)) working.push({ file, note: "konflik" });
-    else if (!(file in repo.index)) working.push({ file, note: "baru" });
+    else if (!hasOwn(repo.index, file)) working.push({ file, note: "baru" });
     else if (repo.files[file] !== repo.index[file]) working.push({ file, note: "diubah" });
   }
   const staging: Chip[] = Object.keys(repo.index)
     .sort()
     .filter((f) => repo.index[f] !== head[f])
-    .map((file) => ({ file, note: file in head ? "diubah" : "baru" }));
+    .map((file) => ({ file, note: hasOwn(head, file) ? "diubah" : "baru" }));
   const committed: Chip[] = Object.keys(head)
     .sort()
     .map((file) => ({ file }));

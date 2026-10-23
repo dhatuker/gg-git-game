@@ -1,3 +1,4 @@
+import { hasOwn } from "../own";
 import { msg, type OutputLine } from "../messages";
 import { failure, markResolved, success } from "../state";
 import type { GitEvent, Handler } from "../types";
@@ -11,7 +12,7 @@ export const add: Handler = (state, args) => {
   if (args.includes(".") || args.includes("-A") || args.includes("--all")) {
     paths = Object.keys(state.files);
   } else {
-    const missing = args.find((a) => !(a in state.files));
+    const missing = args.find((a) => !hasOwn(state.files, a));
     if (missing) {
       return failure(state, msg("add.missingFile", { file: missing }), `fatal: pathspec '${missing}' did not match any files`);
     }

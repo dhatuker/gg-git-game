@@ -1,3 +1,4 @@
+import { hasOwn } from "../own";
 import { msg } from "../messages";
 import { failure, headSnapshot, inProgressBlock, success } from "../state";
 import type { Files, Handler } from "../types";
@@ -17,7 +18,7 @@ export const restore: Handler = (state, args) => {
   const head = headSnapshot(state);
   // Sumber (yang dipulihkan) dan tujuan (yang diubah).
   const [source, target]: [Files, Files] = staged ? [head, state.index] : [state.index, state.files];
-  const known = (p: string) => (staged ? p in state.index || p in head : p in state.index);
+  const known = (p: string) => (staged ? hasOwn(state.index, p) || hasOwn(head, p) : hasOwn(state.index, p));
   const all = paths.includes(".");
   const unknown = paths.find((p) => p !== "." && !known(p));
   if (unknown) {

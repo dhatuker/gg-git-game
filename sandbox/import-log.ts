@@ -1,4 +1,5 @@
 import { createEmptyRepo, isValidBranchName } from "../engine/state";
+import { hasOwn } from "../engine/own";
 import type { Commit, Files, RemoteState, RepoState } from "../engine/types";
 
 /** Penanda awal tiap commit di keluaran `git log`; berupa teks biasa agar tetap utuh saat disalin dari terminal. */
@@ -215,7 +216,7 @@ export function importGitLog(text: string): ImportResult {
 
   // Tanpa branch lokal (misalnya log dari CI), buat satu dari remote atau dari commit terakhir.
   if (Object.keys(branches).length === 0) {
-    const fromRemote = ["main", "master"].find((b) => remoteRefs[b]) ?? Object.keys(remoteRefs)[0];
+    const fromRemote = ["main", "master"].find((b) => hasOwn(remoteRefs, b)) ?? Object.keys(remoteRefs)[0];
     const lastId = idOf.get(records[records.length - 1].hash) as string;
     branches[fromRemote ?? "main"] = fromRemote ? remoteRefs[fromRemote] : lastId;
   }
@@ -223,7 +224,7 @@ export function importGitLog(text: string): ImportResult {
   const head: RepoState["head"] =
     detached && !headBranch
       ? { type: "detached", id: detached }
-      : { type: "branch", name: headBranch && branches[headBranch] ? headBranch : (["main", "master"].find((b) => branches[b]) ?? branchNames[0]) };
+      : { type: "branch", name: headBranch && hasOwn(branches, headBranch) ? headBranch : (["main", "master"].find((b) => hasOwn(branches, b)) ?? branchNames[0]) };
 
   const headId = head.type === "branch" ? branches[head.name] : head.id;
   const snapshot = commits[headId].snapshot;

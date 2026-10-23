@@ -3,6 +3,7 @@ import { defaultFile } from "./file-select";
 import { RichText } from "./RichText";
 import { useState } from "react";
 import type { Files } from "../engine/types";
+import { hasOwn } from "../engine/own";
 
 interface Props {
   files: Files;
@@ -32,7 +33,7 @@ export function FileEditor({ files, conflicts, rebasing, onWrite, onResolve }: P
   const names = Object.keys(files).sort();
   const [picked, setPicked] = useState<string | null>(null);
   const [newName, setNewName] = useState("");
-  const selected = picked && picked in files ? picked : defaultFile(names, conflicts);
+  const selected = picked && hasOwn(files, picked) ? picked : defaultFile(names, conflicts);
 
   const create = () => {
     const name = newName.trim();

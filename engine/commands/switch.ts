@@ -1,3 +1,4 @@
+import { hasOwn } from "../own";
 import { msg, raw } from "../messages";
 import {
   checkoutSnapshot,
@@ -20,19 +21,19 @@ function moveTo(state: RepoState, target: string): CommandResult {
   if (state.head.type === "branch" && state.head.name === target) {
     return success(state, [msg("switch.alreadyOn", { branch: target }), raw(`Already on '${target}'`)], []);
   }
-  const targetId = target in state.branches ? state.branches[target] : target in state.commits ? target : null;
+  const targetId = hasOwn(state.branches, target) ? state.branches[target] : hasOwn(state.commits, target) ? target : null;
   if (targetId) {
     const clobbered = untrackedOverwritten(state, state.commits[targetId].snapshot);
     if (clobbered.length) return untrackedFailure(state, clobbered, "switch");
   }
-  if (target in state.branches) {
+  if (hasOwn(state.branches, target)) {
     const id = state.branches[target];
     const next = { ...state, ...checkoutSnapshot(state, state.commits[id].snapshot), head: { type: "branch" as const, name: target } };
     return success(next, [msg("switch.switched", { branch: target }), raw(`Switched to branch '${target}'`)], [
       { type: "branch-pindah", from: fromLabel, to: target },
     ]);
   }
-  if (target in state.commits) {
+  if (hasOwn(state.commits, target)) {
     const next = { ...state, ...checkoutSnapshot(state, state.commits[target].snapshot), head: { type: "detached" as const, id: target } };
     return success(
       next,
@@ -71,7 +72,7 @@ export const switchBranch: Handler = (state, args) => {
   }
   const alreadyThere = state.head.type === "branch" && state.head.name === target;
   if (!alreadyThere && hasUncommittedChanges(state)) return failure(state, DIRTY_MESSAGE, DIRTY_GIT);
-  if (!getHeadCommitId(state) && !(target in state.branches)) {
+  if (!getHeadCommitId(state) && !hasOwn(state.branches, target)) {
     return failure(state, msg("switch.notFound", { target }), `fatal: invalid reference: ${target}`);
   }
   return remember(state, moveTo(state, target));

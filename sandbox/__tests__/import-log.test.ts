@@ -136,3 +136,14 @@ describe("importGitLog: masukan sulit", () => {
     expect(LOG_COMMAND).toContain("--name-status");
   });
 });
+
+describe("nama ref yang bentrok dengan properti Object.prototype", () => {
+  it.each(["__proto__", "constructor", "toString"])("log dengan branch %s tetap bisa diimpor", (name) => {
+    const r = importGitLog(`@@@aaaaaaa||HEAD -> ${name}, origin/${name}|x\nA\tf\n`);
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const head = r.state.head;
+    const headId = head.type === "branch" ? r.state.branches[head.name] : head.id;
+    expect(r.state.commits[headId]).toBeDefined();
+  });
+});

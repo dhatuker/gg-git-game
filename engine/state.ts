@@ -1,3 +1,4 @@
+import { hasOwn } from "./own";
 import { msg, raw, type Msg, type OutputLine } from "./messages";
 import type { CommandResult, Files, GitEvent, RemoteState, RepoState } from "./types";
 
@@ -71,14 +72,14 @@ export function hasUncommittedChanges(state: RepoState): boolean {
 /** Ganti working directory + index ke snapshot, pertahankan file tak terlacak. */
 export function checkoutSnapshot(state: RepoState, snapshot: Files): Pick<RepoState, "files" | "index"> {
   const files: Files = {};
-  for (const [p, c] of Object.entries(state.files)) if (!(p in state.index)) files[p] = c;
+  for (const [p, c] of Object.entries(state.files)) if (!hasOwn(state.index, p)) files[p] = c;
   return { files: { ...files, ...snapshot }, index: { ...snapshot } };
 }
 
 /** File tak terlacak yang isinya akan ditimpa bila working directory diganti `snapshot`. */
 export function untrackedOverwritten(state: RepoState, snapshot: Files): string[] {
   return Object.keys(state.files)
-    .filter((p) => !(p in state.index) && p in snapshot && snapshot[p] !== state.files[p])
+    .filter((p) => !hasOwn(state.index, p) && hasOwn(snapshot, p) && snapshot[p] !== state.files[p])
     .sort();
 }
 
@@ -92,8 +93,9 @@ export function untrackedFailure(state: RepoState, paths: string[], action: "swi
 
 export const BRANCH_NAME = /^[A-Za-z0-9._/-]+$/;
 
+/** `__proto__` ditolak karena menulisnya ke objek biasa mengganti prototype, bukan membuat branch. */
 export function isValidBranchName(name: string): boolean {
-  return BRANCH_NAME.test(name) && !name.startsWith("-");
+  return BRANCH_NAME.test(name) && !name.startsWith("-") && name !== "__proto__";
 }
 
 export const DIRTY_MESSAGE: Msg = msg("state.dirty");

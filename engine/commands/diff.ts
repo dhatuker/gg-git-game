@@ -1,3 +1,4 @@
+import { hasOwn } from "../own";
 import { diffLines } from "../linediff";
 import { msg, raw, type OutputLine } from "../messages";
 import { failure, headSnapshot, success } from "../state";
@@ -35,7 +36,7 @@ export const diff: Handler = (state, args) => {
   // `.` berarti semua file (sama seperti tanpa argumen), seperti di git.
   const paths = args.filter((a) => !a.startsWith("-") && a !== ".");
   const head = headSnapshot(state);
-  const unknown = paths.find((p) => !(p in state.files) && !(p in state.index) && !(p in head));
+  const unknown = paths.find((p) => !hasOwn(state.files, p) && !hasOwn(state.index, p) && !hasOwn(head, p));
   if (unknown) {
     return failure(
       state,
@@ -47,7 +48,7 @@ export const diff: Handler = (state, args) => {
   const events = [{ type: "diff-ditampilkan" as const, staged }];
   const [left, right] = staged ? [head, state.index] : [state.index, state.files];
   // Tanpa --staged, hanya file terlacak (ada di index) yang dibandingkan.
-  const rightTracked = staged ? right : Object.fromEntries(Object.entries(right).filter(([p]) => p in state.index));
+  const rightTracked = staged ? right : Object.fromEntries(Object.entries(right).filter(([p]) => hasOwn(state.index, p)));
   const files = changed(left, rightTracked, only);
 
   if (files.length > 0) {
@@ -55,11 +56,11 @@ export const diff: Handler = (state, args) => {
     for (const p of files) out.push(...fileDiff(p, left[p], rightTracked[p]));
     return success(state, out, events);
   }
-  const untracked = paths.find((p) => p in state.files && !(p in state.index));
+  const untracked = paths.find((p) => hasOwn(state.files, p) && !hasOwn(state.index, p));
   if (untracked) return success(state, [msg("diff.untracked", { file: untracked })], events);
   if (staged) return success(state, [msg("diff.noneStaged")], events);
   const anyStaged = changed(head, state.index, null).length > 0;
   if (anyStaged) return success(state, [msg("diff.noneUnstagedButStaged")], events);
-  const anyUntracked = Object.keys(state.files).some((p) => !(p in state.index));
+  const anyUntracked = Object.keys(state.files).some((p) => !hasOwn(state.index, p));
   return success(state, [msg(anyUntracked ? "diff.noneButUntracked" : "diff.noneUnstaged")], events);
 };

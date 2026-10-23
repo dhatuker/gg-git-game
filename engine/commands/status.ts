@@ -1,3 +1,4 @@
+import { hasOwn } from "../own";
 import { msg, raw, type MessageKey, type OutputLine } from "../messages";
 import { activeConflicts, aheadBehind, headSnapshot, success } from "../state";
 import type { Handler } from "../types";
@@ -5,8 +6,8 @@ import type { Handler } from "../types";
 export const status: Handler = (state) => {
   const head = headSnapshot(state);
   const staged = Object.keys(state.index).filter((p) => state.index[p] !== head[p]);
-  const unstaged = Object.keys(state.index).filter((p) => p in state.files && state.files[p] !== state.index[p]);
-  const untracked = Object.keys(state.files).filter((p) => !(p in state.index));
+  const unstaged = Object.keys(state.index).filter((p) => hasOwn(state.files, p) && state.files[p] !== state.index[p]);
+  const untracked = Object.keys(state.files).filter((p) => !hasOwn(state.index, p));
   const lines: OutputLine[] = [
     state.head.type === "branch" ? msg("status.onBranch", { branch: state.head.name }) : msg("status.detached", { id: state.head.id }),
   ];

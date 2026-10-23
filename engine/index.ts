@@ -20,6 +20,7 @@ import { push } from "./commands/push";
 import { pull } from "./commands/pull";
 import { checkFlags } from "./flags";
 import { msg } from "./messages";
+import { hasOwn } from "./own";
 import { parseInput } from "./parse";
 import { failure } from "./state";
 import { suggestCommand } from "./suggest";
@@ -59,7 +60,7 @@ export function runCommand(state: RepoState, input: string): CommandResult {
       "fatal: not a git repository (or any of the parent directories): .git",
     );
   }
-  const handler = HANDLERS[parsed.name];
+  const handler = hasOwn(HANDLERS, parsed.name) ? HANDLERS[parsed.name] : undefined;
   if (!handler) {
     const suggestion = suggestCommand(parsed.name);
     return failure(
@@ -77,3 +78,4 @@ export * from "./types";
 export * from "./messages";
 export { createEmptyRepo, getHeadCommitId } from "./state";
 export { COMMAND_FLAGS } from "./flags";
+export { hasOwn } from "./own";
