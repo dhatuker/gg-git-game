@@ -67,7 +67,7 @@ export function HeroDemo() {
       alive = false;
       clearTimeout(timer);
     };
-    // cmds depende dari bahasa lewat t; mulai ulang saat bahasa berganti
+    // cmds bergantung pada bahasa lewat t; mulai ulang saat bahasa berganti
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reduced, t]);
 
@@ -77,7 +77,6 @@ export function HeroDemo() {
   const pending = !reduced && typed !== null ? cmds[step].slice(0, typed) : "";
 
   const lane = (n: number) => `var(--lane-${n})`;
-  const labelOf = (c: (typeof COMMITS)[number]) => (c.lane === 0 ? c.y + 26 : c.y + 26);
 
   return (
     <div className="gg-demo" role="group" aria-label={t("home.demoLabel")}>
@@ -113,8 +112,8 @@ export function HeroDemo() {
             ) : (
               <circle cx={c.x} cy={c.y} r="11" fill={lane(c.lane)} />
             )}
-            <text x={c.x} y={labelOf(c)} textAnchor="middle" className="gg-demo-hash">{c.hash}</text>
-            <text x={c.x} y={labelOf(c) + 13} textAnchor="middle" className="gg-demo-msg">{msg(c.msg)}</text>
+            <text x={c.x} y={c.y + 26} textAnchor="middle" className="gg-demo-hash">{c.hash}</text>
+            <text x={c.x} y={c.y + 39} textAnchor="middle" className="gg-demo-msg">{msg(c.msg)}</text>
           </g>
         ))}
       </svg>

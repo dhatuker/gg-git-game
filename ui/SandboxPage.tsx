@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useReducer, useRef, useState, type ChangeEvent } from "react";
 import type { Lang } from "../i18n/types";
-import { LOG_COMMAND, MAX_COMMITS } from "../sandbox/import-log";
+import { LOG_COMMAND, MAX_COMMITS, MAX_LOG_MB } from "../sandbox/import-log";
 import { LanguageProvider, useLang } from "./LanguageProvider";
 import { LanguageToggle } from "./LanguageToggle";
 import { RichText } from "./RichText";
@@ -67,6 +67,8 @@ export function decodeLogFile(bytes: Uint8Array): string {
   return new TextDecoder(utf16 ? "utf-16le" : "utf-8").decode(bytes).replace(/^\uFEFF/, "");
 }
 
+const ERROR_KEY = { empty: "sandbox.errorEmpty", noCommits: "sandbox.errorNoCommits", tooLarge: "sandbox.errorTooLarge" } as const;
+
 type Dispatch = (action: Parameters<typeof reduceSandbox>[1]) => void;
 
 function ImportScreen({ state, dispatch }: { state: SandboxState; dispatch: Dispatch }) {
@@ -86,7 +88,13 @@ function ImportScreen({ state, dispatch }: { state: SandboxState; dispatch: Disp
 
   const pickFile = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    // Kosongkan pilihan agar file yang sama bisa dipilih lagi setelah diubah.
+    e.target.value = "";
     if (!file) return;
+    if (file.size > MAX_LOG_MB * 1024 * 1024) {
+      dispatch({ type: "too-large" });
+      return;
+    }
     const content = decodeLogFile(new Uint8Array(await file.arrayBuffer()));
     setText(content);
     dispatch({ type: "load", source: { kind: "log", text: content } });
@@ -133,7 +141,7 @@ function ImportScreen({ state, dispatch }: { state: SandboxState; dispatch: Disp
           />
           {state.error && (
             <p className="gg-sbx-error" role="alert">
-              <RichText text={t(state.error === "empty" ? "sandbox.errorEmpty" : "sandbox.errorNoCommits")} />
+              <RichText text={t(ERROR_KEY[state.error], { max: MAX_LOG_MB })} />
             </p>
           )}
           <div className="gg-sbx-actions">
@@ -197,7 +205,7 @@ function SandboxWorkspace({ state, dispatch }: { state: SandboxState; dispatch: 
           {t("sandbox.home")}
         </Link>
         <div className="gg-where">
-          <b>{t("site.sandbox")}</b>
+          <h1>{t("site.sandbox")}</h1>
           <span>{t(state.source?.kind === "sample" ? "sandbox.sourceSample" : "sandbox.sourceLog")}</span>
         </div>
         <span className="gg-bar-spacer" />

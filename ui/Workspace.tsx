@@ -43,7 +43,7 @@ export function Workspace({ session, top, terminalKey, editor, showStash, showRe
   const queue = useEventQueue(session.events);
   const history = useMemo(() => inputHistory(session.lines), [session.lines]);
   return (
-    <>
+    <main className="gg-work">
       <div className="gg-left">
         {top}
         <Terminal key={terminalKey} lines={session.lines.slice(session.clearedAt)} history={history} onSubmit={onRun} />
@@ -75,6 +75,6 @@ export function Workspace({ session, top, terminalKey, editor, showStash, showRe
           <AreaPanel repo={session.repo} activeEvent={queue.active} showStash={showStash} showRemote={showRemote} />
         </section>
       </div>
-    </>
+    </main>
   );
 }
