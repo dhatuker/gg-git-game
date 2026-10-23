@@ -58,7 +58,7 @@ export function SummaryDialog({ state, open, onClose, onRestart }: Props) {
           <p className="gg-sum-done">
             <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
               <circle cx="9" cy="9" r="9" fill="var(--ok)" />
-              <path d="M5 9.5l2.7 2.6L13 6.6" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M5 9.5l2.7 2.6L13 6.6" fill="none" stroke="var(--on-accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             {t("sum.done", { n: level.id })}
           </p>

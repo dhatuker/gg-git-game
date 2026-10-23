@@ -89,3 +89,11 @@ describe("decodeLogFile", () => {
     expect(decodeLogFile(new TextEncoder().encode(text))).toBe(text);
   });
 });
+
+describe("file log terlalu besar", () => {
+  it("menampilkan galat tooLarge di layar impor", () => {
+    const s = reduceSandbox(EMPTY_SANDBOX, { type: "too-large" });
+    expect(s.error).toBe("tooLarge");
+    expect(s.initial).toBeNull();
+  });
+});

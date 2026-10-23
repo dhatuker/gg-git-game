@@ -52,7 +52,7 @@ export const PROJECT_HISTORY: SolutionStep[] = [
   ...commit("Refactor app init"),
 ];
 
-/** State awal level 5–10: proyek yang sudah berjalan, ditambah langkah khusus level. */
+/** State awal level 5 dan 10–21: proyek yang sudah berjalan, ditambah langkah khusus level. */
 export function projectSetup(extra: SolutionStep[] = []): RepoState {
   return setup({ "README.md": "# My First Project" }, [...PROJECT_HISTORY, ...extra]);
 }

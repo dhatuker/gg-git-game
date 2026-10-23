@@ -16,14 +16,19 @@ export type SandboxStep =
   | { type: "undo" }
   | { type: "reset" };
 
-export type SandboxAction = SandboxStep | { type: "load"; source: SandboxSource } | { type: "close" } | { type: "restore"; saved: SavedSandbox };
+export type SandboxAction =
+  | SandboxStep
+  | { type: "load"; source: SandboxSource }
+  | { type: "too-large" }
+  | { type: "close" }
+  | { type: "restore"; saved: SavedSandbox };
 
 export interface SandboxState extends Session {
   source: SandboxSource | null;
   /** Riwayat hasil impor; tidak pernah berubah selama sesi, jadi reset selalu bisa kembali ke sini. */
   initial: RepoState | null;
   stats: ImportStats | null;
-  error: "empty" | "noCommits" | null;
+  error: "empty" | "noCommits" | "tooLarge" | null;
   /** State repo sebelum tiap perubahan, untuk undo (paling baru di akhir). */
   past: RepoState[];
   steps: SandboxStep[];
@@ -106,6 +111,8 @@ export function reduceSandbox(state: SandboxState, action: SandboxAction): Sandb
   switch (action.type) {
     case "load":
       return load(action.source);
+    case "too-large":
+      return { ...EMPTY_SANDBOX, error: "tooLarge" };
     case "close":
       return EMPTY_SANDBOX;
     case "restore": {

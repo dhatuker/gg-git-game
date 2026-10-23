@@ -1,3 +1,4 @@
+import { hasOwn } from "../own";
 import { msg, raw } from "../messages";
 import { resolveRevision } from "../revision";
 import { failure, getHeadCommitId, isReachable, isValidBranchName, success } from "../state";
@@ -20,7 +21,7 @@ export function createBranch(state: RepoState, name: string, at?: string): Comma
       `fatal: '${name}' is not a valid branch name`,
     );
   }
-  if (name in state.branches) {
+  if (hasOwn(state.branches, name)) {
     return failure(state, msg("branch.exists", { name }), `fatal: a branch named '${name}' already exists`);
   }
   return success(
@@ -43,7 +44,7 @@ export const branch: Handler = (state, args) => {
     const force = args[0] === "-D";
     const name = args[1];
     if (!name) return failure(state, msg("branch.deleteNeedsName"), "fatal: branch name required");
-    if (!(name in state.branches)) {
+    if (!hasOwn(state.branches, name)) {
       return failure(state, msg("branch.notFound", { name }), `error: branch '${name}' not found`);
     }
     if (state.head.type === "branch" && state.head.name === name) {

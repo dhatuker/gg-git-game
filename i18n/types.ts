@@ -196,6 +196,7 @@ export type UiKey =
   | "sandbox.sampleBody"
   | "sandbox.errorEmpty"
   | "sandbox.errorNoCommits"
+  | "sandbox.errorTooLarge"
   | "sandbox.home"
   | "sandbox.homeLabel"
   | "sandbox.sourceLog"

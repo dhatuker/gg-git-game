@@ -10,16 +10,16 @@
   --muted: #5a6a73;
   --rail: #cdd6d2;
   --lane-0: #2360c4;
-  --lane-1: #0b9468;
+  --lane-1: #077a56;
   --lane-2: #9a3cc6;
-  --lane-3: #c27c00;
-  --lane-4: #cf2f68;
-  --lane-5: #0e7f8c;
+  --lane-3: #946000;
+  --lane-4: #c42a62;
+  --lane-5: #0c7783;
   --staging: #f2b632;
   --staging-tint: #fdf3d8;
   --conflict: #c42b2b;
   --conflict-tint: #fbe4e2;
-  --ok: #0b9468;
+  --ok: #077a56;
   --term-bg: #17232b;
   --term-ink: #dfe8e4;
   --term-muted: #8fa3ac;
@@ -43,6 +43,7 @@
     --lane-3: #e9a93a;
     --lane-4: #f0679a;
     --lane-5: #3cc2cf;
+    --ok: #2fc795;
     --staging-tint: #3a3015;
     --conflict: #ff6b61;
     --conflict-tint: #3b1d1c;
@@ -77,12 +78,18 @@ code,
 
 /* ---------- Tata letak ---------- */
 .gg-shell {
-  display: grid;
-  grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
-  grid-template-rows: auto 1fr;
+  display: flex;
+  flex-direction: column;
   gap: 16px;
   padding: 16px;
   min-height: 100dvh;
+}
+/* Area kerja halaman level dan sandbox: kolom kiri (level, terminal, editor) dan kanan (graf, area). */
+.gg-work {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
+  gap: 16px;
 }
 /* Tombol ID | EN */
 .gg-lang {
@@ -126,7 +133,7 @@ code,
   padding: 16px 18px;
 }
 @media (max-width: 900px) {
-  .gg-shell {
+  .gg-work {
     grid-template-columns: minmax(0, 1fr);
   }
 }
@@ -209,7 +216,7 @@ code,
 .gg-btn-primary {
   background: var(--lane-0);
   border-color: var(--lane-0);
-  color: #fff;
+  color: var(--on-accent);
 }
 .gg-btn-primary:hover {
   background: color-mix(in srgb, var(--lane-0) 85%, black);
@@ -244,7 +251,7 @@ code,
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: color-mix(in srgb, var(--staging) 55%, var(--ink));
+  color: color-mix(in srgb, var(--staging) 40%, var(--ink));
 }
 
 /* ---------- Terminal ---------- */
@@ -332,8 +339,11 @@ code,
   position: absolute;
   width: 1px;
   height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
   overflow: hidden;
-  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
   white-space: nowrap;
 }
 .gg-term-form {
@@ -549,7 +559,7 @@ code,
   fill: var(--lane-color);
 }
 .gg-label text {
-  fill: #fff;
+  fill: var(--on-accent);
   font-weight: 800;
   font-size: 12px;
   text-anchor: middle;
@@ -808,7 +818,7 @@ a.gg-btn { text-decoration: none; display: inline-flex; align-items: center; gap
 .gg-how p { color: var(--muted); max-width: 30em; }
 .gg-strip-sec { padding-block: 32px 24px; border-top: 2px solid var(--rail); }
 .gg-strip-sec h2 { font-size: 1.5rem; font-weight: 800; margin-bottom: 18px; }
-.gg-strip { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.gg-strip { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); }
 .gg-strip a { text-decoration: none; color: var(--ink); position: relative; padding: 18px 12px 0 0; display: block; }
 .gg-strip a::before { content: ""; position: absolute; left: 0; right: 0; top: 7px; height: 6px; background: var(--c); }
 .gg-strip a:first-child::before { border-radius: 3px 0 0 3px; }
@@ -841,9 +851,9 @@ a.gg-btn { text-decoration: none; display: inline-flex; align-items: center; gap
 .gg-lstop:last-child::before { bottom: calc(100% - 24px); }
 .gg-lstop-done::before, .gg-lstop-cur::before { background: var(--c); }
 .gg-lstop-done + .gg-lstop:not(.gg-lstop-done)::before { background: linear-gradient(var(--c), var(--c) 24px, var(--rail) 24px); }
-.gg-node { position: absolute; left: 0; top: 8px; width: 32px; height: 32px; border-radius: 50%; border: 5px solid var(--rail); background: var(--panel); display: grid; place-items: center; font-weight: 800; font-size: 0.8rem; color: var(--muted); z-index: 1; }
-.gg-lstop-done .gg-node { background: var(--c); border-color: var(--c); color: var(--on-accent); }
-.gg-lstop-cur .gg-node { border-color: var(--c); color: var(--c); box-shadow: 0 0 0 5px color-mix(in srgb, var(--c) 24%, transparent); }
+.gg-stop-node { position: absolute; left: 0; top: 8px; width: 32px; height: 32px; border-radius: 50%; border: 5px solid var(--rail); background: var(--panel); display: grid; place-items: center; font-weight: 800; font-size: 0.8rem; color: var(--muted); z-index: 1; }
+.gg-lstop-done .gg-stop-node { background: var(--c); border-color: var(--c); color: var(--on-accent); }
+.gg-lstop-cur .gg-stop-node { border-color: var(--c); color: var(--c); box-shadow: 0 0 0 5px color-mix(in srgb, var(--c) 24%, transparent); }
 .gg-stop-row { display: flex; align-items: center; gap: 14px; width: 100%; text-align: left; border-radius: 12px; padding: 10px 14px; min-height: 48px; flex-wrap: wrap; color: var(--ink); text-decoration: none; }
 a.gg-stop-row:hover { background: color-mix(in srgb, var(--c) 9%, transparent); }
 .gg-lstop-cur .gg-stop-row { background: color-mix(in srgb, var(--c) 11%, var(--panel)); box-shadow: inset 0 0 0 2px var(--c); }
@@ -855,9 +865,9 @@ a.gg-stop-row:hover { background: color-mix(in srgb, var(--c) 9%, transparent); 
 .gg-lstop-lock .gg-stop-act { color: var(--muted); font-weight: 600; }
 
 /* Bar belajar */
-.gg-learn-bar { grid-column: 1 / -1; position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--paper); display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding-block: 8px 12px; border-bottom: 2px solid var(--rail); }
+.gg-learn-bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--paper); display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding-block: 8px 12px; border-bottom: 2px solid var(--rail); }
 .gg-where { display: flex; flex-direction: column; line-height: 1.2; min-width: 0; }
-.gg-where b { font-size: 1.05rem; }
+.gg-where h1 { font-size: 1.05rem; font-weight: 700; }
 .gg-where span { color: var(--muted); font-size: 0.85rem; }
 .gg-segs { --c: var(--lane-0); display: flex; gap: 4px; flex: 1 1 140px; min-width: 120px; max-width: 360px; }
 .gg-segs i { flex: 1; height: 10px; border-radius: 3px; background: var(--rail); }
@@ -904,6 +914,7 @@ dialog.gg-sum::backdrop { background: rgba(10, 16, 20, 0.6); }
 @media (max-width: 900px) {
   .gg-hero { grid-template-columns: minmax(0, 1fr); gap: 28px; }
   .gg-how { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .gg-strip { grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 20px; }
 }
 @media (max-width: 700px) {
   .gg-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 20px; }

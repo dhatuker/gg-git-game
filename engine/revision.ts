@@ -1,4 +1,5 @@
 import { msg, type Msg } from "./messages";
+import { hasOwn } from "./own";
 import { getHeadCommitId } from "./state";
 import type { RepoState } from "./types";
 
@@ -8,14 +9,12 @@ const unknownGit = (text: string) => `fatal: ambiguous argument '${text}': unkno
 
 const unknown = (text: string): Resolved => ({ error: msg("revision.unknown", { rev: text }), git: unknownGit(text) });
 
-const has = (o: Record<string, string>, k: string) => Object.prototype.hasOwnProperty.call(o, k);
-
 /** Nama polos -> id commit: branch lokal dulu, lalu `origin/<b>` bila ada di remoteRefs. */
 export function resolveRef(state: RepoState, name: string): string | undefined {
-  if (has(state.branches, name)) return state.branches[name] || undefined;
+  if (hasOwn(state.branches, name)) return state.branches[name] || undefined;
   if (name.startsWith("origin/")) {
     const b = name.slice("origin/".length);
-    if (has(state.remoteRefs ?? {}, b)) return state.remoteRefs[b] || undefined;
+    if (hasOwn(state.remoteRefs ?? {}, b)) return state.remoteRefs[b] || undefined;
   }
   return undefined;
 }

@@ -86,7 +86,7 @@ function GameView({ levelIndex }: { levelIndex: number }) {
           {t("play.back")}
         </Link>
         <div className="gg-where">
-          <b>{t("play.levelTitle", { n: level.id, title: tl(level.title) })}</b>
+          <h1>{t("play.levelTitle", { n: level.id, title: tl(level.title) })}</h1>
           {tier && <span>{t("play.where", { tier: tl(tier.name), n: level.id, total: LEVELS.length })}</span>}
         </div>
         {tier && (

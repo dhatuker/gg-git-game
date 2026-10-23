@@ -1,3 +1,4 @@
+import { hasOwn } from "../own";
 import { msg, raw } from "../messages";
 import { shortHash } from "../hash";
 import { failure, getHeadCommitId, headSnapshot, inProgressBlock, success, unreachableCommits } from "../state";
@@ -48,7 +49,7 @@ function stageTracked(state: RepoState): { state: RepoState; events: GitEvent[] 
   const index = { ...state.index };
   const events: GitEvent[] = [];
   for (const p of Object.keys(index).sort()) {
-    if (p in state.files && state.files[p] !== index[p]) {
+    if (hasOwn(state.files, p) && state.files[p] !== index[p]) {
       index[p] = state.files[p];
       events.push({ type: "file-di-stage", file: p });
     }

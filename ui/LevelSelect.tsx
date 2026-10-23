@@ -84,7 +84,7 @@ export function LevelSelect() {
                     );
                     return (
                       <li key={l.id} className={`gg-lstop${isDone ? " gg-lstop-done" : ""}${isCur ? " gg-lstop-cur" : ""}${locked ? " gg-lstop-lock" : ""}`}>
-                        <span className="gg-node" aria-hidden="true">
+                        <span className="gg-stop-node" aria-hidden="true">
                           {isDone ? (
                             <svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3.2 3L13 4.8" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
                           ) : (
@@ -92,7 +92,7 @@ export function LevelSelect() {
                           )}
                         </span>
                         {locked ? (
-                          <div className="gg-stop-row" aria-disabled="true" aria-label={label}>{row}</div>
+                          <div className="gg-stop-row" role="link" aria-disabled="true" aria-label={label}>{row}</div>
                         ) : (
                           <Link className="gg-stop-row" href={`/${lang}/play/${l.id}`} aria-label={label}>{row}</Link>
                         )}

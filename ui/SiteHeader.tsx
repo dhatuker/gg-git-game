@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import type { Lang } from "../i18n/types";
 import { langCookie } from "./language";
 import { useLang } from "./LanguageProvider";
 import { LanguageToggle } from "./LanguageToggle";
 
 /** Ganti bahasa di halaman statis: tulis cookie lalu muat ulang rute yang sama di bahasa lain. */
-export function switchLanguagePath(next: string): void {
-  document.cookie = langCookie(next as "id" | "en");
+export function switchLanguagePath(next: Lang): void {
+  document.cookie = langCookie(next);
   const rest = window.location.pathname.replace(/^\/(id|en)(?=\/|$)/, "");
   // Sengaja reload dokumen penuh (lihat catatan di Game.tsx tentang cacheComponents).
   // eslint-disable-next-line @next/next/no-location-assign-relative-destination

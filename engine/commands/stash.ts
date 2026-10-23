@@ -1,3 +1,4 @@
+import { hasOwn } from "../own";
 import { msg, raw } from "../messages";
 import { checkoutSnapshot, failure, getHeadCommitId, headSnapshot, inProgressBlock, success } from "../state";
 import type { Files, Handler, RepoState, StashEntry } from "../types";
@@ -37,7 +38,7 @@ export const stash: Handler = (state, args) => {
     const changed = tracked.filter((p) => head[p] !== state.index[p] || state.files[p] !== state.index[p]);
     if (!changed.length) return failure(state, msg("stash.nothing"), "No local changes to save");
     const trackedFiles: Files = {};
-    for (const p of tracked) if (p in state.files) trackedFiles[p] = state.files[p];
+    for (const p of tracked) if (hasOwn(state.files, p)) trackedFiles[p] = state.files[p];
     const entry: StashEntry = { files: trackedFiles, index: { ...state.index }, baseCommit: headId };
     // Bersihkan file terlacak dari working directory dulu, lalu pulihkan ke HEAD (file tak terlacak tetap).
     const untracked: Files = {};
@@ -67,7 +68,7 @@ export const stash: Handler = (state, args) => {
   }
   const files: Files = { ...state.files };
   for (const p of changed) {
-    if (p in entry.files) files[p] = entry.files[p];
+    if (hasOwn(entry.files, p)) files[p] = entry.files[p];
     else delete files[p];
   }
   return success(
