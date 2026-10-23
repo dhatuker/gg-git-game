@@ -8,6 +8,9 @@ export const RECORD_MARK = "@@@";
 /** Batas commit yang diimpor; commit yang lebih lama dipotong seperti shallow clone. */
 export const MAX_COMMITS = 300;
 
+/** Batas ukuran file log yang diunggah; log 300 commit jauh lebih kecil, jadi file sebesar ini pasti bukan hasil perintah. */
+export const MAX_LOG_MB = 5;
+
 /** Perintah yang disarankan ke pemain. Hasilnya ditempel atau diunggah sebagai file teks. */
 export const LOG_COMMAND = `git log --all --topo-order --reverse -n ${MAX_COMMITS} --name-status --pretty=format:"${RECORD_MARK}%H|%P|%D|%s"`;
 
